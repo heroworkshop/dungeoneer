@@ -1,0 +1,92 @@
+import unittest
+
+import pygame
+
+from dungeoneer.actors import Player
+from dungeoneer.characters import MonsterType, Character, PlayerCharacterType
+from dungeoneer.interfaces import SpriteGroups
+from dungeoneer import actors
+
+
+class TestZombie(unittest.TestCase):
+    def test_make_monster_withZombie(self):
+        world = SpriteGroups()
+        zombie = actors.make_monster(MonsterType.ZOMBIE, 0, 0, world)
+        self.assertEqual(3, len(zombie.filmstrips.walk_south))
+
+    def test_monsters_have_unlimited_ammo(self):
+        world = SpriteGroups()
+        zombie = actors.make_monster(MonsterType.ZOMBIE, 0, 0, world)
+        ammo = zombie.ammo
+        self.assertGreater(ammo, 0)
+        zombie.ammo -= 1
+        self.assertEqual(ammo, zombie.ammo)
+
+class TestGenerator(unittest.TestCase):
+    def test_generator_withOneGenerator_produceMonsters(self):
+        world = SpriteGroups()
+        player_character = Character(PlayerCharacterType.TOBY)
+        player = Player(500, 500, player_character, world)
+        generator = actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 0, 0, world)
+        generator.targeted_enemy = player
+        self.assertEqual(1, len(world.solid))
+        generator.do_actions(world)
+        self.assertEqual(2, len(world.solid))
+
+    def test_generator_withTwoGenerators_produceTwoMonsters(self):
+        world = SpriteGroups()
+        self.assertEqual(0, len(world.solid))
+        player_character = Character(PlayerCharacterType.TOBY)
+        player = Player(500, 500, player_character, world)
+        generators = [actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
+                      actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
+
+        self.assertEqual(2, len(world.solid))
+        for g in generators:
+            g.targeted_enemy = player
+            g.do_actions(world)
+        self.assertEqual(4, len(world.solid))
+
+    def test_generator_withTime_producesMonstersAtRateOfFire(self):
+        pygame.time.Clock()
+        world = SpriteGroups()
+        player_character = Character(PlayerCharacterType.TOBY)
+        player = Player(500, 500, player_character, world)
+        generators = [actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
+                      actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
+
+        self.assertEqual(2, len(world.solid))
+        for g in generators:
+            g.targeted_enemy = player
+            g.actions[0].rate_of_fire = 10
+            g.do_actions(world)
+        self.assertEqual(4, len(world.solid))
+        t = pygame.time.get_ticks()
+        while True:
+            for g in generators:
+                g.do_actions(world)
+            if t + 150 < pygame.time.get_ticks():
+                break
+        self.assertEqual(6, len(world.solid))
+
+
+class TestPlayer(unittest.TestCase):
+    def setUp(self):
+        world = SpriteGroups()
+        player_character = Character(PlayerCharacterType.TOBY)
+        self.player = Player(500, 500, player_character, world)
+
+    def test_player_ammo_depletes(self):
+        self.player.ammo = 1
+        self.player.ammo -= 1
+        self.assertEqual(0, self.player.ammo)
+
+    def test_player_ammo_neverDropsBelowZero(self):
+        self.player.ammo = 0
+        self.player.ammo -= 1
+        self.assertEqual(0, self.player.ammo)
+
+
+
+if __name__ == '__main__':
+    unittest.main()
