@@ -119,8 +119,7 @@ def create_health_bar(player, world):
 
 def create_ammo_bar(player, world):
     arrow = pygame.image.load(image_file("arrow24.png"))
-    arrow_filmstrip = SpriteSheet(arrow, 1, 1).filmstrip(scale=2)
-    #ammo_bar = ScoreBar(SCREEN_WIDTH-100, 30, arrow_filmstrip, 5, 1, direction=Direction.RIGHT_TO_LEFT)
-    ammo_bar = ScoreBar(300, 100, arrow_filmstrip, 5, 1, direction=Direction.RIGHT_TO_LEFT)
+    arrow_filmstrip = SpriteSheet(arrow, 1, 1).filmstrip(scale=1)
+    ammo_bar = ScoreBar(SCREEN_WIDTH-100, 30, arrow_filmstrip, 5, 1, direction=Direction.RIGHT_TO_LEFT)
     world.hud.add(ammo_bar)
     player.add_observer(ammo_bar, "ammo")

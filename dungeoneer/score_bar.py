@@ -40,13 +40,13 @@ class ScoreBar(pygame.sprite.Sprite, Observer):
         return [self.render_bar(value, image) for image in self.unit_filmstrip]
 
     def render_bar(self, score, frame_image):
-        x, y = 0, 0
-        dx, dy = self.direction.value
         unit_image = frame_image
         n = score // self.score_per_unit
         width, height = unit_image.get_rect().size
-        dx *= width
-        dy *= height
+        dx, dy = self.direction.value
+        x, y = 0, 0
+        dx = abs(dx * width)
+        dy = abs(dy * height)
         if dx:
             width *= n
         else:
