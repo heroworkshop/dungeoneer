@@ -165,6 +165,7 @@ class Actor(pygame.sprite.Sprite):
 class Player(Actor):
     def __init__(self, x, y, character, world: SpriteGroups):
         super().__init__(x, y, character, world)
+        self.inventory = Inventory()
         self._ammo = 5
 
     def handle_keyboard(self, kb):
