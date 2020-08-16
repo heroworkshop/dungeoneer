@@ -19,20 +19,17 @@ class Observer(ABC):
         pass
 
 
-class Item(ABC):
-    def __init__(self):
+class Item:
+    def __init__(self, name):
         self.count = 1
+        self.name = name
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.name() == other.name()
+            return self.name == other.name
         else:
             return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    @staticmethod
-    @abstractmethod
-    def name():
-        pass

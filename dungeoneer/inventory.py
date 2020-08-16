@@ -42,10 +42,17 @@ class Inventory:
             index = slot if slot is not None else self.find_available_slot(item=item)
         except ValueError:
             raise InventoryFull(
-                "Could not add item {}. Inventory already contains {} items".format(item.name(),
+                "Could not add item {}. Inventory already contains {} items".format(item.name,
                                                                                     len(self.slots)))
         if self.slots[index] == item:
             self.slots[index].count += 1
             return None
         drop, self.slots[index] = self.slots[index], item
+        return drop
+
+    def remove(self, slot):
+        drop = self.slots[slot]
+        self.slots[slot].count -= 1
+        if self.slots[slot].count == 0:
+            self.slots[slot] = None
         return drop

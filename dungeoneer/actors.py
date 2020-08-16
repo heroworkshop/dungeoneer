@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pygame
 
 from dungeoneer import game_assets, treasure
+from dungeoneer.inventory import Inventory
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound, sfx_file, make_sprite_sheet
