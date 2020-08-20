@@ -1,58 +1,81 @@
 from contextlib import suppress
 
+from dungeoneer.interfaces import Observable, Observer, Item
+
 
 class InventoryFull(RuntimeError):
     """Raised when an item is added to an already full inventory"""
 
 
-class Inventory:
+class Inventory(Observable):
     WEAPON = 0
     AMMO = 1
     LAUNCHER = 2
     ARMOUR = 3
 
     def __init__(self):
-        self.slots = [None] * 10
+        super().__init__()
+        self._slots = [None] * 10
 
     def __len__(self):
-        return len(self.slots)
+        return len(self._slots)
+
+    def slot(self, i):
+        return self._slots[i]
 
     @property
     def items(self):
-        return [i for i in self.slots if i]
+        return [i for i in self._slots if i]
 
     @property
     def ammo(self):
-        return self.slots[self.AMMO]
+        return self.slot(self.AMMO)
 
     def find_available_slot(self, item=None):
         if item:
             with suppress(ValueError):
                 return self.find_slot_containing_item(item)
+        if item.preferred_slot is not None and self.slot(item.preferred_slot) is None:
+            return item.preferred_slot
         return self.find_first_free_slot()
 
     def find_first_free_slot(self):
-        return self.slots.index(None)
+        try:
+            return self._slots.index(None)
+        except ValueError:
+            raise InventoryFull
 
     def find_slot_containing_item(self, item):
-        return self.slots.index(item)
+        return self._slots.index(item)
 
-    def add_item(self, item, slot=None):
+    def add_item(self, item: Item, slot=None):
         try:
-            index = slot if slot is not None else self.find_available_slot(item=item)
+            slot_index = slot if slot is not None else self.find_available_slot(item=item)
         except ValueError:
             raise InventoryFull(
                 "Could not add item {}. Inventory already contains {} items".format(item.name,
                                                                                     len(self.slots)))
-        if self.slots[index] == item:
-            self.slots[index].count += 1
-            return None
-        drop, self.slots[index] = self.slots[index], item
+        if self.slot(slot_index) == item:
+            self._slots[slot_index].count += 1
+            drop = None
+        else:
+            drop, self._slots[slot_index] = self._slots[slot_index], item
+        self.notify_observers(slot_index)
         return drop
 
-    def remove(self, slot):
-        drop = self.slots[slot]
-        self.slots[slot].count -= 1
-        if self.slots[slot].count == 0:
-            self.slots[slot] = None
+    def remove_item(self, slot_index):
+        drop = self._slots[slot_index]
+        if drop:
+            self._slots[slot_index].count -= 1
+            if self._slots[slot_index].count == 0:
+                self._slots[slot_index] = None
+        self.notify_observers(slot_index)
         return drop
+
+    def notify_observers(self, slot_index):
+        for observer in self.observers[slot_index]:
+            observer.notify(slot_index, self.slot(slot_index))
+
+    def add_observer(self, observer: Observer, attribute):
+        self.observers[attribute].append(observer)
+        observer.notify(attribute, self._slots[attribute])

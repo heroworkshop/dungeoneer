@@ -1,6 +1,16 @@
 import unittest
 from dungeoneer.inventory import Inventory, InventoryFull
-from dungeoneer.interfaces import Item
+from dungeoneer.interfaces import Item, Observer
+
+
+class ItemListener(Observer):
+    def __init__(self):
+        self.last_received = dict()
+        self.notification_count = 0
+
+    def notify(self, attribute, value):
+        self.last_received[attribute] = value
+        self.notification_count += 1
 
 
 class TestInventory(unittest.TestCase):
@@ -35,7 +45,7 @@ class TestInventory(unittest.TestCase):
     def test_len_of_inventory_returnsNumberOfSlots(self):
         inventory = Inventory()
         size = len(inventory)
-        self.assertEqual(len(inventory.slots), size)
+        self.assertEqual(len(inventory), size)
 
     def test_add_item_withFullInventory_raisesInventoryFull(self):
         inventory = Inventory()
@@ -46,50 +56,111 @@ class TestInventory(unittest.TestCase):
 
     def test_add_item_withIndex_replacesItemAtIndex(self):
         inventory = Inventory()
-        inventory.slots[0] = Item("sword")
+        inventory.add_item(Item("sword"), slot=0)
         drop = inventory.add_item(Item("arrow"), slot=0)
         self.assertEqual("sword", drop.name)
 
     def test_add_item_withEmptyInventory_hasItemCountOnOne(self):
         inventory = Inventory()
         inventory.add_item(Item("arrow"), slot=0)
-        item = inventory.slots[0]
+        item = inventory.slot(0)
         self.assertEqual(1, item.count)
 
     def test_add_item_withExistingDuplicateItem_incrementsItemCount(self):
         inventory = Inventory()
         inventory.add_item(Item("arrow"), slot=5)
         inventory.add_item(Item("arrow"))
-        item = inventory.slots[5]
+        item = inventory.slot(5)
         self.assertEqual(2, item.count)
+
+    def test_add_item_withPreferredSlotEmpty_addsToPreferredSlot(self):
+        inventory = Inventory()
+        arrow = Item("arrow")
+        arrow.preferred_slot = inventory.AMMO
+        inventory.add_item(arrow)
+        self.assertEqual("arrow", inventory.slot(inventory.AMMO).name)
 
     def test_ammo_withItemInAmmoSlot_returnsAmmo(self):
         inventory = Inventory()
-        inventory.slots[inventory.AMMO] = Item("arrow")
+        inventory.add_item(Item("arrow"), inventory.AMMO)
         self.assertEqual("arrow", inventory.ammo.name)
+
+    def test_remove_withEmptySlot_returnsNone(self):
+        inventory = Inventory()
+        item = inventory.remove_item(inventory.AMMO)
+        self.assertIs(None, item)
 
     def test_remove_withItemInSlot_returnsItem(self):
         inventory = Inventory()
-        inventory.slots[inventory.AMMO] = Item("arrow")
-        item = inventory.remove(inventory.AMMO)
+        inventory.add_item(Item("arrow"), inventory.AMMO)
+        item = inventory.remove_item(inventory.AMMO)
         self.assertEqual("arrow", item.name)
 
     def test_remove_withItemInSlot_removesItem(self):
         inventory = Inventory()
-        inventory.slots[inventory.AMMO] = Item("arrow")
-        inventory.slots[inventory.WEAPON] = Item("sword")
-        inventory.remove(inventory.AMMO)
+        inventory.add_item(Item("arrow"), slot=inventory.AMMO)
+        inventory.add_item(Item("sword"), slot=inventory.WEAPON)
+        inventory.remove_item(inventory.AMMO)
         self.assertEqual(1, len(inventory.items))
-        self.assertEqual(None, inventory.slots[inventory.AMMO])
+        self.assertEqual(None, inventory.slot(inventory.AMMO))
 
     def test_remove_withMultipleItemsInSlot_removesOneItem(self):
         inventory = Inventory()
         inventory.add_item(Item("arrow"), slot=inventory.AMMO)
         inventory.add_item(Item("arrow"), slot=inventory.AMMO)
-        inventory.remove(inventory.AMMO)
+        inventory.remove_item(inventory.AMMO)
         self.assertEqual(1, len(inventory.items))
-        self.assertEqual(1, inventory.slots[inventory.AMMO].count)
+        self.assertEqual(1, inventory.slot(inventory.AMMO).count)
 
+    def test_add_observer_withItemInInventory_notifiesListenerOfItem(self):
+        inventory = Inventory()
+        inventory.add_item(Item("arrow"), slot=inventory.AMMO)
+        listener = ItemListener()
+        inventory.add_observer(listener, inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("arrow", result.name)
+
+    def test_add_item_withListener_notifiesListenerOfNewItem(self):
+        inventory = Inventory()
+        listener = ItemListener()
+        inventory.add_observer(listener, inventory.AMMO)
+        inventory.add_item(Item("arrow"), slot=Inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("arrow", result.name)
+
+    def test_remove_item_withListener_notifiesListenerOfNewState(self):
+        inventory = Inventory()
+        listener = ItemListener()
+        inventory.add_item(Item("arrow", count=2), slot=Inventory.AMMO)
+        inventory.add_observer(listener, inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("arrow", result.name)
+        self.assertEqual(2, result.count)
+        inventory.remove_item(Inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("arrow", result.name)
+        self.assertEqual(1, result.count)
+
+    def test_remove_item_withListenerAndLastItem_notifiesListenerOfEmpty(self):
+        inventory = Inventory()
+        listener = ItemListener()
+        inventory.add_item(Item("arrow", count=1), slot=Inventory.AMMO)
+        inventory.add_observer(listener, inventory.AMMO)
+        inventory.remove_item(Inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual(None, result)
+        self.assertEqual(2, listener.notification_count)
+
+    def test_replace_item_withListener_notifiesListenerOfNewItem(self):
+        inventory = Inventory()
+        listener = ItemListener()
+        inventory.add_observer(listener, inventory.AMMO)
+        inventory.add_item(Item("arrow", count=1), slot=Inventory.AMMO)
+        inventory.remove_item(Inventory.AMMO)
+        inventory.add_item(Item("iron shot", count=1), slot=Inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("iron shot", result.name)
+        self.assertEqual(4, listener.notification_count)
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,10 @@ from dungeoneer.actors import Player, make_monster
 from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.game_assets import image_file
+from dungeoneer.interfaces import Item
+from dungeoneer.inventory import Inventory
+from dungeoneer.item_sprites import make_item_sprite
+from dungeoneer import items
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.score_bar import ScoreBar, Direction
 from dungeoneer.spritesheet import SpriteSheet
@@ -52,9 +56,20 @@ def play():
     create_health_bar(player, world)
     create_ammo_bar(player, world)
 
+    arrows: Item = items.ammo["arrow"]
+    arrows.count = 5
+    arrow_sprite = make_item_sprite(arrows, 500, 450)
+    if move_to_nearest_empty_space(arrow_sprite, world, 50):
+        world.items.add(arrow_sprite)
+        world.all.add(arrow_sprite)
+
+    melon = make_item_sprite(items.food["melon"], 550, 500)
+    if move_to_nearest_empty_space(melon, world, 50):
+        world.items.add(melon)
+        world.all.add(melon)
+
     make_monster(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
     make_monster(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
-
 
     while True:
         world.all.clear(screen, background)
@@ -73,8 +88,6 @@ def play():
                 screen.blit(background, (0, 0))
         kb = pygame.key.get_pressed()
         player.handle_keyboard(kb)
-        if kb[pygame.K_RETURN]:
-            player.shoot()
 
         player.move(world.solid)
         for monster in world.monster:
@@ -123,4 +136,4 @@ def create_ammo_bar(player, world):
     arrow_filmstrip = SpriteSheet(arrow, 1, 1).filmstrip(scale=1)
     ammo_bar = ScoreBar(SCREEN_WIDTH-100, 30, arrow_filmstrip, 5, 1, direction=Direction.RIGHT_TO_LEFT)
     world.hud.add(ammo_bar)
-    player.add_observer(ammo_bar, "ammo")
+    player.inventory.add_observer(ammo_bar, Inventory.AMMO)

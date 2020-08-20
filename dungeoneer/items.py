@@ -1,4 +1,5 @@
 from dungeoneer.interfaces import Item
+from dungeoneer.inventory import Inventory
 
 
 class Ammo(Item):
@@ -7,6 +8,13 @@ class Ammo(Item):
         self.damage = damage
         self.damage_profile = damage_profile
         self.speed = speed
+        self.preferred_slot = Inventory.AMMO
+
+
+class Food(Item):
+    def __init__(self, name, bonus):
+        super().__init__(name)
+        self.bonus = bonus
 
 
 def make_item_dict(using_class, *args):
@@ -39,3 +47,8 @@ launchers = [
     Item("shortbow"),
     Item("sling")
 ]
+
+food = make_item_dict(
+    Food,
+    ("melon", 10)
+)

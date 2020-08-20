@@ -1,5 +1,6 @@
 /dungeoneer0.1/
 /dungeoneer0.2.4/
 /venv/
-*.pyc
+**/*.pyc
+dungeoneer/__pycache__/*.pyc
 /.idea

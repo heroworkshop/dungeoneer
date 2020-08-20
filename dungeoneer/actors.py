@@ -10,7 +10,7 @@ from dungeoneer.inventory import Inventory
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound, sfx_file, make_sprite_sheet
-from dungeoneer.interfaces import SpriteGroups
+from dungeoneer.interfaces import SpriteGroups, Item
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -57,7 +57,7 @@ class Actor(pygame.sprite.Sprite):
 
     def add_observer(self, observer, attribute):
         self.observers[attribute].append(observer)
-        observer.notify(getattr(self, attribute))
+        observer.notify(attribute, Item(attribute, count=getattr(self, attribute)))
 
     @property
     def vitality(self):
@@ -67,7 +67,7 @@ class Actor(pygame.sprite.Sprite):
     def vitality(self, value):
         self._vitality = value
         for observer in self.observers["vitality"]:
-            observer.notify(self._vitality)
+            observer.notify("vitality", Item("vitality", count=self._vitality))
 
     @property
     def missile_sfx(self):
@@ -115,10 +115,7 @@ class Actor(pygame.sprite.Sprite):
     def collided(self, group):
         collisions = pygame.sprite.spritecollide(self, group, dokill=False,
                                                  collided=pygame.sprite.collide_rect_ratio(0.8))
-        for c in collisions:
-            if c is not self:
-                return True
-        return False
+        return any([c is not self for c in collisions])
 
     def die(self):
         self.kill()
@@ -132,18 +129,17 @@ class Actor(pygame.sprite.Sprite):
         del self  # unused
         return 1
 
-    @ammo.setter
-    def ammo(self, value):
+    def expend_ammo(self):
         del self  # unused
         """Unlimited ammo"""
+        return Item("missile", 1)
 
     def shoot(self):
         t = pygame.time.get_ticks()
         if t < self.attack_cooloff:
             return None
-        if not self.ammo:
+        if not self.expend_ammo():
             return None
-        self.ammo -= 1
         self.missile_sfx.play()
         self.attack_cooloff = t + 1000 // self.character.rate_of_fire
         dx, dy = self.facing
@@ -160,6 +156,7 @@ class Actor(pygame.sprite.Sprite):
         return missile
 
     def connect(self, sprite):
+        """A connected sprite will move when the other sprite moves"""
         self._connected_sprites.append(sprite)
 
 
@@ -167,7 +164,6 @@ class Player(Actor):
     def __init__(self, x, y, character, world: SpriteGroups):
         super().__init__(x, y, character, world)
         self.inventory = Inventory()
-        self._ammo = 5
 
     def handle_keyboard(self, kb):
         self.dx = self.dy = 0
@@ -180,18 +176,18 @@ class Player(Actor):
             self.dy = -1
         if kb[pygame.K_s]:
             self.dy = 1
+        if kb[pygame.K_RETURN]:
+            self.shoot()
 
     @property
     def ammo(self):
-        return self._ammo
+        item = self.inventory.ammo
+        if item:
+            return item.count
+        return 0
 
-    @ammo.setter
-    def ammo(self, value):
-        self._ammo = value
-        if self._ammo < 0:
-            self._ammo = 0
-        for observer in self.observers["ammo"]:
-            observer.notify(self._ammo)
+    def expend_ammo(self):
+        return self.inventory.remove_item(slot_index=self.inventory.AMMO)
 
 
 class Monster(Actor):

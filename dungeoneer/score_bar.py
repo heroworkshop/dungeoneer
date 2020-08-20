@@ -2,7 +2,7 @@ from enum import Enum
 
 import pygame
 
-from dungeoneer.interfaces import Observer
+from dungeoneer.interfaces import Observer, Item
 
 
 class Direction(Enum):
@@ -30,9 +30,9 @@ class ScoreBar(pygame.sprite.Sprite, Observer):
         self.filmstrip = self.render_filmstrip(score)
         self.animate()
 
-    def notify(self, value):
-        self.score = value
-        self.filmstrip = self.render_filmstrip(value)
+    def notify(self, attribute, value: Item):
+        self.score = value.count if value else 0
+        self.filmstrip = self.render_filmstrip(self.score)
         self.image = self.filmstrip[self.frame]
         self.update_rect()
 
@@ -40,6 +40,7 @@ class ScoreBar(pygame.sprite.Sprite, Observer):
         return [self.render_bar(value, image) for image in self.unit_filmstrip]
 
     def render_bar(self, score, frame_image):
+        score = max(score, 0)
         unit_image = frame_image
         n = score // self.score_per_unit
         width, height = unit_image.get_rect().size
@@ -52,7 +53,7 @@ class ScoreBar(pygame.sprite.Sprite, Observer):
         else:
             height *= n
 
-        image = pygame.Surface((width, height), flags=pygame.SRCALPHA)
+        image = pygame.Surface((max(width, 1), max(height, 1)), flags=pygame.SRCALPHA)
         while n:
             image.blit(unit_image, (x, y))
             x += dx

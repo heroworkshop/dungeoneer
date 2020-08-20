@@ -4,8 +4,9 @@ import pygame
 
 from dungeoneer.actors import Player
 from dungeoneer.characters import MonsterType, Character, PlayerCharacterType
-from dungeoneer.interfaces import SpriteGroups
+from dungeoneer.interfaces import SpriteGroups, Item
 from dungeoneer import actors
+from dungeoneer.inventory import Inventory
 
 
 class TestZombie(unittest.TestCase):
@@ -19,7 +20,7 @@ class TestZombie(unittest.TestCase):
         zombie = actors.make_monster(MonsterType.ZOMBIE, 0, 0, world)
         ammo = zombie.ammo
         self.assertGreater(ammo, 0)
-        zombie.ammo -= 1
+        zombie.expend_ammo()
         self.assertEqual(ammo, zombie.ammo)
 
 class TestGenerator(unittest.TestCase):
@@ -77,13 +78,12 @@ class TestPlayer(unittest.TestCase):
         self.player = Player(500, 500, player_character, world)
 
     def test_player_ammo_depletes(self):
-        self.player.ammo = 1
-        self.player.ammo -= 1
+        self.player.inventory.add_item(Item("arrow"), slot=Inventory.AMMO)
+        self.player.expend_ammo()
         self.assertEqual(0, self.player.ammo)
 
     def test_player_ammo_neverDropsBelowZero(self):
-        self.player.ammo = 0
-        self.player.ammo -= 1
+        self.player.expend_ammo()
         self.assertEqual(0, self.player.ammo)
 
 

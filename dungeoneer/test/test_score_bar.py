@@ -71,6 +71,11 @@ class TestScoreBar(unittest.TestCase):
         self.assertEqual(0, bar.rect.bottom)
         self.assertEqual(-10, bar.rect.top)
 
+    def test_score_bar_withZeroScore_returnsWidth1Image(self):
+        filmstrip = SpriteSheet(make_pixel_grid(5, 2), 5, 2).filmstrip()
+        bar = ScoreBar(0, 0, filmstrip, score=0, score_per_unit=1)
+        self.assertEqual(1, bar.image.get_width())
+
 
 if __name__ == '__main__':
     unittest.main()

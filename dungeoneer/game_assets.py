@@ -48,6 +48,7 @@ SPRITE_SHEET_TABLE = {
     "gold pile": ("items_metal.png", (13, 10), (0, 4, 1, 1)),
     "arrow": ("arrow24.png", (1, 1)),
     "swipe": ("arc_strike.png", (13, 1)),
+    "melon": ("equipment.png", (14, 32), (7, 0, 1, 1))
 }
 
 

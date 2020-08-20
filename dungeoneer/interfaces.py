@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from contextlib import suppress
 from dataclasses import dataclass, field
 from pygame.sprite import Group
 
@@ -20,9 +22,10 @@ class Observer(ABC):
 
 
 class Item:
-    def __init__(self, name):
-        self.count = 1
+    def __init__(self, name, count=1):
+        self.count = count
         self.name = name
+        self.preferred_slot = None
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -33,3 +36,16 @@ class Item:
     def __ne__(self, other):
         return not self.__eq__(other)
 
+
+class Observable(ABC):
+    def __init__(self):
+        self.observers = defaultdict(list)
+
+    def add_observer(self, observer: Observer, attribute):
+        """An observer can register an interest in an attribute"""
+
+
+class Observer(ABC):
+    @abstractmethod
+    def notify(self, attribute, value):
+        """Notify an observer of a change to an attribute"""
