@@ -3,4 +3,5 @@
 /venv/
 **/*.pyc
 dungeoneer/__pycache__/*.pyc
+dungeoneer/venv/
 /.idea
