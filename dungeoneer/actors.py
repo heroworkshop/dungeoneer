@@ -7,6 +7,7 @@ import pygame
 
 from dungeoneer import game_assets, treasure
 from dungeoneer.inventory import Inventory
+from dungeoneer.items import Ammo
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound, sfx_file, make_sprite_sheet
@@ -144,7 +145,9 @@ class Actor(pygame.sprite.Sprite):
         self.attack_cooloff = t + 1000 // self.character.rate_of_fire
         dx, dy = self.facing
 
-        missile = make_arrow(self.rect.centerx, self.rect.centery, (dx, dy), self.group)
+        missile = self.make_missile(dx, dy)
+        if not missile:
+            return None
         if dx > 0:
             missile.rect.left = self.rect.right
         elif dx < 0:
@@ -154,6 +157,9 @@ class Actor(pygame.sprite.Sprite):
         elif dy < 0:
             missile.rect.bottom = self.rect.top
         return missile
+
+    def make_missile(self, dx, dy):
+        raise NotImplemented
 
     def connect(self, sprite):
         """A connected sprite will move when the other sprite moves"""
@@ -188,6 +194,15 @@ class Player(Actor):
 
     def expend_ammo(self):
         return self.inventory.remove_item(slot_index=self.inventory.AMMO)
+
+    def make_missile(self, dx, dy):
+        ammo_item: Ammo = self.inventory.slot(Inventory.AMMO)
+
+        return make_attack(self.rect.centerx, self.rect.centery,
+                           (dx, dy), self.group,
+                           ammo_item,
+                           repeats=True)
+
 
 
 class Monster(Actor):
@@ -261,7 +276,7 @@ def make_small_impact(x, y):
 
 
 class MissileSprite(pygame.sprite.Sprite):
-    def __init__(self, x, y, sprite_sheet, direction, damage, damage_profile=None, speed=12,
+    def __init__(self, x, y, sprite_sheet, direction, ammo_item: Ammo,
                  impact_maker=make_small_impact, repeats=False):
         super().__init__()
         self.impact_maker = impact_maker
@@ -272,9 +287,14 @@ class MissileSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.dx, self.dy = direction
-        self.speed = speed
-        self.damage = damage
-        self.damage_profile = damage_profile if damage_profile else [100]
+        self.shot_from_item = ammo_item
+        self.speed = ammo_item.speed
+        self.damage = ammo_item.damage
+        self.damage_profile = ammo_item.damage_profile or [100]
+        extra_frames = sprite_sheet.image_count - len(self.damage_profile)
+        if extra_frames > 0:
+            self.damage_profile.extend([0] * extra_frames)
+
         self.hit_sfx = load_sound(sfx_file("splat.wav"))
         self.repeats = repeats
 
@@ -325,16 +345,12 @@ def make_arrow(x, y, direction, world):
     return make_attack(x, y, direction, world, "arrow", 10, [100], 12, repeats=True)
 
 
-def make_attack(x, y, direction, world, sprite_sheet_name, damage, damage_profile,
-                speed, repeats=False):
-    sprite_sheet = make_sprite_sheet(sprite_sheet_name)
-    extra_frames = sprite_sheet.image_count - len(damage_profile)
-    if extra_frames > 0:
-        damage_profile.extend([0] * extra_frames)
+def make_attack(x, y, direction, world, attack_item: Ammo, repeats=False):
+    if not attack_item:
+        return None
+    sprite_sheet = make_sprite_sheet(attack_item.name)
 
-    sprite = MissileSprite(x, y, sprite_sheet, direction,
-                           damage=damage, damage_profile=damage_profile,
-                           speed=speed, repeats=repeats)
+    sprite = MissileSprite(x, y, sprite_sheet, direction, attack_item, repeats=repeats)
     world.missile.add(sprite)
     world.all.add(sprite)
     return sprite

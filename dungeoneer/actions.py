@@ -4,6 +4,8 @@ from collections import namedtuple
 import pygame
 import abc
 
+from dungeoneer.items import Ammo
+
 Runner = namedtuple("runner", "name parameters")
 
 
@@ -60,10 +62,10 @@ class AttackAction(Action):
         x, y = target.rect.center
         ox, oy = owner.rect.center
         direction = x - ox, y - oy
+        attack_item = Ammo(self.sprite_sheet_name, self.damage,
+                           damage_profile=[0, 0, 0, 0, 80, 0, 0, 0, 20], speed=0)
         parameters = dict(x=x, y=y, direction=direction, world=world,
-                          sprite_sheet_name=self.sprite_sheet_name,
-                          damage=self.damage, damage_profile=[0, 0, 0, 0, 80, 0, 0, 0, 20],
-                          speed=0)
+                          attack_item=attack_item)
         return Runner("make_attack", parameters)
 
     def on_activated(self, result, owner, target):

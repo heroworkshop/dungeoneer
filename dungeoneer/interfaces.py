@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from contextlib import suppress
 from dataclasses import dataclass, field
 from pygame.sprite import Group
 
