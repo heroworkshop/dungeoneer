@@ -3,12 +3,13 @@ from dungeoneer.inventory import Inventory
 
 
 class Ammo(Item):
-    def __init__(self, name, damage, damage_profile, speed):
+    def __init__(self, name, damage, damage_profile, speed, survivability):
         super().__init__(name)
         self.damage = damage
         self.damage_profile = damage_profile
         self.speed = speed
         self.preferred_slot = Inventory.AMMO
+        self.survivability = survivability
 
 
 class Food(Item):
@@ -27,10 +28,10 @@ def make_item_dict(using_class, *args):
 
 ammo = make_item_dict(
     Ammo,
-    ("arrow", 10, [100], 12),
-    ("stone shot", 4, [100], 6),
-    ("iron shot", 6, [100], 6),
-    ("firebolt", 10, [60, 40], 12)
+    ("arrow", 10, [100], 12, 70),
+    ("stone shot", 4, [100], 6, 90),
+    ("iron shot", 6, [100], 6, 98),
+    ("firebolt", 10, [60, 40], 12, 0)
 )
 
 weapons = [

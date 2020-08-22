@@ -63,7 +63,7 @@ class AttackAction(Action):
         ox, oy = owner.rect.center
         direction = x - ox, y - oy
         attack_item = Ammo(self.sprite_sheet_name, self.damage,
-                           damage_profile=[0, 0, 0, 0, 80, 0, 0, 0, 20], speed=0)
+                           damage_profile=[0, 0, 0, 0, 80, 0, 0, 0, 20], speed=0, survivability=0)
         parameters = dict(x=x, y=y, direction=direction, world=world,
                           attack_item=attack_item)
         return Runner("make_attack", parameters)

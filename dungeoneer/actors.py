@@ -1,12 +1,14 @@
 import copy
 import math
 from collections import defaultdict
+from random import randint
 from types import SimpleNamespace
 
 import pygame
 
 from dungeoneer import game_assets, treasure
 from dungeoneer.inventory import Inventory
+from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.items import Ammo
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
@@ -204,7 +206,6 @@ class Player(Actor):
                            repeats=True)
 
 
-
 class Monster(Actor):
     def __init__(self, x, y, character, group, direction=(0, 0)):
         super().__init__(x, y, character, group)
@@ -236,9 +237,10 @@ class Monster(Actor):
 
     def die(self):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)
-        item = GoldItem(self.rect.centerx, self.rect.centery, sprite_sheet.filmstrip(scale=scale), value)
-        self.group.all.add(item)
-        self.group.items.add(item)
+        if randint(1, 100) < 20:
+            item = GoldItem(self.rect.centerx, self.rect.centery, sprite_sheet.filmstrip(scale=scale), value)
+            self.group.all.add(item)
+            self.group.items.add(item)
         super().die()
 
     def do_actions(self, world):
@@ -273,6 +275,13 @@ def make_small_impact(x, y):
     image = game_assets.load_image("small_short_effect_hit.png")
     sprite_sheet = SpriteSheet(image, columns=16, rows=1, sub_area=(0, 0, 3, 1))
     return VisualEffect(x, y, sprite_sheet.filmstrip(), reverse=True)
+
+
+def drop_item(item_spec:Item, world, x: int, y: int):
+    drop_x, drop_y = x + randint(-16, 16), y + randint(-16, 16)
+    item = make_item_sprite(item_spec, drop_x, drop_y)
+    world.items.add(item)
+    world.all.add(item)
 
 
 class MissileSprite(pygame.sprite.Sprite):
@@ -324,6 +333,8 @@ class MissileSprite(pygame.sprite.Sprite):
         self.hit_sfx.play()
         x, y = target.rect.center
         world.all.add(self.make_impact_effect(x, y))
+        if randint(0, 100) <= self.shot_from_item.survivability:
+            drop_item(self.shot_from_item, world, x, y)
         target.on_hit()
 
     def make_impact_effect(self, x, y):
