@@ -56,17 +56,7 @@ def play():
     create_health_bar(player, world)
     create_ammo_bar(player, world)
 
-    arrows: Item = items.ammo["arrow"]
-    arrows.count = 5
-    arrow_sprite = make_item_sprite(arrows, 500, 450)
-    if move_to_nearest_empty_space(arrow_sprite, world, 50):
-        world.items.add(arrow_sprite)
-        world.all.add(arrow_sprite)
-
-    melon = make_item_sprite(items.food["melon"], 550, 500)
-    if move_to_nearest_empty_space(melon, world, 50):
-        world.items.add(melon)
-        world.all.add(melon)
+    add_demo_items(world)
 
     make_monster(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
     make_monster(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
@@ -111,6 +101,27 @@ def play():
         world.hud.draw(screen)
         pygame.display.flip()
         clock.tick(20)
+
+
+def add_demo_items(world):
+    arrows: Item = items.ammo["arrow"]
+    arrows.count = 5
+    arrow_sprite = make_item_sprite(arrows, 500, 450)
+    if move_to_nearest_empty_space(arrow_sprite, world, 50):
+        world.items.add(arrow_sprite)
+        world.all.add(arrow_sprite)
+    melon = make_item_sprite(items.food["melon"], 550, 500)
+    if move_to_nearest_empty_space(melon, world, 50):
+        world.items.add(melon)
+        world.all.add(melon)
+
+    x = 650
+    y = 500
+    for i, item in enumerate(items.all_items.values()):
+        item_sprite = make_item_sprite(item, x + 32 * (i % 8), y + 32 * (i // 8))
+        if move_to_nearest_empty_space(arrow_sprite, world, 50):
+            world.items.add(item_sprite)
+            world.all.add(item_sprite)
 
 
 def create_player(world):

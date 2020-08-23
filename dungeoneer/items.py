@@ -12,6 +12,12 @@ class Ammo(Item):
         self.survivability = survivability
 
 
+class Melee(Item):
+    def __init__(self, name, creates_effect):
+        super().__init__(name)
+        self.creates_effect = creates_effect
+
+
 class Food(Item):
     def __init__(self, name, bonus):
         super().__init__(name)
@@ -26,30 +32,48 @@ def make_item_dict(using_class, *args):
     return result
 
 
+
 ammo = make_item_dict(
     Ammo,
     ("arrow", 10, [100], 12, 70),
-    ("stone shot", 4, [100], 6, 90),
-    ("iron shot", 6, [100], 6, 98),
-    ("firebolt", 10, [60, 40], 12, 0)
+    # ("stone shot", 4, [100], 6, 90),
+    # ("iron shot", 6, [100], 6, 98),
 )
 
-weapons = [
-    Item("sword"),
-    Item("axe")
-]
+generated_ammo = make_item_dict(
+    Ammo,
+    ("firebolt", 10, [60, 40], 12, 0),
+    ("swipe", 12, [60, 0, 40], 0, 0)
+)
 
-armour = [
-    Item("chain mail"),
-    Item("leather armour")
-]
+weapons = make_item_dict(
+    Melee,
+    ("sword", "swipe"),
+    ("battle axe", "swipe")
+)
 
-launchers = [
-    Item("shortbow"),
-    Item("sling")
-]
+armour = make_item_dict(
+    Item,
+    ("chain mail",),
+    ("leather armour",)
+)
+
+launchers = make_item_dict(
+    Item,
+    ("shortbow",),
+    ("sling",)
+)
 
 food = make_item_dict(
     Food,
-    ("melon", 10)
+    ("melon", 10),
+    ("strawberry", 5),
+    ("pear", 7),
+    ("lemon", 1),
+    ("pineapple", 10),
+    ("carrot", 4),
+    ("bread", 15),
+    ("cheese", 15),
 )
+
+all_items = {**ammo, **weapons, **armour, **launchers, **food}
