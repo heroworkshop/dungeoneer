@@ -20,6 +20,9 @@ class Inventory(Observable):
     def __len__(self):
         return len(self._slots)
 
+    def __iter__(self):
+        return iter(self._slots)
+
     def slot(self, i):
         return self._slots[i]
 
@@ -74,8 +77,8 @@ class Inventory(Observable):
 
     def notify_observers(self, slot_index):
         for observer in self.observers[slot_index]:
-            observer.notify(slot_index, self.slot(slot_index))
+            observer.on_update(slot_index, self.slot(slot_index))
 
     def add_observer(self, observer: Observer, attribute):
         self.observers[attribute].append(observer)
-        observer.notify(attribute, self._slots[attribute])
+        observer.on_update(attribute, self._slots[attribute])

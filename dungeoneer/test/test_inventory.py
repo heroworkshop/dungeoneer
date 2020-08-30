@@ -8,7 +8,7 @@ class ItemListener(Observer):
         self.last_received = dict()
         self.notification_count = 0
 
-    def notify(self, attribute, value):
+    def on_update(self, attribute, value):
         self.last_received[attribute] = value
         self.notification_count += 1
 
@@ -161,6 +161,11 @@ class TestInventory(unittest.TestCase):
         result = listener.last_received[inventory.AMMO]
         self.assertEqual("iron shot", result.name)
         self.assertEqual(4, listener.notification_count)
+
+    def test_iterate_withEmptyInventory_iterates10Nones(self):
+        inventory = Inventory()
+        result = list(inventory)
+        self.assertEqual([None] * 10, result)
 
 if __name__ == '__main__':
     unittest.main()

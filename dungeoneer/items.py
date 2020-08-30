@@ -24,13 +24,17 @@ class Food(Item):
         self.bonus = bonus
 
 
+class Potion(Item):
+    def __init__(self, name):
+        super().__init__(name)
+
+
 def make_item_dict(using_class, *args):
     result = dict()
     for item in args:
         name = item[0]
         result[name] = using_class(*item)
     return result
-
 
 
 ammo = make_item_dict(
@@ -76,4 +80,16 @@ food = make_item_dict(
     ("cheese", 15),
 )
 
-all_items = {**ammo, **weapons, **armour, **launchers, **food}
+potions = make_item_dict(
+    Potion,
+    ("red potion", ),
+    ("orange potion",),
+    ("yellow potion",),
+    ("blue potion",),
+    ("magenta potion",),
+    ("green potion",),
+    ("grey potion",),
+
+)
+
+all_items = {**ammo, **weapons, **armour, **launchers, **food, **potions}

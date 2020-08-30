@@ -60,7 +60,7 @@ class Actor(pygame.sprite.Sprite):
 
     def add_observer(self, observer, attribute):
         self.observers[attribute].append(observer)
-        observer.notify(attribute, Item(attribute, count=getattr(self, attribute)))
+        observer.on_update(attribute, Item(attribute, count=getattr(self, attribute)))
 
     @property
     def vitality(self):
@@ -70,7 +70,7 @@ class Actor(pygame.sprite.Sprite):
     def vitality(self, value):
         self._vitality = value
         for observer in self.observers["vitality"]:
-            observer.notify("vitality", Item("vitality", count=self._vitality))
+            observer.on_update("vitality", Item("vitality", count=self._vitality))
 
     @property
     def missile_sfx(self):
@@ -217,7 +217,7 @@ class Monster(Actor):
     def on_collided(self):
         self.dx, dy = (0, 0)
 
-    def notify(self, player):
+    def target_enemy(self, player):
         if self.character.sleeping:
             return
         if not player.alive():

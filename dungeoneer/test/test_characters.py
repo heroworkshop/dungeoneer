@@ -10,7 +10,7 @@ class TestCharacter(unittest.TestCase):
 
     def test_character_withPlayerCharacterTemplate(self):
         player = Character(PlayerCharacterType.TOBY)
-        self.assertEqual(15, player.vitality)
+        self.assertEqual(150, player.vitality)
         self.assertEqual(1.5, player.rate_of_fire)
 
 

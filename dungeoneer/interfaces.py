@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
+from enum import Enum
+
 from pygame.sprite import Group
 
 
@@ -46,5 +48,12 @@ class Observable(ABC):
 
 class Observer(ABC):
     @abstractmethod
-    def notify(self, attribute, value):
+    def on_update(self, attribute, value):
         """Notify an observer of a change to an attribute"""
+
+
+class Direction(Enum):
+    LEFT_TO_RIGHT = (1, 0)
+    RIGHT_TO_LEFT = (-1, 0)
+    TOP_DOWN = (0, 1)
+    BOTTOM_UP = (0, -1)

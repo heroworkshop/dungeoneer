@@ -6,20 +6,20 @@ import pygame
 from dungeoneer.spritesheet import SpriteSheet
 
 
-def asset_file(subfolder, filename):
+def _asset_file(subfolder, filename):
     return os.path.join(os.path.dirname(__file__), subfolder, filename)
 
 
 def image_file(filename):
-    return asset_file("images", filename)
+    return _asset_file("images", filename)
 
 
 def music_file(filename):
-    return asset_file("music", filename)
+    return _asset_file("music", filename)
 
 
 def sfx_file(filename):
-    return asset_file("sfx", filename)
+    return _asset_file("sfx", filename)
 
 
 @lru_cache(maxsize=1000)
@@ -39,6 +39,7 @@ def load_sound(filename):
 
 
 SPRITE_SHEET_TABLE = {
+    "inventory slot box": ("slot_box.png", (1, 1)),
     "zombie": ("TombZombies.png", (12, 8), (3, 0, 3, 4)),
     "zombie generator": ("graveyard.png", (12, 8), (0, 1, 1, 1)),
     "mummy": ("TombZombies.png", (12, 8), (6, 0, 3, 4)),
@@ -66,7 +67,7 @@ SPRITE_SHEET_TABLE = {
     "grey potion": ("equipment.png", (14, 32), (6, 2, 1, 1)),
     "dagger": ("equipment.png", (14, 32), (0, 6, 1, 1)),
     "sword": ("equipment.png", (14, 32), (0, 5, 1, 1)),
-    "battle axe": ("equipment.png", (14, 32), (10, 2, 1, 1)),
+    "battle axe": ("equipment.png", (14, 32), (2, 10, 1, 1)),
     "shortbow": ("equipment.png", (14, 32), (0, 11, 1, 1)),
     "sling": ("weapons-and-equipment.png", (12, 8), (3, 2, 1, 1)),
     "chain mail": ("equipment.png", (14, 32), (0, 13, 1, 1)),
@@ -74,5 +75,5 @@ SPRITE_SHEET_TABLE = {
 }
 
 
-def make_sprite_sheet(name):
+def make_sprite_sheet(name: str) -> SpriteSheet:
     return _make_sprite_sheet(*SPRITE_SHEET_TABLE[name])

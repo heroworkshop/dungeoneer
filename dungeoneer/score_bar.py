@@ -1,15 +1,6 @@
-from enum import Enum
-
 import pygame
 
-from dungeoneer.interfaces import Observer, Item
-
-
-class Direction(Enum):
-    LEFT_TO_RIGHT = (1, 0)
-    RIGHT_TO_LEFT = (-1, 0)
-    TOP_DOWN = (0, 1)
-    BOTTOM_UP = (0, -1)
+from dungeoneer.interfaces import Observer, Item, Direction
 
 
 class ScoreBar(pygame.sprite.Sprite, Observer):
@@ -30,7 +21,7 @@ class ScoreBar(pygame.sprite.Sprite, Observer):
         self.filmstrip = self.render_filmstrip(score)
         self.animate()
 
-    def notify(self, attribute, value: Item):
+    def on_update(self, attribute, value: Item):
         self.score = value.count if value else 0
         self.filmstrip = self.render_filmstrip(self.score)
         self.image = self.filmstrip[self.frame]

@@ -10,12 +10,13 @@ from dungeoneer.actors import Player, make_monster
 from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.game_assets import image_file
-from dungeoneer.interfaces import Item
+from dungeoneer.interfaces import Item, Direction
 from dungeoneer.inventory import Inventory
+from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer import items
 from dungeoneer.pathfinding import move_to_nearest_empty_space
-from dungeoneer.score_bar import ScoreBar, Direction
+from dungeoneer.score_bar import ScoreBar
 from dungeoneer.spritesheet import SpriteSheet
 
 GENERATOR_EVENT = pygame.USEREVENT + 1
@@ -55,6 +56,8 @@ def play():
     player = create_player(world)
     create_health_bar(player, world)
     create_ammo_bar(player, world)
+    InventoryView(player.inventory, SCREEN_WIDTH - 80, 200,
+                  sprite_groups=[world.hud])
 
     add_demo_items(world)
 
@@ -81,7 +84,7 @@ def play():
 
         player.move(world.solid)
         for monster in world.monster:
-            monster.notify(player)
+            monster.target_enemy(player)
             monster.move(world.solid)
             monster.do_actions(world)
         for missile in world.missile:
