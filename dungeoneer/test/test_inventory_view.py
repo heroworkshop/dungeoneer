@@ -1,4 +1,8 @@
 import unittest
+import numpy as np
+import pygame
+
+from pygame.pixelarray import PixelArray
 
 from dungeoneer import interfaces
 from dungeoneer.inventory import Inventory
@@ -64,8 +68,19 @@ class TestInventoryView(unittest.TestCase):
 
 
 class TestSlotView(unittest.TestCase):
+
     def test_construct_withItem(self):
         SlotView(0, 0)
+
+    # def test_compose_item_image_withMultipleCount_rendersDifferentImageToSingleCount(self):
+    #     arrow_slot = SlotView(0, 0, item=Item("arrow", count=1))
+    #     multi_slot = SlotView(0, 0, item=Item("arrow", count=2))
+    #     image1 = PixelArray(arrow_slot.image)
+    #     image2 = PixelArray(multi_slot.image)
+    #
+    #     diff = image1.compare(image2)
+    #     difference_count = np.count_nonzero(np.all(diff == 0))
+    #     self.assertNotEqual(0, difference_count)
 
 
 if __name__ == '__main__':

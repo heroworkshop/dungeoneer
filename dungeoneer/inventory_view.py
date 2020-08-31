@@ -1,5 +1,6 @@
 import pygame
 from dungeoneer import game_assets
+from dungeoneer.fonts import make_font
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.interfaces import Direction, Observer
 from dungeoneer.inventory import Inventory
@@ -14,13 +15,13 @@ class SlotView(pygame.sprite.Sprite, Observer):
         self.image = self.compose_item_image(item)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+        self.font = make_font("Times New Roman", 16)
 
     def on_update(self, attribute, value):
         del attribute  # not used
         self.image = self.compose_item_image(value)
 
-    @staticmethod
-    def compose_item_image(item):
+    def compose_item_image(self, item):
         if item is None:
             return EMPTY_BOX
         result = EMPTY_BOX.copy()
@@ -28,6 +29,10 @@ class SlotView(pygame.sprite.Sprite, Observer):
         x = (result.get_width() - item_image.get_width()) // 2
         y = (result.get_height() - item_image.get_height()) // 2
         result.blit(item_image, (x, y))
+
+        caption = self.font.render(f"x{item.count}", True, (180, 180, 180))
+        result.blit(caption, (30, 30))
+
         return result
 
 
