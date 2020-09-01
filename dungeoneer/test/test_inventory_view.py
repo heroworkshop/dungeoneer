@@ -13,6 +13,9 @@ from dungeoneer.interfaces import Direction, Item
 
 class TestInventoryView(unittest.TestCase):
 
+    def setUp(self):
+        pygame.init()
+
     def test_construct_withInventory_createsEqualSizedContainer(self):
         inventory = Inventory()
         view = InventoryView(inventory)
@@ -68,6 +71,9 @@ class TestInventoryView(unittest.TestCase):
 
 
 class TestSlotView(unittest.TestCase):
+
+    def setUp(self):
+        pygame.init()
 
     def test_construct_withItem(self):
         SlotView(0, 0)

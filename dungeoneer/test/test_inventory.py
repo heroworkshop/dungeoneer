@@ -60,7 +60,7 @@ class TestInventory(unittest.TestCase):
         drop = inventory.add_item(Item("arrow"), slot=0)
         self.assertEqual("sword", drop.name)
 
-    def test_add_item_withEmptyInventory_hasItemCountOnOne(self):
+    def test_add_item_withEmptyInventory_hasItemCountOfOne(self):
         inventory = Inventory()
         inventory.add_item(Item("arrow"), slot=0)
         item = inventory.slot(0)

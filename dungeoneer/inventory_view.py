@@ -1,5 +1,5 @@
 import pygame
-from dungeoneer import game_assets
+
 from dungeoneer.fonts import make_font
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.interfaces import Direction, Observer
@@ -12,10 +12,11 @@ class SlotView(pygame.sprite.Sprite, Observer):
 
     def __init__(self, x, y, item=None):
         super().__init__()
+        self.font = make_font("Times New Roman", 16)
         self.image = self.compose_item_image(item)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
-        self.font = make_font("Times New Roman", 16)
+
 
     def on_update(self, attribute, value):
         del attribute  # not used
