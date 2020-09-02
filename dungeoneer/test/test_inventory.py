@@ -38,19 +38,29 @@ class TestInventory(unittest.TestCase):
 
     def test_add_item_withMatchingItemInInventory_IncreasesItemCount(self):
         inventory = Inventory()
-        inventory.add_item(Item("arrow"))
+        inventory.add_item(Item("arrow"), slot=0)
         inventory.add_item(Item("arrow"))
         self.assertEqual(1, len(inventory.items))
+        self.assertEqual(2, inventory.slot(0).count)
+
+    def test_add_item_with2ItemsMatchingItemInInventory_IncreasesItemCountBy2(self):
+        inventory = Inventory()
+        inventory.add_item(Item("arrow"), slot=0)
+        inventory.add_item(Item("arrow", count=2))
+        self.assertEqual(1, len(inventory.items))
+        self.assertEqual(3, inventory.slot(0).count)
 
     def test_len_of_inventory_returnsNumberOfSlots(self):
         inventory = Inventory()
         size = len(inventory)
-        self.assertEqual(len(inventory), size)
+        self.assertEqual(len(inventory._slots), size)
 
     def test_add_item_withFullInventory_raisesInventoryFull(self):
         inventory = Inventory()
+        # fill up the inventory
         for i, item in enumerate([Item("sword")] * len(inventory)):
             inventory.add_item(item, slot=i)
+        # Add one more item
         with self.assertRaises(InventoryFull):
             inventory.add_item(Item("arrow"))
 

@@ -1,3 +1,6 @@
+import copy
+from random import randint
+
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.interfaces import Item
 from dungeoneer.scenary import VisualEffect
@@ -16,3 +19,13 @@ class ItemSprite(VisualEffect):
 
     def on_pick_up(self, actor):
         actor.inventory.add_item(self.item_spec)
+
+
+def drop_item(item_spec: Item, world, x: int, y: int, count=1):
+    drop_x, drop_y = x + randint(-16, 16), y + randint(-16, 16)
+    new_item = copy.copy(item_spec)
+    new_item.count = count
+    item = make_item_sprite(new_item, drop_x, drop_y)
+    world.items.add(item)
+    world.all.add(item)
+    return item

@@ -8,7 +8,7 @@ import pygame
 
 from dungeoneer import game_assets, treasure
 from dungeoneer.inventory import Inventory
-from dungeoneer.item_sprites import make_item_sprite
+from dungeoneer.item_sprites import drop_item
 from dungeoneer.items import Ammo
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
@@ -275,13 +275,6 @@ def make_small_impact(x, y):
     image = game_assets.load_image("small_short_effect_hit.png")
     sprite_sheet = SpriteSheet(image, columns=16, rows=1, sub_area=(0, 0, 3, 1))
     return VisualEffect(x, y, sprite_sheet.filmstrip(), reverse=True)
-
-
-def drop_item(item_spec:Item, world, x: int, y: int):
-    drop_x, drop_y = x + randint(-16, 16), y + randint(-16, 16)
-    item = make_item_sprite(item_spec, drop_x, drop_y)
-    world.items.add(item)
-    world.all.add(item)
 
 
 class MissileSprite(pygame.sprite.Sprite):

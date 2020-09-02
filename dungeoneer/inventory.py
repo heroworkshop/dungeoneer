@@ -52,6 +52,8 @@ class Inventory(Observable):
         return self._slots.index(item)
 
     def add_item(self, item: Item, slot=None):
+        assert item.count
+        assert item.count < 99
         try:
             slot_index = slot if slot is not None else self.find_available_slot(item=item)
         except ValueError:
@@ -59,7 +61,7 @@ class Inventory(Observable):
                 "Could not add item {}. Inventory already contains {} items".format(item.name,
                                                                                     len(self.slots)))
         if self.slot(slot_index) == item:
-            self._slots[slot_index].count += 1
+            self._slots[slot_index].count += item.count
             drop = None
         else:
             drop, self._slots[slot_index] = self._slots[slot_index], item

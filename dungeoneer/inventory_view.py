@@ -17,7 +17,6 @@ class SlotView(pygame.sprite.Sprite, Observer):
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
 
-
     def on_update(self, attribute, value):
         del attribute  # not used
         self.image = self.compose_item_image(value)
