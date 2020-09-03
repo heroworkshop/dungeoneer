@@ -1,6 +1,8 @@
 import unittest
+from contextlib import suppress
 from dungeoneer.inventory import Inventory, InventoryFull
 from dungeoneer.interfaces import Item, Observer
+from dungeoneer.items import Food
 
 
 class ItemListener(Observer):
@@ -20,20 +22,22 @@ class TestInventory(unittest.TestCase):
 
     def test_add_item_withEmptyInventory_addsItemToTopOfInventory(self):
         inventory = Inventory()
+        first_generic_slot = len(inventory.special_slots)
+        inventory.add_item(Item("A"))
 
-        inventory.add_item(Item("sword"))
-
-        items = inventory.items
-        self.assertEqual("sword", items[0].name)
+        item = inventory.slot(first_generic_slot)
+        self.assertEqual("A", item.name)
         self.assertEqual(1, len(inventory.items))
 
-    def test_add_item_withPartiallyFullInventory_addsItemInFirstEmptySlotItems(self):
+    def test_add_item_withPartiallyFullInventory_addsItemInFirstEmptySlot(self):
         inventory = Inventory()
-        inventory.add_item(Item("sword"))
-        inventory.add_item(Item("arrow"))
-        items = inventory.items
-        self.assertEqual("sword", items[0].name)
-        self.assertEqual("arrow", items[1].name)
+        first_generic_slot = len(inventory.special_slots)
+        inventory.add_item(Item("A"))
+        inventory.add_item(Item("B"))
+        item_a = inventory.slot(first_generic_slot)
+        item_b = inventory.slot(first_generic_slot + 1)
+        self.assertEqual("A", item_a.name)
+        self.assertEqual("B", item_b.name)
         self.assertEqual(2, len(inventory.items))
 
     def test_add_item_withMatchingItemInInventory_IncreasesItemCount(self):
@@ -109,7 +113,7 @@ class TestInventory(unittest.TestCase):
     def test_remove_withItemInSlot_removesItem(self):
         inventory = Inventory()
         inventory.add_item(Item("arrow"), slot=inventory.AMMO)
-        inventory.add_item(Item("sword"), slot=inventory.WEAPON)
+        inventory.add_item(Item("sword"), slot=inventory.ON_HAND)
         inventory.remove_item(inventory.AMMO)
         self.assertEqual(1, len(inventory.items))
         self.assertEqual(None, inventory.slot(inventory.AMMO))
@@ -121,6 +125,18 @@ class TestInventory(unittest.TestCase):
         inventory.remove_item(inventory.AMMO)
         self.assertEqual(1, len(inventory.items))
         self.assertEqual(1, inventory.slot(inventory.AMMO).count)
+
+    def test_add_item_withNonWeapon_alwaysIgnoresSpecialSlots(self):
+        inventory = Inventory()
+        with suppress(InventoryFull):
+            for i in range(20):
+                inventory.add_item(Food(f"sandwich{i}", 10))
+        # cannot add any more sandwiches. Special slots should be still empty
+        for slot_id in inventory.special_slots:
+            self.assertIs(None, inventory.slot(slot_id))
+
+
+class TestInventoryEvents(unittest.TestCase):
 
     def test_add_observer_withItemInInventory_notifiesListenerOfItem(self):
         inventory = Inventory()
@@ -176,6 +192,7 @@ class TestInventory(unittest.TestCase):
         inventory = Inventory()
         result = list(inventory)
         self.assertEqual([None] * 10, result)
+
 
 if __name__ == '__main__':
     unittest.main()

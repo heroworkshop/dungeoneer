@@ -8,10 +8,12 @@ class InventoryFull(RuntimeError):
 
 
 class Inventory(Observable):
-    WEAPON = 0
-    AMMO = 1
-    LAUNCHER = 2
-    ARMOUR = 3
+    ON_HAND = 0
+    OFF_HAND = 1
+    AMMO = 2
+    LAUNCHER = 3
+    ARMOUR = 4
+    special_slots = list(range(5))
 
     def __init__(self):
         super().__init__()
@@ -43,8 +45,9 @@ class Inventory(Observable):
         return self.find_first_free_slot()
 
     def find_first_free_slot(self):
+        generic_slots_start = len(self.special_slots)
         try:
-            return self._slots.index(None)
+            return generic_slots_start + self._slots[generic_slots_start:].index(None)
         except ValueError:
             raise InventoryFull
 
@@ -56,10 +59,8 @@ class Inventory(Observable):
         assert item.count < 99
         try:
             slot_index = slot if slot is not None else self.find_available_slot(item=item)
-        except ValueError:
-            raise InventoryFull(
-                "Could not add item {}. Inventory already contains {} items".format(item.name,
-                                                                                    len(self.slots)))
+        except InventoryFull:
+            raise InventoryFull(f"Could not add item '{item.name}'. There are no appropriate slots")
         if self.slot(slot_index) == item:
             self._slots[slot_index].count += item.count
             drop = None
