@@ -31,9 +31,9 @@ class TileManager:
 
 
 class TileMap:
-    def __init__(self, default_tile):
+    def __init__(self, default_tile, tile_size):
         self.default_tile = default_tile
-        self.tile_width, self.tile_height = default_tile.get_size()
+        self.tile_width, self.tile_height = tile_size #default_tile.get_size()
         self.tiles = dict()
 
     def tile_at(self, x: int, y: int):
@@ -48,4 +48,6 @@ class TileMap:
             y = row * self.tile_height + offset.y
             for column in range(left, left + width):
                 x = column * self.tile_width + offset.x
-                surface.blit(self.tile_at(column, row), (x, y))
+                tile_to_plot = self.tile_at(column, row)
+                if tile_to_plot:
+                    surface.blit(tile_to_plot, (x, y))

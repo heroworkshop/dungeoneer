@@ -3,7 +3,7 @@ from random import randint
 
 import pygame
 
-from dungeoneer import interfaces, floorplan, sprite_effects
+from dungeoneer import interfaces, floorplan, sprite_effects, game_assets
 from dungeoneer import intro
 from dungeoneer import tiles
 from dungeoneer.actors import Player, make_monster
@@ -44,9 +44,9 @@ def play():
     tile_manager = tiles.TileManager()
     tile_manager.import_tiles("terrain.png", 8, 16)
 
-    game_map = tiles.TileMap(tile_manager.tiles[7])
+    game_map = tiles.TileMap(tile_manager.tiles[7], (32, 32))
     world = interfaces.SpriteGroups()
-    floorplan.create_objects(0, world, game_map)
+    floorplan.create_objects(floorplan.baby_dungeon_design, 0, world)
 
     game_map.render(background, 0, 0,
                     SCREEN_WIDTH//game_map.tile_width,
@@ -63,6 +63,11 @@ def play():
 
     make_monster(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
     make_monster(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
+
+    pygame.mixer.music.load(game_assets.music_file("Dragon_and_Toast.mp3"))
+    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.play()
+
 
     while True:
         world.all.clear(screen, background)

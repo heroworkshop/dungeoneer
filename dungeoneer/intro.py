@@ -3,11 +3,12 @@ import pygame
 import sys
 from pygame.locals import *
 
-from dungeoneer import fonts
+from dungeoneer import fonts, interfaces, tiles
+from dungeoneer.floorplan import create_objects
 
 
 def start_music():
-    song = "The-Castle-Beyond-the-Forest.mp3"
+    song = "af.mp3"
     this_module = os.path.dirname(os.path.abspath(__file__))
     pygame.mixer.music.load(os.path.join(this_module, "music", song))
     pygame.mixer.music.set_volume(0.3)
@@ -19,9 +20,12 @@ def play(screen):
     start_music()
     x = 100
     y = screen.get_height() * 0.8
-    caption = fonts.FadeInCaption("Dungeoneer", fonts.make_font("Times New Roman", 60), screen, (x, y), step=2)
+    #caption = fonts.FadeInCaption("Dungeoneer", fonts.make_font("Times New Roman", 60), screen, (x, y), step=2)
+    world = plot_blocks(dungeoneer_pattern, screen)
 
-    while caption.update():
+    while True:
+        # caption.update()
+        world.all.update()
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -30,4 +34,22 @@ def play(screen):
             if event.type == KEYDOWN:
                 return
         clock.tick(50)
-        screen.fill((0, 0, 0))
+        world.all.draw(screen)
+        #screen.fill((0, 0, 0))
+
+
+dungeoneer_pattern = """
+        ###  # # #  #  ##  ###  ##  #  # ### ### ## 
+        #  # # # ## # #    #   #  # ## # #   #   # #
+        #  # # # # ## # ## ### #  # # ## ### ### ## 
+        #  # # # #  # #  # #   #  # #  # #   #   # #
+        ###  ### #  #  ### ###  ##  #  # ### ### #  #
+"""
+
+
+def plot_blocks(pattern, screen):
+
+    world = interfaces.SpriteGroups()
+    cols, rows = create_objects([pattern], 0, world, (-150, 200))
+
+    return world

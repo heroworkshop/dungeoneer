@@ -1,7 +1,3 @@
-from collections import namedtuple
-
-import pygame
-
 from dungeoneer import game_assets
 from dungeoneer.scenary import ScenerySprite
 from dungeoneer.spritesheet import SpriteSheet
@@ -9,8 +5,8 @@ from dungeoneer.spritesheet import SpriteSheet
 TILE_HEIGHT = 32
 TILE_WIDTH = 32
 
-design = []
-design.append("""
+baby_dungeon_design = []
+baby_dungeon_design.append("""
 #########~~~###############################
 #.....   ~~~      z,z        #            #
 #....    ___   #z zZz        #
@@ -65,11 +61,12 @@ scenery_types = {"#": SceneryType(SpriteSheet(wood_sheet2, columns=8, rows=16, s
                  }
 
 
-def create_objects(level, world, tile_map):
+def create_objects(design, level, world, offset=None, tile_width=TILE_WIDTH, tile_height=TILE_HEIGHT):
+    ox, oy = offset or (0, 0)
     rows = [line for line in design[level].split("\n") if line]
     for row_num, row in enumerate(rows):
         for col_num, ch in enumerate(row):
-            x, y = col_num * TILE_WIDTH, row_num * TILE_HEIGHT
+            x, y = ox + col_num * tile_width, oy + row_num * tile_height
             scenery = scenery_types.get(ch)
             if scenery:
                 filmstrip = scenery.sprite_sheet.filmstrip()
@@ -77,3 +74,4 @@ def create_objects(level, world, tile_map):
                 world.all.add(effect)
                 if scenery.is_solid:
                     world.solid.add(effect)
+    return col_num, row_num
