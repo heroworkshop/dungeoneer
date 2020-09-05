@@ -31,9 +31,10 @@ class TileManager:
 
 
 class TileMap:
-    def __init__(self, default_tile, tile_size):
+    def __init__(self, default_tile, tile_size=None):
         self.default_tile = default_tile
-        self.tile_width, self.tile_height = tile_size #default_tile.get_size()
+        tile_size = tile_size or default_tile.get_size()
+        self.tile_width, self.tile_height = tile_size
         self.tiles = dict()
 
     def tile_at(self, x: int, y: int):

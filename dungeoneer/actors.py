@@ -6,10 +6,10 @@ from types import SimpleNamespace
 
 import pygame
 
-from dungeoneer import game_assets, treasure
+from dungeoneer import game_assets, treasure, items
 from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item
-from dungeoneer.items import Ammo
+from dungeoneer.items import Ammo, Melee
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound, sfx_file, make_sprite_sheet
@@ -137,6 +137,26 @@ class Actor(pygame.sprite.Sprite):
         """Unlimited ammo"""
         return Item("missile", 1)
 
+    def attack(self):
+        t = pygame.time.get_ticks()
+        if t < self.attack_cooloff:
+            return None
+        self.attack_cooloff = t + 1000 // self.character.rate_of_fire
+        dx, dy = self.facing
+
+        missile = self.make_attack(dx, dy)
+        if not missile:
+            return None
+        if dx > 0:
+            missile.rect.left = self.rect.right
+        elif dx < 0:
+            missile.rect.right = self.rect.left
+        if dy > 0:
+            missile.rect.top = self.rect.bottom
+        elif dy < 0:
+            missile.rect.bottom = self.rect.top
+        return missile
+
     def shoot(self):
         t = pygame.time.get_ticks()
         if t < self.attack_cooloff:
@@ -186,6 +206,8 @@ class Player(Actor):
             self.dy = 1
         if kb[pygame.K_RETURN]:
             self.shoot()
+        if kb[pygame.K_SPACE]:
+            self.attack()
 
     @property
     def ammo(self):
@@ -204,6 +226,22 @@ class Player(Actor):
                            (dx, dy), self.group,
                            ammo_item,
                            repeats=True)
+
+    def make_attack(self, dx, dy):
+        weapon_item: Melee = self.inventory.slot(Inventory.ON_HAND)
+        if not weapon_item:
+            return None
+        ammo_item: Ammo = items.generated_ammo[weapon_item.creates_effect]
+
+        if not ammo_item:
+            return None
+
+        attack_sprite = make_attack(self.rect.centerx, self.rect.centery,
+                           (dx, dy), self.group,
+                           ammo_item,
+                           repeats=False)
+        self.connect(attack_sprite)
+        return attack_sprite
 
 
 class Monster(Actor):
@@ -343,10 +381,6 @@ class GoldItem(VisualEffect):
     def on_pick_up(self, player):
         player.character.gold += self.value
         self.sound_effect.play()
-
-
-def make_arrow(x, y, direction, world):
-    return make_attack(x, y, direction, world, "arrow", 10, [100], 12, repeats=True)
 
 
 def make_attack(x, y, direction, world, attack_item: Ammo, repeats=False):

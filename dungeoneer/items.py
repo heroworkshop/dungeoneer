@@ -16,6 +16,7 @@ class Melee(Item):
     def __init__(self, name, creates_effect):
         super().__init__(name)
         self.creates_effect = creates_effect
+        self.preferred_slot = Inventory.ON_HAND
 
 
 class Food(Item):

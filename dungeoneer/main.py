@@ -10,8 +10,7 @@ from dungeoneer.actors import Player, make_monster
 from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.game_assets import image_file
-from dungeoneer.interfaces import Item, Direction
-from dungeoneer.inventory import Inventory
+from dungeoneer.interfaces import Item
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer import items
@@ -55,7 +54,6 @@ def play():
 
     player = create_player(world)
     create_health_bar(player, world)
-    create_ammo_bar(player, world)
     InventoryView(player.inventory, SCREEN_WIDTH - 80, 200,
                   sprite_groups=[world.hud])
 
@@ -67,7 +65,6 @@ def play():
     pygame.mixer.music.load(game_assets.music_file("Dragon_and_Toast.mp3"))
     pygame.mixer.music.set_volume(0.3)
     pygame.mixer.music.play()
-
 
     while True:
         world.all.clear(screen, background)
@@ -148,11 +145,3 @@ def create_health_bar(player, world):
     health_bar = ScoreBar(30, 30, throbbing_heart, 100, 10, frame_length=50)
     world.hud.add(health_bar)
     player.add_observer(health_bar, "vitality")
-
-
-def create_ammo_bar(player, world):
-    arrow = pygame.image.load(image_file("arrow24.png"))
-    arrow_filmstrip = SpriteSheet(arrow, 1, 1).filmstrip(scale=1)
-    ammo_bar = ScoreBar(SCREEN_WIDTH-100, 30, arrow_filmstrip, 5, 1, direction=Direction.RIGHT_TO_LEFT)
-    world.hud.add(ammo_bar)
-    player.inventory.add_observer(ammo_bar, Inventory.AMMO)
