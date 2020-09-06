@@ -47,7 +47,7 @@ class SummonAction(Action):
         x, y = owner.rect.center
         monster_type_name = random.choice(self.monster_type_names)
         parameters = dict(monster_type=monster_type_name, x=x, y=y, world=world)
-        return Runner("make_monster", parameters)
+        return Runner("make_monster_sprite", parameters)
 
 
 class AttackAction(Action):
@@ -66,7 +66,7 @@ class AttackAction(Action):
                            damage_profile=[0, 0, 0, 0, 80, 0, 0, 0, 20], speed=0, survivability=0)
         parameters = dict(x=x, y=y, direction=direction, world=world,
                           attack_item=attack_item)
-        return Runner("make_attack", parameters)
+        return Runner("make_attack_sprite", parameters)
 
     def on_activated(self, result, owner, target):
         owner.connect(result)

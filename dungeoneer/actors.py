@@ -9,7 +9,7 @@ import pygame
 from dungeoneer import game_assets, treasure, items
 from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item
-from dungeoneer.items import Ammo, Melee
+from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound, sfx_file, make_sprite_sheet
@@ -52,7 +52,7 @@ class Actor(pygame.sprite.Sprite):
         self.speed = 4
         self.dx, self.dy = (0, 0)  # unit vector. Actual velocity is speed x this value
         self.facing = (0, 1)  # direction the actor is facing
-        self.attack_cooloff = 0
+        self.action_cooloff = 0
         self.actions = copy.deepcopy(character.template.actions)
         self._missile_sfx = None
         self._connected_sprites = []
@@ -139,35 +139,35 @@ class Actor(pygame.sprite.Sprite):
 
     def attack(self):
         t = pygame.time.get_ticks()
-        if t < self.attack_cooloff:
+        if t < self.action_cooloff:
             return None
-        self.attack_cooloff = t + 1000 // self.character.rate_of_fire
+        weapon_item: Melee = self.inventory.slot(Inventory.ON_HAND) or items.specials["unarmed strike"]
+        rate_of_fire = weapon_item.rate_of_fire * self.character.rate_of_fire
+        self.action_cooloff = t + 1000 // rate_of_fire
         dx, dy = self.facing
 
-        missile = self.make_attack(dx, dy)
-        if not missile:
-            return None
-        if dx > 0:
-            missile.rect.left = self.rect.right
-        elif dx < 0:
-            missile.rect.right = self.rect.left
-        if dy > 0:
-            missile.rect.top = self.rect.bottom
-        elif dy < 0:
-            missile.rect.bottom = self.rect.top
-        return missile
+        missile = self.make_attack(dx, dy, weapon_item)
+        return self._place_in_front(dx, dy, missile)
 
     def shoot(self):
         t = pygame.time.get_ticks()
-        if t < self.attack_cooloff:
+        if t < self.action_cooloff:
             return None
-        if not self.expend_ammo():
+        weapon_item: Launcher = self.inventory.slot(Inventory.LAUNCHER) or items.specials["thrown"]
+        rate_of_fire = weapon_item.rate_of_fire * self.character.rate_of_fire
+        self.action_cooloff = t + 1000 // rate_of_fire
+
+        ammo_item = self.expend_ammo()
+        if not ammo_item:
             return None
         self.missile_sfx.play()
-        self.attack_cooloff = t + 1000 // self.character.rate_of_fire
+
         dx, dy = self.facing
 
-        missile = self.make_missile(dx, dy)
+        missile = self.make_missile(dx, dy, ammo_item)
+        return self._place_in_front(dx, dy, missile)
+
+    def _place_in_front(self, dx, dy, missile):
         if not missile:
             return None
         if dx > 0:
@@ -219,27 +219,30 @@ class Player(Actor):
     def expend_ammo(self):
         return self.inventory.remove_item(slot_index=self.inventory.AMMO)
 
-    def make_missile(self, dx, dy):
-        ammo_item: Ammo = self.inventory.slot(Inventory.AMMO)
+    def make_missile(self, dx, dy, ammo_item):
+        if not ammo_item:
+            return
 
-        return make_attack(self.rect.centerx, self.rect.centery,
-                           (dx, dy), self.group,
-                           ammo_item,
-                           repeats=True)
+        return make_attack_sprite(self.rect.centerx, self.rect.centery,
+                                  (dx, dy), self.group,
+                                  ammo_item,
+                                  repeats=True)
 
-    def make_attack(self, dx, dy):
-        weapon_item: Melee = self.inventory.slot(Inventory.ON_HAND)
+    def make_attack(self, dx, dy, weapon_item):
+
         if not weapon_item:
             return None
-        ammo_item: Ammo = items.generated_ammo[weapon_item.creates_effect]
+        ammo_prefab: Ammo = items.generated_ammo[weapon_item.creates_effect]
+        ammo_item = copy.copy(ammo_prefab)
+        ammo_item.damage = weapon_item.damage
 
         if not ammo_item:
             return None
 
-        attack_sprite = make_attack(self.rect.centerx, self.rect.centery,
-                           (dx, dy), self.group,
-                           ammo_item,
-                           repeats=False)
+        attack_sprite = make_attack_sprite(self.rect.centerx, self.rect.centery,
+                                           (dx, dy), self.group,
+                                           ammo_item,
+                                           repeats=False)
         self.connect(attack_sprite)
         return attack_sprite
 
@@ -271,6 +274,7 @@ class Monster(Actor):
             if me - self.speed > them:
                 return -1
             return 0
+
         self.dx, self.dy = (home_in(x, px), home_in(y, py))
 
     def die(self):
@@ -364,7 +368,7 @@ class MissileSprite(pygame.sprite.Sprite):
         self.hit_sfx.play()
         x, y = target.rect.center
         world.all.add(self.make_impact_effect(x, y))
-        if randint(0, 100) <= self.shot_from_item.survivability:
+        if randint(0, 100) < self.shot_from_item.survivability:
             drop_item(self.shot_from_item, world, x, y)
         target.on_hit()
 
@@ -383,7 +387,7 @@ class GoldItem(VisualEffect):
         self.sound_effect.play()
 
 
-def make_attack(x, y, direction, world, attack_item: Ammo, repeats=False):
+def make_attack_sprite(x, y, direction, world, attack_item: Ammo, repeats=False):
     if not attack_item:
         return None
     sprite_sheet = make_sprite_sheet(attack_item.name)
@@ -394,7 +398,7 @@ def make_attack(x, y, direction, world, attack_item: Ammo, repeats=False):
     return sprite
 
 
-def make_monster(monster_type: MonsterType, x, y, world: SpriteGroups, sleeping=False):
+def make_monster_sprite(monster_type: MonsterType, x, y, world: SpriteGroups, sleeping=False):
     if type(monster_type) is str:
         monster_type = MonsterType[monster_type]
     monster = Character(monster_type)
@@ -406,7 +410,3 @@ def make_monster(monster_type: MonsterType, x, y, world: SpriteGroups, sleeping=
         world.monster.add(monster_sprite)
         return monster_sprite
     return None
-
-
-
-

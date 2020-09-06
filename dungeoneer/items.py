@@ -13,16 +13,24 @@ class Ammo(Item):
 
 
 class Melee(Item):
-    def __init__(self, name, creates_effect):
+    def __init__(self, name, creates_effect, rate_of_fire, damage):
         super().__init__(name)
         self.creates_effect = creates_effect
         self.preferred_slot = Inventory.ON_HAND
+        self.rate_of_fire = rate_of_fire
+        self.damage = damage
 
 
 class Food(Item):
     def __init__(self, name, bonus):
         super().__init__(name)
         self.bonus = bonus
+
+
+class Launcher(Item):
+    def __init__(self, name, rate_of_fire):
+        super().__init__(name)
+        self.rate_of_fire = rate_of_fire
 
 
 class Potion(Item):
@@ -36,6 +44,10 @@ def make_item_dict(using_class, *args):
         name = item[0]
         result[name] = using_class(*item)
     return result
+
+
+specials = make_item_dict(Melee, ("unarmed strike", "swipe", 1.5, 2))
+specials.update(make_item_dict(Launcher, ("thrown", 1)))
 
 
 ammo = make_item_dict(
@@ -53,8 +65,8 @@ generated_ammo = make_item_dict(
 
 weapons = make_item_dict(
     Melee,
-    ("sword", "swipe"),
-    ("battle axe", "swipe")
+    ("sword", "swipe", 1.0, 10),
+    ("battle axe", "swipe", 0.8, 12)
 )
 
 armour = make_item_dict(
@@ -64,9 +76,9 @@ armour = make_item_dict(
 )
 
 launchers = make_item_dict(
-    Item,
-    ("shortbow",),
-    ("sling",)
+    Launcher,
+    ("shortbow", 1),
+    ("sling", 1)
 )
 
 food = make_item_dict(
@@ -93,4 +105,4 @@ potions = make_item_dict(
 
 )
 
-all_items = {**ammo, **weapons, **armour, **launchers, **food, **potions}
+all_items = {**ammo, **weapons, **launchers, **armour, **launchers, **food, **potions}

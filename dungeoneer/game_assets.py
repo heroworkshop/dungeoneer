@@ -65,6 +65,8 @@ SPRITE_SHEET_TABLE = {
     "magenta potion": ("equipment.png", (14, 32), (4, 2, 1, 1)),
     "green potion": ("equipment.png", (14, 32), (5, 2, 1, 1)),
     "grey potion": ("equipment.png", (14, 32), (6, 2, 1, 1)),
+    "unarmed strike": ("equipment.png", (14, 32), (7, 14, 1, 1)),
+    "thrown": ("equipment.png", (14, 32), (7, 14, 1, 1)),
     "dagger": ("equipment.png", (14, 32), (0, 6, 1, 1)),
     "sword": ("equipment.png", (14, 32), (0, 5, 1, 1)),
     "battle axe": ("equipment.png", (14, 32), (2, 10, 1, 1)),

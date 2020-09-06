@@ -6,7 +6,7 @@ import pygame
 from dungeoneer import interfaces, floorplan, sprite_effects, game_assets
 from dungeoneer import intro
 from dungeoneer import tiles
-from dungeoneer.actors import Player, make_monster
+from dungeoneer.actors import Player, make_monster_sprite
 from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.game_assets import image_file
@@ -59,8 +59,8 @@ def play():
 
     add_demo_items(world)
 
-    make_monster(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
-    make_monster(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
+    make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
+    make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
 
     pygame.mixer.music.load(game_assets.music_file("Dragon_and_Toast.mp3"))
     pygame.mixer.music.set_volume(0.3)

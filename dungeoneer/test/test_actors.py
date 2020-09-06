@@ -12,12 +12,12 @@ from dungeoneer.inventory import Inventory
 class TestZombie(unittest.TestCase):
     def test_make_monster_withZombie(self):
         world = SpriteGroups()
-        zombie = actors.make_monster(MonsterType.ZOMBIE, 0, 0, world)
+        zombie = actors.make_monster_sprite(MonsterType.ZOMBIE, 0, 0, world)
         self.assertEqual(3, len(zombie.filmstrips.walk_south))
 
     def test_monsters_have_unlimited_ammo(self):
         world = SpriteGroups()
-        zombie = actors.make_monster(MonsterType.ZOMBIE, 0, 0, world)
+        zombie = actors.make_monster_sprite(MonsterType.ZOMBIE, 0, 0, world)
         ammo = zombie.ammo
         self.assertGreater(ammo, 0)
         zombie.expend_ammo()
@@ -28,7 +28,7 @@ class TestGenerator(unittest.TestCase):
         world = SpriteGroups()
         player_character = Character(PlayerCharacterType.TOBY)
         player = Player(500, 500, player_character, world)
-        generator = actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 0, 0, world)
+        generator = actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, world)
         generator.targeted_enemy = player
         self.assertEqual(1, len(world.solid))
         generator.do_actions(world)
@@ -39,8 +39,8 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(0, len(world.solid))
         player_character = Character(PlayerCharacterType.TOBY)
         player = Player(500, 500, player_character, world)
-        generators = [actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
-                      actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
+        generators = [actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
+                      actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
 
         self.assertEqual(2, len(world.solid))
         for g in generators:
@@ -53,8 +53,8 @@ class TestGenerator(unittest.TestCase):
         world = SpriteGroups()
         player_character = Character(PlayerCharacterType.TOBY)
         player = Player(500, 500, player_character, world)
-        generators = [actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
-                      actors.make_monster(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
+        generators = [actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
+                      actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
 
         self.assertEqual(2, len(world.solid))
         for g in generators:
