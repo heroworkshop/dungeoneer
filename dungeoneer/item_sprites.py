@@ -14,7 +14,7 @@ def make_item_sprite(item_spec: Item, x, y):
 class ItemSprite(VisualEffect):
     def __init__(self, item_spec: Item, x, y, filmstrip):
         super().__init__(x, y, filmstrip, repeats=VisualEffect.FOREVER)
-        self.item_spec = item_spec
+        self.item_spec = copy.copy(item_spec)
         self.item_spec.sprite = self
 
     def on_pick_up(self, actor):
