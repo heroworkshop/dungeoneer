@@ -12,7 +12,7 @@ from dungeoneer.item_sprites import drop_item
 from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
-from dungeoneer.game_assets import load_sound, sfx_file, make_sprite_sheet
+from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
 from dungeoneer.interfaces import SpriteGroups, Item
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.spritesheet import SpriteSheet
@@ -71,12 +71,6 @@ class Actor(pygame.sprite.Sprite):
         self._vitality = value
         for observer in self.observers["vitality"]:
             observer.on_update("vitality", Item("vitality", count=self._vitality))
-
-    @property
-    def missile_sfx(self):
-        if not self._missile_sfx:
-            self._missile_sfx = load_sound(sfx_file("arrow.wav"))
-        return self._missile_sfx
 
     def on_collided(self):
         """overload this to determine what happens when hitting a solid object"""
@@ -137,36 +131,6 @@ class Actor(pygame.sprite.Sprite):
         """Unlimited ammo"""
         return Item("missile", 1)
 
-    def attack(self):
-        t = pygame.time.get_ticks()
-        if t < self.action_cooloff:
-            return None
-        weapon_item: Melee = self.inventory.slot(Inventory.ON_HAND) or items.specials["unarmed strike"]
-        rate_of_fire = weapon_item.rate_of_fire * self.character.rate_of_fire
-        self.action_cooloff = t + 1000 // rate_of_fire
-        dx, dy = self.facing
-
-        missile = self.make_attack(dx, dy, weapon_item)
-        return self._place_in_front(dx, dy, missile)
-
-    def shoot(self):
-        t = pygame.time.get_ticks()
-        if t < self.action_cooloff:
-            return None
-        weapon_item: Launcher = self.inventory.slot(Inventory.LAUNCHER) or items.specials["thrown"]
-        rate_of_fire = weapon_item.rate_of_fire * self.character.rate_of_fire
-        self.action_cooloff = t + 1000 // rate_of_fire
-
-        ammo_item = self.expend_ammo()
-        if not ammo_item:
-            return None
-        self.missile_sfx.play()
-
-        dx, dy = self.facing
-
-        missile = self.make_missile(dx, dy, ammo_item)
-        return self._place_in_front(dx, dy, missile)
-
     def _place_in_front(self, dx, dy, missile):
         if not missile:
             return None
@@ -180,7 +144,7 @@ class Actor(pygame.sprite.Sprite):
             missile.rect.bottom = self.rect.top
         return missile
 
-    def make_missile(self, dx, dy):
+    def make_missile(self, dx, dy, ammo_item):
         raise NotImplemented
 
     def connect(self, sprite):
@@ -215,6 +179,36 @@ class Player(Actor):
         if item:
             return item.count
         return 0
+
+    def attack(self):
+        t = pygame.time.get_ticks()
+        if t < self.action_cooloff:
+            return None
+        weapon_item: Melee = self.inventory.slot(Inventory.ON_HAND) or items.specials["unarmed strike"]
+        rate_of_fire = weapon_item.rate_of_fire * self.character.rate_of_fire
+        self.action_cooloff = t + 1000 // rate_of_fire
+        dx, dy = self.facing
+
+        missile = self.make_attack(dx, dy, weapon_item)
+        return self._place_in_front(dx, dy, missile)
+
+    def shoot(self):
+        t = pygame.time.get_ticks()
+        if t < self.action_cooloff:
+            return None
+        weapon_item: Launcher = self.inventory.slot(Inventory.LAUNCHER) or items.specials["thrown"]
+        rate_of_fire = weapon_item.rate_of_fire * self.character.rate_of_fire
+        self.action_cooloff = t + 1000 // rate_of_fire
+
+        ammo_item: Ammo = self.expend_ammo()
+        if not ammo_item:
+            return None
+        ammo_item.sfx_events.activate.play()
+
+        dx, dy = self.facing
+
+        missile = self.make_missile(dx, dy, ammo_item)
+        return self._place_in_front(dx, dy, missile)
 
     def expend_ammo(self):
         return self.inventory.remove_item(slot_index=self.inventory.AMMO)
@@ -339,7 +333,7 @@ class MissileSprite(pygame.sprite.Sprite):
         if extra_frames > 0:
             self.damage_profile.extend([0] * extra_frames)
 
-        self.hit_sfx = load_sound(sfx_file("splat.wav"))
+        self.hit_sfx = load_sound_file(sfx_file("splat.wav"))
         self.repeats = repeats
 
     def move(self, solid_object_group):
@@ -380,7 +374,7 @@ class GoldItem(VisualEffect):
     def __init__(self, x, y, filmstrip, value):
         super().__init__(x, y, filmstrip, repeats=VisualEffect.FOREVER)
         self.value = value
-        self.sound_effect = load_sound(sfx_file("handleCoins.ogg"))
+        self.sound_effect = load_sound_file(sfx_file("handleCoins.ogg"))
 
     def on_pick_up(self, player):
         player.character.gold += self.value

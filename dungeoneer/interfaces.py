@@ -23,10 +23,11 @@ class Observer(ABC):
 
 
 class Item:
-    def __init__(self, name, count=1):
+    def __init__(self, name, count=1, sfx_events=None):
         self.count = count
         self.name = name
         self.preferred_slot = None
+        self.sfx_events = sfx_events
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):

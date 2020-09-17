@@ -34,7 +34,7 @@ def play():
     pygame.mixer.pre_init(frequency=44100)
     pygame.init()
     pygame.mixer.init(frequency=44100)
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) #, pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # , pygame.FULLSCREEN)
     background = screen.copy()
     intro.play(screen)
 

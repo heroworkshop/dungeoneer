@@ -34,8 +34,12 @@ def _make_sprite_sheet(filename, sheet_dimensions, sub_area=None):
 
 
 @lru_cache(maxsize=1000)
-def load_sound(filename):
+def load_sound_file(filename):
     return pygame.mixer.Sound(filename)
+
+
+def play_sound(name):
+    load_sound_file(sfx_file(name)).play()
 
 
 SPRITE_SHEET_TABLE = {

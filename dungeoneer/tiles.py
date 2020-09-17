@@ -9,6 +9,7 @@ from dungeoneer.spritesheet import SpriteSheet
 
 Coord = namedtuple("coord", "x y")
 
+
 class Tile:
     def __init__(self, images):
         try:

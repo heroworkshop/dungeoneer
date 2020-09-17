@@ -18,13 +18,9 @@ def start_music():
 def play(screen):
     clock = pygame.time.Clock()
     start_music()
-    x = 100
-    y = screen.get_height() * 0.8
-    #caption = fonts.FadeInCaption("Dungeoneer", fonts.make_font("Times New Roman", 60), screen, (x, y), step=2)
-    world = plot_blocks(dungeoneer_pattern, screen)
+    world = plot_blocks(dungeoneer_pattern)
 
     while True:
-        # caption.update()
         world.all.update()
         pygame.display.flip()
         for event in pygame.event.get():
@@ -35,7 +31,6 @@ def play(screen):
                 return
         clock.tick(50)
         world.all.draw(screen)
-        #screen.fill((0, 0, 0))
 
 
 dungeoneer_pattern = """
@@ -47,9 +42,9 @@ dungeoneer_pattern = """
 """
 
 
-def plot_blocks(pattern, screen):
+def plot_blocks(pattern):
 
     world = interfaces.SpriteGroups()
-    cols, rows = create_objects([pattern], 0, world, (-150, 200))
+    create_objects([pattern], 0, world, (-150, 200))
 
     return world

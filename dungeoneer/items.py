@@ -1,10 +1,11 @@
+from dungeoneer.sound_effects import SfxEvents
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory import Inventory
 
 
 class Ammo(Item):
-    def __init__(self, name, damage, damage_profile, speed, survivability):
-        super().__init__(name)
+    def __init__(self, name, damage, damage_profile, speed, survivability, sfx_events):
+        super().__init__(name, sfx_events=sfx_events)
         self.damage = damage
         self.damage_profile = damage_profile
         self.speed = speed
@@ -52,15 +53,15 @@ specials.update(make_item_dict(Launcher, ("thrown", 1)))
 
 ammo = make_item_dict(
     Ammo,
-    ("arrow", 10, [100], 12, 70),
+    ("arrow", 10, [100], 12, 70, SfxEvents(activate="arrow.wav")),
     # ("stone shot", 4, [100], 6, 90),
     # ("iron shot", 6, [100], 6, 98),
 )
 
 generated_ammo = make_item_dict(
     Ammo,
-    ("firebolt", 10, [60, 40], 12, 0),
-    ("swipe", 12, [60, 0, 40], 0, 0)
+    ("firebolt", 10, [60, 40], 12, 0, SfxEvents(activate="firebolt.ogg")),
+    ("swipe", 12, [60, 0, 40], 0, 0, SfxEvents(activate="swipe.ogg"))
 )
 
 weapons = make_item_dict(
@@ -105,4 +106,6 @@ potions = make_item_dict(
 
 )
 
+# all_items does not include generated items. The intention is that all_items encompasses
+# all the items that can be dropped.
 all_items = {**ammo, **weapons, **launchers, **armour, **launchers, **food, **potions}
