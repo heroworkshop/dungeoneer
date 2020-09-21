@@ -1,3 +1,3 @@
-from .main import play
+from .main import play, GameInterrupt
 
-__all__ = ["play"]
+__all__ = ["play", "GameInterrupt"]

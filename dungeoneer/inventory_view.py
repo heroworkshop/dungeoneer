@@ -50,6 +50,7 @@ class InventoryView:
         # register for inventory updates
         for index, slot in enumerate(self.slot_views):
             inventory.add_observer(slot, index)
+        self.selected = None
 
     def __len__(self):
         return len(self.slot_views)

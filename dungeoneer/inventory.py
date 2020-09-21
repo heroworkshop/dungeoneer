@@ -18,6 +18,7 @@ class Inventory(Observable):
     def __init__(self):
         super().__init__()
         self._slots = [None] * 10
+        self.current_selection = None
 
     def __len__(self):
         return len(self._slots)
@@ -35,6 +36,10 @@ class Inventory(Observable):
     @property
     def ammo(self):
         return self.slot(self.AMMO)
+
+    @property
+    def selected_item(self):
+        return self.slot(self.current_selection)
 
     def find_available_slot(self, item=None):
         if item:
@@ -78,6 +83,11 @@ class Inventory(Observable):
         self.notify_observers(slot_index)
         return drop
 
+    def swap(self, slot_a, slot_b):
+        self._slots[slot_a], self._slots[slot_b] = self._slots[slot_b], self._slots[slot_a]
+        self.notify_observers(slot_a)
+        self.notify_observers(slot_b)
+
     def notify_observers(self, slot_index):
         for observer in self.observers[slot_index]:
             observer.on_update(slot_index, self.slot(slot_index))
@@ -85,3 +95,8 @@ class Inventory(Observable):
     def add_observer(self, observer: Observer, attribute):
         self.observers[attribute].append(observer)
         observer.on_update(attribute, self._slots[attribute])
+
+    def select(self, slot_index):
+        self.current_selection = slot_index
+        for observer in self.observers[slot_index]:
+            observer.on_update(slot_index, self.slot(slot_index))

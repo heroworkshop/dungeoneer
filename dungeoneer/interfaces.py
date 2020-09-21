@@ -53,6 +53,16 @@ class Observer(ABC):
         """Notify an observer of a change to an attribute"""
 
 
+class KeyObserver(ABC):
+    @abstractmethod
+    def on_key_down(self, key):
+        """Notify observer when a key is pressed"""
+
+    @abstractmethod
+    def on_key_up(self, key):
+        """Notify observer when a key is released"""
+
+
 class Direction(Enum):
     LEFT_TO_RIGHT = (1, 0)
     RIGHT_TO_LEFT = (-1, 0)

@@ -135,6 +135,21 @@ class TestInventory(unittest.TestCase):
         for slot_id in inventory.special_slots:
             self.assertIs(None, inventory.slot(slot_id))
 
+    def test_swap_slots(self):
+        inventory = Inventory()
+        inventory.add_item(Item("arrow"), slot=inventory.AMMO)
+        inventory.add_item(Item("iron shot"), slot=5)
+
+        inventory.swap(inventory.AMMO, 5)
+
+        self.assertEqual("arrow", inventory.slot(5).name)
+        self.assertEqual("iron shot", inventory.slot(inventory.AMMO).name)
+
+    def test_iterate_withEmptyInventory_iterates10Nones(self):
+        inventory = Inventory()
+        result = list(inventory)
+        self.assertEqual([None] * 10, result)
+
 
 class TestInventoryEvents(unittest.TestCase):
 
@@ -188,10 +203,19 @@ class TestInventoryEvents(unittest.TestCase):
         self.assertEqual("iron shot", result.name)
         self.assertEqual(4, listener.notification_count)
 
-    def test_iterate_withEmptyInventory_iterates10Nones(self):
+    def test_swap_withListeners_notifiesBothListeners(self):
         inventory = Inventory()
-        result = list(inventory)
-        self.assertEqual([None] * 10, result)
+        inventory.add_item(Item("arrow"), slot=Inventory.AMMO)
+        inventory.add_item(Item("iron shot"), slot=5)
+        listener_a = ItemListener()
+        listener_b = ItemListener()
+        inventory.add_observer(listener_a, inventory.AMMO)
+        inventory.add_observer(listener_b, 5)
+        inventory.swap(inventory.AMMO, 5)
+        result_a = listener_a.last_received[inventory.AMMO]
+        result_b = listener_b.last_received[5]
+        self.assertEqual("iron shot", result_a.name)
+        self.assertEqual("arrow", result_b.name)
 
 
 if __name__ == '__main__':

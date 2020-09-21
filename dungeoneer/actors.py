@@ -8,7 +8,7 @@ import pygame
 
 from dungeoneer import game_assets, treasure, items
 from dungeoneer.inventory import Inventory
-from dungeoneer.item_sprites import drop_item
+from dungeoneer.item_sprites import drop_item, make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.scenary import VisualEffect
 from dungeoneer.characters import Character, MonsterType
@@ -40,7 +40,7 @@ def extract_filmstrips(sprite_sheet: SpriteSheet):
 class Actor(pygame.sprite.Sprite):
     def __init__(self, x, y, character, world: SpriteGroups):
         pygame.sprite.Sprite.__init__(self)
-        self.group = world
+        self.world = world
         self.filmstrips = extract_filmstrips(character.template.sprite_sheet)
         self.character = character
         self._vitality = character.vitality
@@ -120,6 +120,10 @@ class Actor(pygame.sprite.Sprite):
     def on_hit(self):
         if self.vitality < 0:
             self.die()
+
+    def drop(self, item: Item):
+        x, y = self.rect.center
+        make_item_sprite(item, x, y)
 
     @property
     def ammo(self):
@@ -218,7 +222,7 @@ class Player(Actor):
             return
 
         return make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                  (dx, dy), self.group,
+                                  (dx, dy), self.world,
                                   ammo_item,
                                   repeats=True)
 
@@ -234,7 +238,7 @@ class Player(Actor):
             return None
 
         attack_sprite = make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                           (dx, dy), self.group,
+                                           (dx, dy), self.world,
                                            ammo_item,
                                            repeats=False)
         self.connect(attack_sprite)
@@ -275,8 +279,8 @@ class Monster(Actor):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)
         if randint(1, 100) < 20:
             item = GoldItem(self.rect.centerx, self.rect.centery, sprite_sheet.filmstrip(scale=scale), value)
-            self.group.all.add(item)
-            self.group.items.add(item)
+            self.world.all.add(item)
+            self.world.items.add(item)
         super().die()
 
     def do_actions(self, world):

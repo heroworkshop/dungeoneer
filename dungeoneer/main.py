@@ -9,8 +9,10 @@ from dungeoneer import tiles
 from dungeoneer.actors import Player, make_monster_sprite
 from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
+from dungeoneer.event_dispatcher import KeyEventDispatcher
 from dungeoneer.game_assets import image_file
 from dungeoneer.interfaces import Item
+from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer import items
@@ -24,6 +26,10 @@ SCREEN_WIDTH = 1600
 SCREEN_HEIGHT = 900
 
 SCREEN_BOUNDS = pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+
+class GameInterrupt(RuntimeError):
+    """Raised to signal game end"""
 
 
 def out_of_bounds(sprite):
@@ -56,6 +62,8 @@ def play():
     create_health_bar(player, world)
     InventoryView(player.inventory, SCREEN_WIDTH - 80, 200,
                   sprite_groups=[world.hud])
+    key_event_dispatcher = KeyEventDispatcher()
+    key_event_dispatcher.register(InventoryController(player.inventory, player))
 
     add_demo_items(world)
 
@@ -74,13 +82,14 @@ def play():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                return
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_F12:
-                debug_filmstrips(screen, world.all)
-                screen.blit(background, (0, 0))
+                raise GameInterrupt
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    raise GameInterrupt
+                elif event.key == pygame.K_F12:
+                    debug_filmstrips(screen, world.all)
+                    screen.blit(background, (0, 0))
+                key_event_dispatcher.event(event.type, event.key)
         kb = pygame.key.get_pressed()
         player.handle_keyboard(kb)
 
