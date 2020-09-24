@@ -10,9 +10,11 @@ EMPTY_BOX = make_sprite_sheet("inventory slot box").filmstrip()[0]
 
 class SlotView(pygame.sprite.Sprite, Observer):
 
-    def __init__(self, x, y, item=None):
+    def __init__(self, x, y, hot_key="", item=None):
         super().__init__()
+        self.hot_key = hot_key
         self.font = make_font("Times New Roman", 16)
+        self.hot_key_font = make_font("Times New Roman", 24)
         self.image = self.compose_item_image(item)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
@@ -26,12 +28,15 @@ class SlotView(pygame.sprite.Sprite, Observer):
             return EMPTY_BOX
         result = EMPTY_BOX.copy()
         item_image = make_sprite_sheet(item.name).filmstrip()[0]
-        x = (result.get_width() - item_image.get_width()) // 2
+        x = (result.get_width() - item_image.get_width() - 25) // 2
         y = (result.get_height() - item_image.get_height()) // 2
         result.blit(item_image, (x, y))
 
         caption = self.font.render(f"x{item.count}", True, (180, 180, 180))
         result.blit(caption, (30, 30))
+
+        hot_key_label = self.hot_key_font.render(self.hot_key, True, (220, 220, 220))
+        result.blit(hot_key_label, (55, 20))
 
         return result
 
@@ -50,14 +55,14 @@ class InventoryView:
         dx, dy = orientation.value
         dx *= self.SPACING
         dy *= self.SPACING
-        self.slot_views = [SlotView(x + i * dx, y + i * dy, item) for i, item in enumerate(inventory)]
+        self.slot_views = [SlotView(x + i * dx, y + i * dy, af"{i}", item)
+                           for i, item in enumerate(inventory)]
         # add each inventory slot to the sprite groups
         for slot in self.slot_views:
             slot.add(sprite_groups or [])
         # register for inventory updates
         for index, slot in enumerate(self.slot_views):
             inventory.add_observer(slot, index)
-        self.selected = None
 
     def __len__(self):
         return len(self.slot_views)
