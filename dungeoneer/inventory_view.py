@@ -55,7 +55,7 @@ class InventoryView:
         dx, dy = orientation.value
         dx *= self.SPACING
         dy *= self.SPACING
-        self.slot_views = [SlotView(x + i * dx, y + i * dy, af"{i}", item)
+        self.slot_views = [SlotView(x + i * dx, y + i * dy, f"{i}", item)
                            for i, item in enumerate(inventory)]
         # add each inventory slot to the sprite groups
         for slot in self.slot_views:

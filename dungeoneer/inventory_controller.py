@@ -7,6 +7,7 @@ from dungeoneer.interfaces import KeyObserver
 from dungeoneer.inventory import Inventory
 
 SLOT_KEYS = {
+    pygame.K_0: 0,
     pygame.K_1: 1,
     pygame.K_2: 2,
     pygame.K_3: 3,
@@ -18,7 +19,7 @@ SLOT_KEYS = {
     pygame.K_9: 9,
 }
 
-ACTION_KEYS ={
+ACTION_KEYS = {
     pygame.K_RETURN,
     pygame.K_SPACE,
     pygame.K_a,  # left
@@ -63,6 +64,8 @@ class InventoryController(KeyObserver):
         # left or right = throw
         # return = activate
         # number = swap
+        if key in SLOT_KEYS.keys():
+            self.inventory.swap(SLOT_KEYS[key], slot_index)
         self.inventory.current_selection = None
 
     def on_key_up(self, key):
