@@ -123,7 +123,10 @@ class Actor(pygame.sprite.Sprite):
 
     def drop(self, item: Item):
         x, y = self.rect.center
-        make_item_sprite(item, x, y)
+        sprite = make_item_sprite(item, x, y)
+        self.world.items.add(sprite)
+        self.world.all.add(sprite)
+        return sprite
 
     @property
     def ammo(self):
@@ -160,6 +163,12 @@ class Player(Actor):
     def __init__(self, x, y, character, world: SpriteGroups):
         super().__init__(x, y, character, world)
         self.inventory = Inventory()
+        self.recently_dropped_items = set()  # item_sprites that have recently been dropped. Ignore until move away.
+
+    def drop(self, item: Item):
+        item_sprite = super().drop(item)
+        self.recently_dropped_items.add(item_sprite)
+        return item_sprite
 
     def handle_keyboard(self, kb):
         self.dx = self.dy = 0

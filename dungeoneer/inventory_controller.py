@@ -28,6 +28,14 @@ ACTION_KEYS ={
 
 
 class InventoryController(KeyObserver):
+    """The InventoryController accepts user input and converts them into commands to perform on an inventory.
+
+    This class is part of MVC architecture
+      For the model see Inventory.
+      For the view see InventoryView
+
+    It is intended that this is used in conjunction with a KeyEventDispatcher.
+    """
     def __init__(self, inventory: Inventory, player: Player, key_map=SLOT_KEYS):
         self.inventory = inventory
         self.key_map = key_map
@@ -50,7 +58,8 @@ class InventoryController(KeyObserver):
         # down direction = drop
         if key == pygame.K_s:
             drop_item = self.inventory.remove_item(slot_index)
-            self.player.drop(drop_item)
+            if drop_item:
+                self.player.drop(drop_item)
         # left or right = throw
         # return = activate
         # number = swap

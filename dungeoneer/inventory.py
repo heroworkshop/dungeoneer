@@ -1,4 +1,5 @@
 from contextlib import suppress
+from copy import copy
 
 from dungeoneer.interfaces import Observable, Observer, Item
 
@@ -75,13 +76,15 @@ class Inventory(Observable):
         return drop
 
     def remove_item(self, slot_index):
-        drop = self._slots[slot_index]
-        if drop:
-            self._slots[slot_index].count -= 1
-            if self._slots[slot_index].count == 0:
+        item = self._slots[slot_index]
+        if item:
+            drop = copy(item)
+            drop.count = 1
+            item.count -= 1
+            if item.count == 0:
                 self._slots[slot_index] = None
-        self.notify_observers(slot_index)
-        return drop
+            self.notify_observers(slot_index)
+        return item
 
     def swap(self, slot_a, slot_b):
         self._slots[slot_a], self._slots[slot_b] = self._slots[slot_b], self._slots[slot_a]

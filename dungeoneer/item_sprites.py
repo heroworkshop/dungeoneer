@@ -3,6 +3,7 @@ from random import randint
 
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.interfaces import Item
+from dungeoneer.inventory import InventoryFull
 from dungeoneer.scenary import VisualEffect
 
 
@@ -18,7 +19,10 @@ class ItemSprite(VisualEffect):
         self.item_spec.sprite = self
 
     def on_pick_up(self, actor):
-        actor.inventory.add_item(self.item_spec)
+        try:
+            actor.inventory.add_item(self.item_spec)
+        except InventoryFull:
+            actor.drop(self.item_spec)
 
 
 def drop_item(item_spec: Item, world, x: int, y: int, count=1):

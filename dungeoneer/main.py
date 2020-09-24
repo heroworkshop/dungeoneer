@@ -107,9 +107,14 @@ def play():
             for m in missiles:
                 m.on_impact(hit, world)
 
-        pick_ups = pygame.sprite.spritecollide(player, world.items, dokill=True, collided=pygame.sprite.collide_mask)
+        pick_ups = pygame.sprite.spritecollide(player, world.items, dokill=False, collided=pygame.sprite.collide_mask)
+        # refresh drop-lock
+        player.recently_dropped_items = {item for item in player.recently_dropped_items if item in pick_ups}
+
         for item in pick_ups:
-            item.on_pick_up(player)
+            if item not in player.recently_dropped_items:
+                item.kill()
+                item.on_pick_up(player)
 
         world.all.draw(screen)
         world.hud.draw(screen)

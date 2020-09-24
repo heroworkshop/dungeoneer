@@ -86,6 +86,17 @@ class TestPlayer(unittest.TestCase):
         self.player.expend_ammo()
         self.assertEqual(0, self.player.ammo)
 
+    def test_drop_withItem_addsItemSpriteToWorld(self):
+        item = Item("arrow")
+        item_sprite = self.player.drop(item)
+        self.assertEqual(1, len(self.player.world.items))
+        self.assertIn(item_sprite, self.player.world.items)
+        self.assertIn(item_sprite, self.player.world.all)
+
+    def test_drop_withItem_addsItemSpriteToPlayerRecentlyDroppedItems(self):
+        item = Item("arrow")
+        item_sprite = self.player.drop(item)
+        self.assertIn(item_sprite, self.player.recently_dropped_items)
 
 
 if __name__ == '__main__':

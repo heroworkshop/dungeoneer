@@ -37,6 +37,13 @@ class SlotView(pygame.sprite.Sprite, Observer):
 
 
 class InventoryView:
+    """The InventoryView is a group of SlotViews. This class determines how the slot views
+    are arranged on the screen. The rendering is left up to the slot views.
+
+    This class is part of MVC architecture
+      For the model see Inventory.
+      For the controller see InventoryController
+    """
     SPACING = 50  # px distance between top-left corners of slot views
 
     def __init__(self, inventory: Inventory, x=0, y=0, sprite_groups=None, orientation=Direction.TOP_DOWN):
