@@ -2,6 +2,7 @@ import copy
 import math
 from collections import defaultdict
 from random import randint
+import random
 from types import SimpleNamespace
 
 import pygame
@@ -10,7 +11,7 @@ from dungeoneer import game_assets, treasure, items
 from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item, make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher
-from dungeoneer.scenary import VisualEffect
+from dungeoneer.scenery import VisualEffect, parabolic_motion
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
 from dungeoneer.interfaces import SpriteGroups, Item
@@ -123,7 +124,9 @@ class Actor(pygame.sprite.Sprite):
 
     def drop(self, item: Item):
         x, y = self.rect.center
-        sprite = make_item_sprite(item, x, y)
+        direction = random.choice((1, -1))
+        arc = parabolic_motion(20 * direction, 15, -3, 0.5)
+        sprite = make_item_sprite(item, x, y, motion=iter(arc))
         self.world.items.add(sprite)
         self.world.all.add(sprite)
         return sprite

@@ -1,3 +1,4 @@
+from contextlib import suppress
 from random import randint
 
 import pygame
@@ -6,7 +7,7 @@ import pygame
 class VisualEffect(pygame.sprite.Sprite):
     FOREVER = -1
 
-    def __init__(self, x, y, filmstrip, frame_length=200, repeats=0, reverse=False):
+    def __init__(self, x, y, filmstrip, frame_length=200, repeats=0, reverse=False, motion=iter([])):
         super().__init__()
         self.filmstrip = filmstrip
         if reverse:
@@ -18,9 +19,17 @@ class VisualEffect(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.next_frame_t = pygame.time.get_ticks() + self.frame_length
+        self.motion = motion
 
     def update(self):
+        self.move()
         self.animate()
+
+    def move(self):
+        with suppress(StopIteration):
+            dx, dy = next(self.motion)
+            x, y = self.rect.center
+            self.rect.center = x + dx, y + dy
 
     def animate(self):
         t = pygame.time.get_ticks()
@@ -54,3 +63,20 @@ class ScenerySprite(VisualEffect):
     def update(self):
         if self.animated:
             self.animate()
+
+
+def parabolic_motion(arc_width, steps, dy, g=1):
+    direction = 1 if arc_width > 1 else -1
+    if direction == -1:
+        arc_width = abs(arc_width)
+
+    dx = arc_width / steps
+    result = []
+    x = 0
+    prev_x = 0
+    while x < arc_width:
+        x += dx
+        result.append((direction * (int(x) - int(prev_x)), int(dy)))
+        dy += g
+        prev_x = x
+    return result

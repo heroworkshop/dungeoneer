@@ -30,5 +30,6 @@ class TestItemSpriteActions(unittest.TestCase):
         dropped_item = item_sprites.drop_item(item_spec, world, 0, 0, count=5)
         self.assertTrue(world.items.has(dropped_item))
 
+
 if __name__ == '__main__':
     unittest.main()

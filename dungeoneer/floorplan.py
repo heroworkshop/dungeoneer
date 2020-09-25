@@ -1,5 +1,5 @@
 from dungeoneer import game_assets
-from dungeoneer.scenary import ScenerySprite
+from dungeoneer.scenery import ScenerySprite
 from dungeoneer.spritesheet import SpriteSheet
 
 TILE_HEIGHT = 32

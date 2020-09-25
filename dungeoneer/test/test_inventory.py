@@ -118,6 +118,13 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(1, len(inventory.items))
         self.assertEqual(None, inventory.slot(inventory.AMMO))
 
+    def test_remove_withItemInSlot_dropsOneItem(self):
+        inventory = Inventory()
+        inventory.add_item(Item("arrow"), slot=inventory.AMMO)
+        drop = inventory.remove_item(inventory.AMMO)
+        self.assertEqual(1, drop.count)
+        self.assertEqual("arrow", drop.name)
+
     def test_remove_withMultipleItemsInSlot_removesOneItem(self):
         inventory = Inventory()
         inventory.add_item(Item("arrow"), slot=inventory.AMMO)

@@ -84,7 +84,8 @@ class Inventory(Observable):
             if item.count == 0:
                 self._slots[slot_index] = None
             self.notify_observers(slot_index)
-        return item
+            return drop
+        return None
 
     def swap(self, slot_a, slot_b):
         self._slots[slot_a], self._slots[slot_b] = self._slots[slot_b], self._slots[slot_a]
