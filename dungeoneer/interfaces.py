@@ -29,6 +29,7 @@ class Item:
         self.name = name
         self.preferred_slot = None
         self.sfx_events = sfx_events
+        self.selected = False
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):

@@ -20,8 +20,11 @@ class SlotView(pygame.sprite.Sprite, Observer):
         self.rect.topleft = (x, y)
 
     def on_update(self, attribute, value):
+        # value is an Item
         del attribute  # not used
         self.image = self.compose_item_image(value)
+        if value and value.selected:
+            self.draw_highlight()
 
     def compose_item_image(self, item):
         if item is None:
@@ -39,6 +42,10 @@ class SlotView(pygame.sprite.Sprite, Observer):
         result.blit(hot_key_label, (55, 20))
 
         return result
+
+    def draw_highlight(self):
+        colour = (255, 255, 0)
+        pygame.draw.rect(self.image, colour, self.image.get_rect(), 4)
 
 
 class InventoryView:

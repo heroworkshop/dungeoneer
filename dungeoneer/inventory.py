@@ -101,6 +101,18 @@ class Inventory(Observable):
         observer.on_update(attribute, self._slots[attribute])
 
     def select(self, slot_index):
-        self.current_selection = slot_index
+        item = self.slot(slot_index)
+        if not item:
+            return
+        item.selected = True
         for observer in self.observers[slot_index]:
-            observer.on_update(slot_index, self.slot(slot_index))
+            observer.on_update(slot_index, item)
+        self.current_selection = slot_index
+
+    def deselect(self, slot_index):
+        item = self.slot(slot_index)
+        if not item:
+            return
+        item.selected = False
+        for observer in self.observers[slot_index]:
+            observer.on_update(slot_index, item)

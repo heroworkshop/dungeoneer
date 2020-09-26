@@ -168,6 +168,27 @@ class TestInventoryEvents(unittest.TestCase):
         result = listener.last_received[inventory.AMMO]
         self.assertEqual("arrow", result.name)
 
+    def test_add_observer_withItemSelect_notifiesListener(self):
+        inventory = Inventory()
+        inventory.add_item(Item("arrow"), slot=inventory.AMMO)
+        listener = ItemListener()
+        inventory.add_observer(listener, inventory.AMMO)
+        inventory.select(inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("arrow", result.name)
+        self.assertEqual(True, result.selected)
+
+    def test_add_observer_withItemDeselect_notifiesListener(self):
+        inventory = Inventory()
+        inventory.add_item(Item("arrow"), slot=inventory.AMMO)
+        listener = ItemListener()
+        inventory.add_observer(listener, inventory.AMMO)
+        inventory.select(inventory.AMMO)
+        inventory.deselect(inventory.AMMO)
+        result = listener.last_received[inventory.AMMO]
+        self.assertEqual("arrow", result.name)
+        self.assertEqual(False, result.selected)
+
     def test_add_item_withListener_notifiesListenerOfNewItem(self):
         inventory = Inventory()
         listener = ItemListener()

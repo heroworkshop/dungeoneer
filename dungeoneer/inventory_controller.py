@@ -56,7 +56,9 @@ class InventoryController(KeyObserver):
                 self.inventory.select(slot_number)
             return
 
-        # do special stuff:
+        # do action based on key press:
+        self.inventory.deselect(slot_index)
+        self.inventory.current_selection = None
         if key == pygame.K_s:  # down direction = drop
             self.throw_item(slot_index, 15 * random.choice((1, -1)))
         elif key == pygame.K_a:  # left = throw left
@@ -66,7 +68,8 @@ class InventoryController(KeyObserver):
         # return = activate
         elif key in SLOT_KEYS.keys():  # number = swap
             self.inventory.swap(SLOT_KEYS[key], slot_index)
-        self.inventory.current_selection = None
+
+
 
     def throw_item(self, slot_index, distance):
         arc = parabolic_motion(distance, 15, -3, 0.5)
