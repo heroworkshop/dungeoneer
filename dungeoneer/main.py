@@ -93,15 +93,18 @@ def play():
         kb = pygame.key.get_pressed()
         player.handle_keyboard(kb)
 
-        player.move(world.solid)
+        player.move([world.solid])
         for monster in world.monster:
             monster.target_enemy(player)
-            monster.move(world.solid)
+            monster.move((world.player, world.solid))
             monster.do_actions(world)
         for missile in world.missile:
-            missile.move(world.solid)
             if out_of_bounds(missile):
                 missile.kill()
+
+        # This is for player missiles. The player is not in the solid group so enemy missiles
+        # will need to do collision detection with the player group instead.
+        # It is important that player missiles and items don't collide with the player.
         missile_hits = pygame.sprite.groupcollide(world.solid, world.missile, False, False)
         for hit, missiles in missile_hits.items():
             for m in missiles:
@@ -126,11 +129,11 @@ def add_demo_items(world):
     arrows: Item = items.ammo["arrow"]
     arrows.count = 5
     arrow_sprite = make_item_sprite(arrows, 500, 450)
-    if move_to_nearest_empty_space(arrow_sprite, world, 50):
+    if move_to_nearest_empty_space(arrow_sprite, [world.solid], 50):
         world.items.add(arrow_sprite)
         world.all.add(arrow_sprite)
     melon = make_item_sprite(items.food["melon"], 550, 500)
-    if move_to_nearest_empty_space(melon, world, 50):
+    if move_to_nearest_empty_space(melon, [world.solid], 50):
         world.items.add(melon)
         world.all.add(melon)
 
@@ -138,7 +141,7 @@ def add_demo_items(world):
     y = 500
     for i, item in enumerate(items.all_items.values()):
         item_sprite = make_item_sprite(item, x + 32 * (i % 8), y + 32 * (i // 8))
-        if move_to_nearest_empty_space(arrow_sprite, world, 50):
+        if move_to_nearest_empty_space(arrow_sprite, [world.solid], 50):
             world.items.add(item_sprite)
             world.all.add(item_sprite)
 
@@ -146,9 +149,9 @@ def add_demo_items(world):
 def create_player(world):
     player_character = Character(PlayerCharacterType.TOBY)
     player = Player(500, 500, player_character, world)
-    move_to_nearest_empty_space(player, world, 100)
+    move_to_nearest_empty_space(player, [world.solid], 100)
     world.all.add(player)
-    world.solid.add(player)
+    world.player.add(player)
     return player
 
 

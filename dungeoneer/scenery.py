@@ -7,7 +7,7 @@ import pygame
 class VisualEffect(pygame.sprite.Sprite):
     FOREVER = -1
 
-    def __init__(self, x, y, filmstrip, frame_length=200, repeats=0, reverse=False, motion=iter([])):
+    def __init__(self, x, y, filmstrip, frame_length=200, repeats=0, reverse=False, motion=None):
         super().__init__()
         self.filmstrip = filmstrip
         if reverse:
@@ -26,6 +26,8 @@ class VisualEffect(pygame.sprite.Sprite):
         self.animate()
 
     def move(self):
+        if not self.motion:
+            return
         with suppress(StopIteration):
             dx, dy = next(self.motion)
             x, y = self.rect.center
@@ -44,6 +46,11 @@ class VisualEffect(pygame.sprite.Sprite):
                 self.kill()
                 return
         self.image = self.filmstrip[self.frame]
+
+    def on_impact(self, hit, world):
+        del hit  # unused
+        del world  # unused
+        self.motion = None
 
 
 class ScenerySprite(VisualEffect):

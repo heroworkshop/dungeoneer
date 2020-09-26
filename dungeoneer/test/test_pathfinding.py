@@ -22,7 +22,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
     def test_move_withSpriteAlreadyInSpace_doesNotMove(self):
         world = SpriteGroups()
         tile = TinyBlock(1, 1)
-        result = move_to_nearest_empty_space(tile, world, 3)
+        result = move_to_nearest_empty_space(tile, [world.solid], 3)
         self.assertEqual((1, 1), result.rect.center)
 
 
@@ -30,7 +30,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
         world = SpriteGroups()
         block = TinyBlock(1, 1, world.solid)
         tile = TinyBlock(1, 1)
-        result = move_to_nearest_empty_space(tile, world, 3)
+        result = move_to_nearest_empty_space(tile, [world.solid], 3)
         self.assertFalse(result.rect.colliderect(block.rect))
         self.assertTrue(-1 < result.rect.centerx < 3)
         self.assertTrue(-1 < result.rect.centery < 3)
@@ -47,7 +47,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
                 if (x, y) != (2, 1):
                     TinyBlock(x, y, world.solid)
         tile = TinyBlock(1, 1)
-        result = move_to_nearest_empty_space(tile, world, 3)
+        result = move_to_nearest_empty_space(tile, [world.solid], 3)
         self.assertEqual((2, 1), result.rect.center)
 
     def test_move_withSpriteNextToFreeSpace_movesIntoSpace(self):
@@ -62,7 +62,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
                 if (x, y) != (1, 1):
                     TinyBlock(x, y, world.solid)
         tile = TinyBlock(2, 1)
-        result = move_to_nearest_empty_space(tile, world, 3)
+        result = move_to_nearest_empty_space(tile, [world.solid], 3)
         self.assertEqual((1, 1), result.rect.center)
 
     @unittest.skip("Something odd going on here")
@@ -78,7 +78,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
                 if (x, y) != (10, 10):
                     BigBlock(x, y, world.solid)
         tile = BigBlock(20, 10)
-        result = move_to_nearest_empty_space(tile, world, 30)
+        result = move_to_nearest_empty_space(tile, [world.solid], 30)
         self.assertEqual((10, 10), result.rect.center)
 
 

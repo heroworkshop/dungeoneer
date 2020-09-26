@@ -76,19 +76,20 @@ class Actor(pygame.sprite.Sprite):
     def on_collided(self):
         """overload this to determine what happens when hitting a solid object"""
 
-    def move(self, solid_object_group):
+    def move(self, solid_object_groups):
         if not self.dx and not self.dy:
             return
         vx, vy = self.dx * self.speed, self.dy * self.speed
         self.filmstrip = self.filmstrip_from_direction(vx, vy)
         self.frame = (self.frame + 1) % len(self.filmstrip)
         self.image = self.filmstrip[self.frame]
+
         self.rect.centerx += vx
-        if self.collided(solid_object_group):
+        if any(filter(self.collided,  solid_object_groups)):
             self.rect.centerx -= vx
             vx = 0
         self.rect.centery += vy
-        if self.collided(solid_object_group):
+        if any(filter(self.collided, solid_object_groups)):
             self.rect.centery -= vy
             vy = 0
         for sprite in self._connected_sprites:
@@ -122,13 +123,13 @@ class Actor(pygame.sprite.Sprite):
         if self.vitality < 0:
             self.die()
 
-    def drop(self, item: Item):
+    def drop(self, item: Item, motion=None):
         x, y = self.rect.center
-        direction = random.choice((1, -1))
-        arc = parabolic_motion(20 * direction, 15, -3, 0.5)
-        sprite = make_item_sprite(item, x, y, motion=iter(arc))
+        sprite = make_item_sprite(item, x, y, motion=motion)
         self.world.items.add(sprite)
         self.world.all.add(sprite)
+        if motion:
+            self.world.missile.add(sprite)
         return sprite
 
     @property
@@ -168,8 +169,8 @@ class Player(Actor):
         self.inventory = Inventory()
         self.recently_dropped_items = set()  # item_sprites that have recently been dropped. Ignore until move away.
 
-    def drop(self, item: Item):
-        item_sprite = super().drop(item)
+    def drop(self, item: Item, motion=None):
+        item_sprite = super().drop(item, motion=motion)
         self.recently_dropped_items.add(item_sprite)
         return item_sprite
 
@@ -352,7 +353,7 @@ class MissileSprite(pygame.sprite.Sprite):
         self.hit_sfx = load_sound_file(sfx_file("splat.wav"))
         self.repeats = repeats
 
-    def move(self, solid_object_group):
+    def update(self):
         self.frame += 1
         if self.frame >= len(self.filmstrip) and not self.repeats:
             self.kill()
@@ -413,7 +414,7 @@ def make_monster_sprite(monster_type: MonsterType, x, y, world: SpriteGroups, sl
         monster_type = MonsterType[monster_type]
     monster = Character(monster_type)
     monster_sprite = Monster(x, y, monster, world)
-    if move_to_nearest_empty_space(monster_sprite, world, 500):
+    if move_to_nearest_empty_space(monster_sprite, (world.solid, world.player), 500):
         monster.sleeping = sleeping
         world.all.add(monster_sprite)
         world.solid.add(monster_sprite)

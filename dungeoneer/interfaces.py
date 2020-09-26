@@ -10,6 +10,7 @@ from pygame.sprite import Group
 class SpriteGroups:
     all: Group = field(default_factory=Group)
     solid: Group = field(default_factory=Group)
+    player: Group = field(default_factory=Group)
     monster: Group = field(default_factory=Group)
     missile: Group = field(default_factory=Group)
     items: Group = field(default_factory=Group)

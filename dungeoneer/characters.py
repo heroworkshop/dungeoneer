@@ -39,7 +39,7 @@ class MonsterType(enum.Enum):
                  sprite_sheet=make_sprite_sheet("zombie"),
                  actions=[AttackAction("swipe", 10)]
                  )
-    ZOMBIE_GENERATOR = _CT(vitality=1000, speed=0, rate_of_fire=0.1,
+    ZOMBIE_GENERATOR = _CT(vitality=100, speed=0, rate_of_fire=0.1,
                            sprite_sheet=make_sprite_sheet("zombie generator"),
                            actions=[SummonAction(["ZOMBIE"], 0.1)]
                            )

@@ -1,10 +1,12 @@
 from contextlib import suppress
 
 import pygame
+import random
 
 from dungeoneer.actors import Player
 from dungeoneer.interfaces import KeyObserver
 from dungeoneer.inventory import Inventory
+from dungeoneer.scenery import parabolic_motion
 
 SLOT_KEYS = {
     pygame.K_0: 0,
@@ -55,18 +57,22 @@ class InventoryController(KeyObserver):
             return
 
         # do special stuff:
-
-        # down direction = drop
-        if key == pygame.K_s:
-            drop_item = self.inventory.remove_item(slot_index)
-            if drop_item:
-                self.player.drop(drop_item)
-        # left or right = throw
+        if key == pygame.K_s:  # down direction = drop
+            self.throw_item(slot_index, 15 * random.choice((1, -1)))
+        elif key == pygame.K_a:  # left = throw left
+            self.throw_item(slot_index, -100)
+        elif key == pygame.K_d:  # right = throw right
+            self.throw_item(slot_index, 100)
         # return = activate
-        # number = swap
-        if key in SLOT_KEYS.keys():
+        elif key in SLOT_KEYS.keys():  # number = swap
             self.inventory.swap(SLOT_KEYS[key], slot_index)
         self.inventory.current_selection = None
+
+    def throw_item(self, slot_index, distance):
+        arc = parabolic_motion(distance, 15, -3, 0.5)
+        drop_item = self.inventory.remove_item(slot_index)
+        if drop_item:
+            self.player.drop(drop_item, motion=iter(arc))
 
     def on_key_up(self, key):
         pass
