@@ -69,8 +69,6 @@ class InventoryController(KeyObserver):
         elif key in SLOT_KEYS.keys():  # number = swap
             self.inventory.swap(SLOT_KEYS[key], slot_index)
 
-
-
     def throw_item(self, slot_index, distance):
         arc = parabolic_motion(distance, 15, -3, 0.5)
         drop_item = self.inventory.remove_item(slot_index)

@@ -27,7 +27,7 @@ class Inventory(Observable):
     def __iter__(self):
         return iter(self._slots)
 
-    def slot(self, i):
+    def slot(self, i: int) -> Item:
         return self._slots[i]
 
     @property
@@ -39,7 +39,7 @@ class Inventory(Observable):
         return self.slot(self.AMMO)
 
     @property
-    def selected_item(self):
+    def selected_item(self) -> Item:
         return self.slot(self.current_selection)
 
     def find_available_slot(self, item=None):
@@ -102,17 +102,13 @@ class Inventory(Observable):
 
     def select(self, slot_index):
         item = self.slot(slot_index)
-        if not item:
-            return
-        item.selected = True
-        for observer in self.observers[slot_index]:
-            observer.on_update(slot_index, item)
-        self.current_selection = slot_index
+        if item:
+            item.selected = True
+            self.notify_observers(slot_index)
+            self.current_selection = slot_index
 
     def deselect(self, slot_index):
         item = self.slot(slot_index)
-        if not item:
-            return
-        item.selected = False
-        for observer in self.observers[slot_index]:
-            observer.on_update(slot_index, item)
+        if item:
+            item.selected = False
+            self.notify_observers(slot_index)
