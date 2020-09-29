@@ -50,6 +50,6 @@ class SpriteSheet:
             if scale:
                 width, height = int(surface.get_width() * scale), int(surface.get_height() * scale)
                 return pygame.transform.smoothscale(surface, (width, height))
-            return surface
+            return surface.convert_alpha()
 
         return [transform(self.surface_by_index(i)) for i in indices]
