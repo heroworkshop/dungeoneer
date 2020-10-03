@@ -1,4 +1,5 @@
 from collections import namedtuple
+from functools import lru_cache
 
 import pygame
 
@@ -33,6 +34,7 @@ class SpriteSheet:
                 indices.append(index)
         return indices
 
+    @lru_cache(1000)
     def filmstrip(self, start=0, length=None, rotate=0, scale=1):
         if not length:
             length = self.image_count
