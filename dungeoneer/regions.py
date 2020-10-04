@@ -109,3 +109,36 @@ class Region:
                 self.solid_objects.pop((column, row), None)
 
 
+class SubRegion:
+    def __init__(self, region, top_left=(0,0), size=None):
+        self.top_left = top_left
+        self.size = size or (region.grid_width, region.grid_height)
+        self.region = region
+
+    def split_horizontally(self, split=0.5):
+        if self.size[0] < 2:
+            raise ValueError("Cannot split SubRegion with width {}".format(self.size[0]))
+        subregion1 = SubRegion(self.region, self.top_left, self.size)
+        subregion2 = SubRegion(self.region, self.top_left, self.size)
+        split_point = int(self.size[0] * split) + self.top_left[0]
+        x, y = self.top_left
+        subregion2.top_left = (split_point, y)
+        width1 = split_point - x
+        width2 = self.size[0] - width1
+        subregion1.size = (width1, self.size[1])
+        subregion2.size = (width2, self.size[1])
+        return subregion1, subregion2
+
+    def split_vertically(self, split=0.5):
+        if self.size[1] < 2:
+            raise ValueError("Cannot split SubRegion with height {}".format(self.size[1]))
+        subregion1 = SubRegion(self.region, self.top_left, self.size)
+        subregion2 = SubRegion(self.region, self.top_left, self.size)
+        split_point = int(self.size[1] * split) + self.top_left[1]
+        x, y = self.top_left
+        subregion2.top_left = (x, split_point)
+        height1 = split_point - y
+        height2 = self.size[1] - height1
+        subregion1.size = (self.size[0], height1)
+        subregion2.size = (self.size[0], height2)
+        return subregion1, subregion2

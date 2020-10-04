@@ -1,7 +1,7 @@
 import unittest
 
-from dungeoneer.map_maker import generate_map, DesignType
-from dungeoneer.regions import Region
+from dungeoneer.map_maker import generate_map, DesignType, make_nodes
+from dungeoneer.regions import Region, SubRegion
 
 
 class TestGenerateMap(unittest.TestCase):
@@ -24,6 +24,11 @@ class TestGenerateMap(unittest.TestCase):
         self.assertLess(total, 198)
         self.assertGreater(total, 170)
 
-    # def test_generate_map_withLevel2Room(self):
-    #     region = Region((50, 40))
-    #     split_room(region)
+    def test_make_nodes_withNodeCountN_CreatesNNodes(self):
+        for n in range(2, 16):
+            with self.subTest(n=n):
+                region = Region((50, 40))
+                nodes = make_nodes(SubRegion(region), node_count=n)
+                self.assertEqual(n, len(set(nodes)))
+
+

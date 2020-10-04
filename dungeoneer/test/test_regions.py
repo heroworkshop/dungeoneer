@@ -3,7 +3,7 @@ import unittest
 import pygame
 
 from dungeoneer.characters import MonsterType
-from dungeoneer.regions import Region, Tile, TileType
+from dungeoneer.regions import Region, Tile, TileType, SubRegion
 from dungeoneer.spritesheet import SpriteSheet
 
 
@@ -115,3 +115,41 @@ class TestRegion(unittest.TestCase):
         region.fill_all(TileType.STONE_WALL)
         region.clear_area((1, 1), (2, 2))
         self.assertEqual(16 - 4, len(region.solid_objects))
+
+
+class TestSubRegion(unittest.TestCase):
+    def test_split_horizontally_withDefaultSplit_makesEqualSizedAdjacentRegions(self):
+        region = Region((10, 10))
+        r1, r2 = SubRegion(region).split_horizontally()
+        self.assertEqual((5, 10), r1.size)
+        self.assertEqual((5, 10), r2.size)
+        self.assertEqual(5, abs(r1.top_left[0] - r2.top_left[0]))
+
+    def test_split_horizontally_with9WidthSplitEvenly_makesWidth4AndWidth5SubRegions(self):
+        region = Region((9, 10))
+        r1, r2 = SubRegion(region).split_horizontally(0.5)
+        self.assertEqual(9, r1.size[0] + r2.size[0])
+        self.assertEqual(1, abs(r1.size[0] - r2.size[0]))
+
+    def test_split_horizontally_with1Width_raisesException(self):
+        region = Region((1, 10))
+        with self.assertRaises(ValueError):
+            SubRegion(region).split_horizontally(0.5)
+
+    def test_split_vertically_with1Height_raisesException(self):
+        region = Region((10, 1))
+        with self.assertRaises(ValueError):
+            SubRegion(region).split_vertically(0.5)
+
+    def test_split_vertically_withDefaultSplit_makesEqualSizedAdjacentRegions(self):
+        region = Region((10, 10))
+        r1, r2 = SubRegion(region).split_vertically()
+        self.assertEqual((10, 5), r1.size)
+        self.assertEqual((10, 5), r2.size)
+        self.assertEqual(5, abs(r1.top_left[1] - r2.top_left[1]))
+
+    def test_split_vertically_with9HeightSplitEvenly_makesHeight4AndHeight5SubRegions(self):
+        region = Region((10, 9))
+        r1, r2 = SubRegion(region).split_vertically(0.5)
+        self.assertEqual(9, r1.size[1] + r2.size[1])
+        self.assertEqual(1, abs(r1.size[1] - r2.size[1]))
