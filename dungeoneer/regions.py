@@ -33,6 +33,7 @@ class TileType(Enum):
 
 
 Position = namedtuple("position", "x y")
+Size = namedtuple("size", "width height")
 
 
 class Region:
@@ -110,35 +111,55 @@ class Region:
 
 
 class SubRegion:
-    def __init__(self, region, top_left=(0,0), size=None):
-        self.top_left = top_left
-        self.size = size or (region.grid_width, region.grid_height)
+    def __init__(self, region, top_left=Position(0, 0), size: Size = None):
+        self.top_left = Position(*top_left)
+        self.size = Size(*(size or (region.grid_width, region.grid_height)))
         self.region = region
 
+    def __str__(self):
+        return f"{self.top_left} {self.size}"
+
     def split_horizontally(self, split=0.5):
-        if self.size[0] < 2:
+        if self.size.width < 2:
             raise ValueError("Cannot split SubRegion with width {}".format(self.size[0]))
         subregion1 = SubRegion(self.region, self.top_left, self.size)
         subregion2 = SubRegion(self.region, self.top_left, self.size)
-        split_point = int(self.size[0] * split) + self.top_left[0]
+        split_point = int(self.size.width * split) + self.top_left.x
         x, y = self.top_left
-        subregion2.top_left = (split_point, y)
+        subregion2.top_left = Position(split_point, y)
         width1 = split_point - x
-        width2 = self.size[0] - width1
-        subregion1.size = (width1, self.size[1])
-        subregion2.size = (width2, self.size[1])
+        width2 = self.size.width - width1
+        assert width1 > 0
+        assert width2 > 0
+        subregion1.size = Size(width1, self.size.height)
+        subregion2.size = Size(width2, self.size.height)
         return subregion1, subregion2
 
     def split_vertically(self, split=0.5):
-        if self.size[1] < 2:
+        if self.size.height < 2:
             raise ValueError("Cannot split SubRegion with height {}".format(self.size[1]))
         subregion1 = SubRegion(self.region, self.top_left, self.size)
         subregion2 = SubRegion(self.region, self.top_left, self.size)
-        split_point = int(self.size[1] * split) + self.top_left[1]
+        split_point = int(self.size.height * split) + self.top_left.y
         x, y = self.top_left
-        subregion2.top_left = (x, split_point)
+        subregion2.top_left = Position(x, split_point)
         height1 = split_point - y
         height2 = self.size[1] - height1
-        subregion1.size = (self.size[0], height1)
-        subregion2.size = (self.size[0], height2)
+        subregion1.size = Size(self.size.width, height1)
+        subregion2.size = Size(self.size.width, height2)
         return subregion1, subregion2
+
+    def mid_point(self):
+        x, y = self.top_left
+        w, h = self.size
+        x += w // 2
+        y += h // 2
+        return Position(x, y)
+
+    def ascii_render(self, ascii_map):
+        for x in range(self.top_left.x, self.top_left.x + self.size.width):
+            ascii_map[(x, self.top_left.y)] = "."
+            ascii_map[(x, self.top_left.y + self.size.height - 1)] = "."
+        for y in range(self.top_left.y, self.top_left.y + self.size.height):
+            ascii_map[(self.top_left.x, y)] = "."
+            ascii_map[(self.top_left.x + self.size.width-1, y)] = "."

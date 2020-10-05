@@ -142,14 +142,29 @@ class TestSubRegion(unittest.TestCase):
             SubRegion(region).split_vertically(0.5)
 
     def test_split_vertically_withDefaultSplit_makesEqualSizedAdjacentRegions(self):
-        region = Region((10, 10))
-        r1, r2 = SubRegion(region).split_vertically()
-        self.assertEqual((10, 5), r1.size)
-        self.assertEqual((10, 5), r2.size)
-        self.assertEqual(5, abs(r1.top_left[1] - r2.top_left[1]))
+        for h in range(2, 100, 2):
+            with self.subTest(h=h):
+                region = Region((10, h))
+                r1, r2 = SubRegion(region).split_vertically()
+                self.assertEqual((10, h // 2), r1.size)
+                self.assertEqual((10, h // 2), r2.size)
+                self.assertEqual(h // 2, abs(r1.top_left.y - r2.top_left.y))
 
     def test_split_vertically_with9HeightSplitEvenly_makesHeight4AndHeight5SubRegions(self):
-        region = Region((10, 9))
-        r1, r2 = SubRegion(region).split_vertically(0.5)
-        self.assertEqual(9, r1.size[1] + r2.size[1])
-        self.assertEqual(1, abs(r1.size[1] - r2.size[1]))
+        for h in range(3, 101, 2):
+            with self.subTest(h=h):
+                region = Region((10, h))
+                r1, r2 = SubRegion(region).split_vertically(0.5)
+                self.assertEqual(h, r1.size.height + r2.size.height)
+                self.assertGreater(r1.size.height, 0)
+                self.assertGreater(r2.size.height, 0)
+                self.assertEqual(1, abs(r1.size.height - r2.size.height))
+
+    def test_split_vertically_withOffsetCorner(self):
+        region = Region((50, 40))
+        sub_region = SubRegion(region, (31, 0), (19, 40))
+        r1, r2 = sub_region.split_vertically(0.5)
+        self.assertEqual(40, r1.size.height + r2.size.height)
+        self.assertGreater(r1.size.height, 0)
+        self.assertGreater(r2.size.height, 0)
+        self.assertEqual(20, abs(r1.top_left.y - r2.top_left.y))

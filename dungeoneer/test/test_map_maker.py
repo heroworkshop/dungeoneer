@@ -1,7 +1,8 @@
 import unittest
+from typing import List
 
 from dungeoneer.map_maker import generate_map, DesignType, make_nodes
-from dungeoneer.regions import Region, SubRegion
+from dungeoneer.regions import Region, SubRegion, Position
 
 
 class TestGenerateMap(unittest.TestCase):
@@ -25,10 +26,12 @@ class TestGenerateMap(unittest.TestCase):
         self.assertGreater(total, 170)
 
     def test_make_nodes_withNodeCountN_CreatesNNodes(self):
-        for n in range(2, 16):
+        for n in [16]:
             with self.subTest(n=n):
                 region = Region((50, 40))
                 nodes = make_nodes(SubRegion(region), node_count=n)
                 self.assertEqual(n, len(set(nodes)))
 
-
+    def test_make_cavern(self):
+        # make_cavern(region: Region, nodes: List[Position])
+        pass

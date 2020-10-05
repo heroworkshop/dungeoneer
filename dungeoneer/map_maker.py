@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 import random
 
@@ -20,23 +21,43 @@ def generate_large_room(region):
     return region
 
 
-def make_nodes(subregion: SubRegion, *, node_count):
-    nodes = []
-    subregions = [subregion]
+def make_nodes(sub_region: SubRegion, *, node_count):
+    sub_regions = [sub_region]
 
-    while len(subregions) < node_count:
+    while len(sub_regions) < node_count:
         split = random.uniform(0.3, 0.7)
-        subregion = subregions.pop(0)
-        if subregion.size[0] < subregion.size[1]:  # narrow
-            subregions.extend(subregion.split_vertically(split))
+        sr = sub_regions.pop(0)
+        if sr.size.width < sr.size.height:  # narrow
+            sub_regions.extend(sr.split_vertically(split))
         else:  # square or wide
-            subregions.extend(subregion.split_horizontally(split))
+            sub_regions.extend(sr.split_horizontally(split))
 
-    for r in subregions:
-        x, y = r.top_left
-        w, h = r.size
-        x += w // 2
-        y += h // 2
-        nodes.append((x, y))
+    nodes = [r.mid_point() for r in sub_regions]
+    # dump_ascii_map(sub_region, sub_regions, nodes, f"subregions-{len(sub_regions)}.txt")
 
     return nodes
+
+
+def dump_ascii_map(root_region: SubRegion, sub_regions: SubRegion,
+                   nodes: Position, filename: str):
+    with open(filename, "w") as f:
+        for sr, n in zip(sub_regions, nodes):
+            print(sr, n, file=f)
+
+        ascii_map = defaultdict(str)
+        for y in range(root_region.size.height):
+            for x in range(root_region.size.width):
+                ascii_map[(x, y)] = " "
+        for r in sub_regions:
+            r.ascii_render(ascii_map)
+
+        for n in nodes:
+            ascii_map[(n.x, n.y)] = "*"
+
+        for y in range(root_region.size.height):
+            for x in range(root_region.size.width):
+                print(ascii_map[(x, y)], end="", file=f)
+            print(file=f)
+
+
+
