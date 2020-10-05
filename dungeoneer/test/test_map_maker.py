@@ -1,7 +1,7 @@
 import unittest
 from typing import List
 
-from dungeoneer.map_maker import generate_map, DesignType, make_nodes
+from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes
 from dungeoneer.regions import Region, SubRegion, Position
 
 
@@ -32,6 +32,26 @@ class TestGenerateMap(unittest.TestCase):
                 nodes = make_nodes(SubRegion(region), node_count=n)
                 self.assertEqual(n, len(set(nodes)))
 
-    def test_make_cavern(self):
-        # make_cavern(region: Region, nodes: List[Position])
-        pass
+    def test_join_nodes_withYAlignedNodes(self):
+        region = Region((20, 20))
+        nodes = (Position(2, 2), Position(8, 2))
+        path = join_nodes(region, nodes)
+        self.assertEqual(6 + 1, len(path))
+
+    def test_join_nodes_withXAlignedNodes(self):
+        region = Region((20, 20))
+        nodes = (Position(2, 2), Position(2, 8))
+        path = join_nodes(region, nodes)
+        self.assertEqual(6 + 1, len(path))
+
+    def test_join_nodes_withDiagonalNodes(self):
+        region = Region((20, 20))
+        nodes = (Position(2, 2), Position(8, 8))
+        path = join_nodes(region, nodes)
+        self.assertEqual(6 + 6 + 1, len(path))
+
+    def test_join_nodes_withNegativeDirectionDiagonalNodes(self):
+        region = Region((20, 20))
+        nodes = (Position(8, 8), Position(2, 2))
+        path = join_nodes(region, nodes)
+        self.assertEqual(6 + 6 + 1, len(path))
