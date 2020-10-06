@@ -5,3 +5,4 @@
 dungeoneer/__pycache__/*.pyc
 dungeoneer/venv/
 /.idea
+/dungeoneer/test/debug/

@@ -1,5 +1,6 @@
 from collections import namedtuple
 from enum import Enum
+from typing import Iterable
 
 import pygame
 
@@ -108,6 +109,10 @@ class Region:
         for column in range(x, x + width):
             for row in range(y, y + height):
                 self.solid_objects.pop((column, row), None)
+
+    def clear_nodes(self, nodes: Iterable[Position]):
+        for p in nodes:
+            self.solid_objects.pop(p, None)
 
 
 class SubRegion:

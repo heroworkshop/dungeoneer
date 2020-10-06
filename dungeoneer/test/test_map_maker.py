@@ -1,8 +1,7 @@
 import unittest
-from typing import List
 
-from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes
-from dungeoneer.regions import Region, SubRegion, Position
+from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms
+from dungeoneer.regions import Region, Position
 
 
 class TestGenerateMap(unittest.TestCase):
@@ -29,9 +28,22 @@ class TestGenerateMap(unittest.TestCase):
         for n in [16]:
             with self.subTest(n=n):
                 region = Region((50, 40))
-                nodes = make_nodes(SubRegion(region), node_count=n)
+                nodes = make_nodes(region, node_count=n)
                 self.assertEqual(n, len(set(nodes)))
 
+    def test_generate_connected_rooms(self):
+        width, height = 50, 40
+        region = generate_connected_rooms(Region((width, height)))
+        walls = 0
+        for row in range(height):
+            walls += [region.solid_object((column, row)) is not None
+                      for column in range(width)].count(True)
+        self.assertEqual(walls, len(region.solid_objects), "Solid objects should not be outside bounds of region")
+        self.assertLess(walls, int(width * height * 0.9), "Solid objects should be less than 90% of region")
+        self.assertGreater(walls, int(width * height * 0.10), "Solid objects should be at least 10% of region")
+
+
+class TestJoinNodes(unittest.TestCase):
     def test_join_nodes_withYAlignedNodes(self):
         nodes = (Position(2, 2), Position(8, 2))
         path = join_nodes(nodes)
