@@ -1,7 +1,7 @@
 from collections import defaultdict
 from enum import Enum
 import random
-from typing import Iterable
+from typing import Iterable, List
 
 from dungeoneer.regions import TileType, Position, SubRegion
 
@@ -39,7 +39,7 @@ def make_nodes(sub_region: SubRegion, *, node_count):
     return nodes
 
 
-def join_nodes(sub_region: SubRegion, nodes: Iterable[Position]):
+def join_nodes(nodes: Iterable[Position]):
     path = []
     i = iter(nodes)
     x, y = next(i)
@@ -56,9 +56,7 @@ def join_nodes(sub_region: SubRegion, nodes: Iterable[Position]):
         dx = x_count // abs(x_count or 1)
         dy = y_count // abs(y_count or 1)
 
-        options = [(x_count, 0), (0, y_count)]
-        option = random.choice([opt for opt in options if opt[0] or opt[1]])
-        steps = [random.randint(0, abs(option[0])), random.randint(0, abs(option[1]))]
+        steps = _random_path_segment(x_count, y_count)
 
         while steps[0]:
             x += dx
@@ -71,8 +69,21 @@ def join_nodes(sub_region: SubRegion, nodes: Iterable[Position]):
     return path
 
 
+def _random_path_segment(x_count, y_count):
+    """Given a distance to travel (x_count, y_count), choose to either go a random distance
+    in x direction or in y direction.
+
+    Returns:
+        List[int]: number of steps to travel. For example [0, 2] means travel in the y direction 2 steps
+    """
+    options = [(x_count, 0), (0, y_count)]
+    option = random.choice([opt for opt in options if opt[0] or opt[1]])
+    steps = [random.randint(0, abs(option[0])), random.randint(0, abs(option[1]))]
+    return steps
+
+
 def dump_ascii_map(root_region: SubRegion, sub_regions: SubRegion,
-                   nodes: Position, filename: str):
+                   nodes: List[Position], filename: str):
     with open(filename, "w") as f:
         for sr, n in zip(sub_regions, nodes):
             print(sr, n, file=f)
@@ -91,6 +102,3 @@ def dump_ascii_map(root_region: SubRegion, sub_regions: SubRegion,
             for x in range(root_region.size.width):
                 print(ascii_map[(x, y)], end="", file=f)
             print(file=f)
-
-
-

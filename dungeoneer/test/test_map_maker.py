@@ -33,25 +33,21 @@ class TestGenerateMap(unittest.TestCase):
                 self.assertEqual(n, len(set(nodes)))
 
     def test_join_nodes_withYAlignedNodes(self):
-        region = Region((20, 20))
         nodes = (Position(2, 2), Position(8, 2))
-        path = join_nodes(region, nodes)
+        path = join_nodes(nodes)
         self.assertEqual(6 + 1, len(path))
 
     def test_join_nodes_withXAlignedNodes(self):
-        region = Region((20, 20))
         nodes = (Position(2, 2), Position(2, 8))
-        path = join_nodes(region, nodes)
+        path = join_nodes(nodes)
         self.assertEqual(6 + 1, len(path))
 
     def test_join_nodes_withDiagonalNodes(self):
-        region = Region((20, 20))
         nodes = (Position(2, 2), Position(8, 8))
-        path = join_nodes(region, nodes)
+        path = join_nodes(nodes)
         self.assertEqual(6 + 6 + 1, len(path))
 
     def test_join_nodes_withNegativeDirectionDiagonalNodes(self):
-        region = Region((20, 20))
         nodes = (Position(8, 8), Position(2, 2))
-        path = join_nodes(region, nodes)
+        path = join_nodes(nodes)
         self.assertEqual(6 + 6 + 1, len(path))
