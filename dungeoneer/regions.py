@@ -121,6 +121,10 @@ class SubRegion:
         self.size = Size(*(size or (region.grid_width, region.grid_height)))
         self.region = region
 
+    @property
+    def node(self):
+        return self.mid_point()
+
     def __str__(self):
         return f"{self.top_left} {self.size}"
 

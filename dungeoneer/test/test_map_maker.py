@@ -1,7 +1,8 @@
 import unittest
 
-from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms
-from dungeoneer.regions import Region, Position
+from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms, \
+    make_rooms_in_subregions
+from dungeoneer.regions import Region, Position, SubRegion, Size
 
 
 class TestGenerateMap(unittest.TestCase):
@@ -41,6 +42,22 @@ class TestGenerateMap(unittest.TestCase):
         self.assertEqual(walls, len(region.solid_objects), "Solid objects should not be outside bounds of region")
         self.assertLess(walls, int(width * height * 0.9), "Solid objects should be less than 90% of region")
         self.assertGreater(walls, int(width * height * 0.10), "Solid objects should be at least 10% of region")
+
+    def test_make_rooms_in_subregions_leavesBordersAroundRooms(self):
+        region = Region((30, 10))
+        sub_regions = [SubRegion(region, size=Size(10, 10)),
+                       SubRegion(region, top_left=Position(20, 0), size=Size(10, 10))]
+
+        rooms = make_rooms_in_subregions(sub_regions)
+        outer_wall = ([(x, 0) for x in range(region.grid_width)] +
+                      [(x, region.grid_height) for x in range(region.grid_width)] +
+                      [(0, y) for y in range(region.grid_height)] +
+                      [(region.grid_width, y) for y in range(region.grid_height)]
+                      )
+        self.assertEqual(set(), set(outer_wall).intersection(set(rooms)))
+
+        self.assertGreater(len(rooms), 1)
+        self.assertLess(len(rooms), 8 * 8 + 8 * 8)
 
 
 class TestJoinNodes(unittest.TestCase):

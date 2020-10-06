@@ -30,10 +30,12 @@ def generate_connected_rooms(region):
     sub_regions = make_sub_regions(region, node_count=16)
     nodes = sub_regions_to_nodes(sub_regions)
     paths = join_nodes(nodes)
-    dump_ascii_map(region, sub_regions, nodes, paths, f"debug/subregions-{len(sub_regions)}.txt")
+    rooms = make_rooms_in_subregions(sub_regions)
+    dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
     region.fill_all(TileType.STONE_WALL)
     region.clear_nodes(nodes)
     region.clear_nodes(paths)
+    region.clear_nodes(rooms)
     return region
 
 
@@ -43,7 +45,7 @@ def make_nodes(root_region: Region, *, node_count) -> List[Position]:
 
 
 def sub_regions_to_nodes(sub_regions) -> List[Position]:
-    return [r.mid_point() for r in sub_regions]
+    return [r.node for r in sub_regions]
 
 
 def make_sub_regions(root_region: Region, *, node_count) -> List[SubRegion]:
@@ -112,8 +114,37 @@ def _random_path_segment(x_count, y_count):
     return steps
 
 
+def make_rooms_in_subregions(sub_regions: List[SubRegion]):
+    rooms = []
+    for r in sub_regions:
+        cx, cy = r.node
+        x1, y1 = r.top_left
+        x2, y2 = x1 + r.size.width, y1 + r.size.height
+        # Shrink room by random amount with 2 conditions:
+        #  - keep node inside room
+        #  - keep room at least one unit inside sub-region boundary
+        dx = cx - x1
+        if dx > 1:
+            x1 = cx - random.randint(1, dx-1)
+        dy = cy - y1
+        if dy > 1:
+            y1 = cy - random.randint(1, dy-1)
+        dx = x2 - cx
+        if dx > 1:
+            x2 = cx + random.randint(1, dx-1)
+        dy = y2 - cy
+        if dy > 1:
+            y2 = cy + random.randint(1, dy-1)
+
+        for x in range(x1, x2):
+            for y in range(y1, y2):
+                rooms.append(Position(x, y))
+    return rooms
+
+
 def dump_ascii_map(root_region: Region, sub_regions: List[SubRegion],
-                   nodes: List[Position], paths: List[Position], filename: str):
+                   nodes: List[Position], paths: List[Position], rooms: List[Position],
+                   filename: str):
     with open(filename, "w") as f:
         for sr, n in zip(sub_regions, nodes):
             print(sr, n, file=f)
@@ -124,6 +155,9 @@ def dump_ascii_map(root_region: Region, sub_regions: List[SubRegion],
                 ascii_map[(x, y)] = " "
         for r in sub_regions:
             r.ascii_render(ascii_map)
+
+        for p in rooms:
+            ascii_map[p] = "/"
 
         for p in paths:
             ascii_map[p] = "*"
