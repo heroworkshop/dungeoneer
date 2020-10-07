@@ -1,6 +1,8 @@
+from functools import lru_cache
+
 import pygame
 
-
+@lru_cache(1000)
 def make_font(fonts, size):
     """Find a font matching one of the requested fonts. If none of the requested fonts are available then use the
     system font.

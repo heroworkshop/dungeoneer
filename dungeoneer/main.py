@@ -10,6 +10,7 @@ from dungeoneer.actors import Player, make_monster_sprite
 from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.event_dispatcher import KeyEventDispatcher
+from dungeoneer.fonts import make_font
 from dungeoneer.game_assets import image_file
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory_controller import InventoryController
@@ -125,8 +126,9 @@ def play():
 
         world.all.draw(screen)
         world.hud.draw(screen)
+        display_fps(screen, clock, (0, 0))
         pygame.display.flip()
-        clock.tick(20)
+        clock.tick(25)
 
 
 def add_demo_items(world):
@@ -166,3 +168,8 @@ def create_health_bar(player, world):
     health_bar = ScoreBar(30, 30, throbbing_heart, 100, 10, frame_length=50)
     world.hud.add(health_bar)
     player.add_observer(health_bar, "vitality")
+
+def display_fps(surface, clock, position):
+    font = make_font("Times New Roman", 20)
+    caption = font.render(str(int(clock.get_fps())), True, (255, 255, 255))
+    surface.blit(caption, position)
