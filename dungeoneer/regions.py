@@ -6,6 +6,8 @@ import pygame
 
 from dungeoneer import game_assets
 from dungeoneer.characters import MonsterType
+from dungeoneer.interfaces import SpriteGroups
+from dungeoneer.scenery import ScenerySprite
 from dungeoneer.spritesheet import SpriteSheet
 
 terrain = game_assets.load_image("terrain.png")
@@ -20,6 +22,10 @@ class Tile:
         self.is_solid = is_solid
         self.width = self.filmstrip[0].get_width()
         self.height = self.filmstrip[0].get_height()
+
+    @property
+    def animated(self):
+        return len(self.filmstrip) > 1
 
 
 class TileType(Enum):
@@ -68,7 +74,7 @@ class Region:
         return self.monsters.get(position)
 
     def place(self, position: Position, tile: Tile):
-        if len(tile.filmstrip) > 1:
+        if tile.animated:
             self.animated_tiles[position] = tile
         elif tile.is_solid:
             self.solid_objects[position] = tile
@@ -90,6 +96,19 @@ class Region:
                 y = row * self.tile_height
                 surface.blit(tile_to_plot.filmstrip[0], (x, y))
         return surface
+
+    def build_world(self, world: SpriteGroups):
+        self.place_sprites(self.solid_objects, [world.all, world.solid])
+        self.place_sprites(self.animated_tiles, [world.all])
+
+    def place_sprites(self, tiles, groups):
+        for position, tile in tiles.items():
+            position = Position(*position)
+            x = position.x * self.tile_width
+            y = position.y * self.tile_height
+            tile_sprite = ScenerySprite(x, y, tile.filmstrip, animated=tile.animated)
+            for g in groups:
+                g.add(tile_sprite)
 
     def fill_all(self, tile: TileType):
         size = (self.grid_width, self.grid_height)

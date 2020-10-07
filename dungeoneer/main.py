@@ -16,7 +16,9 @@ from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer import items
+from dungeoneer.map_maker import generate_map, DesignType
 from dungeoneer.pathfinding import move_to_nearest_empty_space
+from dungeoneer.regions import Region
 from dungeoneer.score_bar import ScoreBar
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -40,8 +42,8 @@ def play():
     pygame.mixer.pre_init(frequency=44100)
     pygame.init()
     pygame.mixer.init(frequency=44100)
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # , pygame.FULLSCREEN)
-    background = screen.copy()
+    screen_flags = pygame.FULLSCREEN | pygame.DOUBLEBUF
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
     intro.play(screen)
 
     clock = pygame.time.Clock()
@@ -51,14 +53,16 @@ def play():
 
     game_map = tiles.TileMap(tile_manager.tiles[7], (32, 32))
     world = interfaces.SpriteGroups()
-    floorplan.create_objects(floorplan.baby_dungeon_design, 0, world)
 
-    game_map.render(background, 0, 0,
-                    SCREEN_WIDTH//game_map.tile_width,
-                    SCREEN_HEIGHT//game_map.tile_height)
+    region = Region((SCREEN_WIDTH//game_map.tile_width, SCREEN_HEIGHT//game_map.tile_height))
+    generate_map(region, DesignType.CONNECTED_ROOMS)
+    background = region.render_tiles()
+    region.build_world(world)
+
     screen.blit(background, (0, 0))
 
     player = create_player(world)
+    move_to_nearest_empty_space(player, [world.solid], 50)
     create_health_bar(player, world)
     InventoryView(player.inventory, SCREEN_WIDTH - 80, 200,
                   sprite_groups=[world.hud])

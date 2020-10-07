@@ -145,27 +145,28 @@ def make_rooms_in_subregions(sub_regions: List[SubRegion]):
 def dump_ascii_map(root_region: Region, sub_regions: List[SubRegion],
                    nodes: List[Position], paths: List[Position], rooms: List[Position],
                    filename: str):
-    with open(filename, "w") as f:
-        for sr, n in zip(sub_regions, nodes):
-            print(sr, n, file=f)
+    with suppress(FileNotFoundError):
+        with open(filename, "w") as f:
+            for sr, n in zip(sub_regions, nodes):
+                print(sr, n, file=f)
 
-        ascii_map = defaultdict(str)
-        for y in range(root_region.grid_height):
-            for x in range(root_region.grid_width):
-                ascii_map[(x, y)] = " "
-        for r in sub_regions:
-            r.ascii_render(ascii_map)
+            ascii_map = defaultdict(str)
+            for y in range(root_region.grid_height):
+                for x in range(root_region.grid_width):
+                    ascii_map[(x, y)] = " "
+            for r in sub_regions:
+                r.ascii_render(ascii_map)
 
-        for p in rooms:
-            ascii_map[p] = "/"
+            for p in rooms:
+                ascii_map[p] = "/"
 
-        for p in paths:
-            ascii_map[p] = "*"
+            for p in paths:
+                ascii_map[p] = "*"
 
-        for i, n in enumerate(nodes):
-            ascii_map[(n.x, n.y)] = f"{hex(i)[-1]}"
+            for i, n in enumerate(nodes):
+                ascii_map[(n.x, n.y)] = f"{hex(i)[-1]}"
 
-        for y in range(root_region.grid_height):
-            for x in range(root_region.grid_width):
-                print(ascii_map[(x, y)], end="", file=f)
-            print(file=f)
+            for y in range(root_region.grid_height):
+                for x in range(root_region.grid_width):
+                    print(ascii_map[(x, y)], end="", file=f)
+                print(file=f)

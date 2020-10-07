@@ -3,6 +3,7 @@ import unittest
 import pygame
 
 from dungeoneer.characters import MonsterType
+from dungeoneer.interfaces import SpriteGroups
 from dungeoneer.regions import Region, Tile, TileType, SubRegion
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -109,6 +110,13 @@ class TestRegion(unittest.TestCase):
         region = Region((4, 4))
         region.fill((1, 1), (2, 2), TileType.STONE_WALL)
         self.assertEqual(4, len(region.solid_objects))
+
+    def test_build_world_withSolidObjects_addsSpritesToSolidLayer(self):
+        region = Region((4, 4))
+        region.fill((1, 1), (2, 2), TileType.STONE_WALL)
+        world = SpriteGroups()
+        region.build_world(world)
+        self.assertEqual(4, len(world.solid))
 
     def test_clear_area_with2x2Area_removes4SolidObjects(self):
         region = Region((4, 4))
