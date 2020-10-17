@@ -2,12 +2,12 @@ import sys
 from random import randint
 
 import pygame
+from pygame.rect import Rect
 
 from dungeoneer import interfaces, floorplan, sprite_effects, game_assets
 from dungeoneer import intro
 from dungeoneer import tiles
 from dungeoneer.actors import Player, make_monster_sprite
-from dungeoneer.debug import debug_filmstrips
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.event_dispatcher import KeyEventDispatcher
 from dungeoneer.fonts import make_font
@@ -43,7 +43,7 @@ def play():
     pygame.mixer.pre_init(frequency=44100)
     pygame.init()
     pygame.mixer.init(frequency=44100)
-    screen_flags = pygame.FULLSCREEN | pygame.DOUBLEBUF
+    screen_flags = pygame.DOUBLEBUF | pygame.FULLSCREEN
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
     intro.play(screen)
 
@@ -52,10 +52,9 @@ def play():
     tile_manager = tiles.TileManager()
     tile_manager.import_tiles("terrain.png", 8, 16)
 
-    game_map = tiles.TileMap(tile_manager.tiles[7], (32, 32))
     world = interfaces.SpriteGroups()
 
-    region = Region((SCREEN_WIDTH//game_map.tile_width, SCREEN_HEIGHT//game_map.tile_height))
+    region = Region((SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
     generate_map(region, DesignType.CONNECTED_ROOMS)
     background = region.render_tiles()
     region.build_world(world)
@@ -80,7 +79,10 @@ def play():
     pygame.mixer.music.play()
 
     while True:
-        world.all.clear(screen, background)
+        world.player.clear(screen, background)
+        world.monster.clear(screen, background)
+        world.missile.clear(screen, background)
+        world.items.clear(screen, background)
         world.hud.clear(screen, background)
         world.all.update()
         world.hud.update()
@@ -91,9 +93,6 @@ def play():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     raise GameInterrupt
-                elif event.key == pygame.K_F12:
-                    debug_filmstrips(screen, world.all)
-                    screen.blit(background, (0, 0))
                 key_event_dispatcher.event(event.type, event.key)
         kb = pygame.key.get_pressed()
         player.handle_keyboard(kb)
@@ -124,11 +123,14 @@ def play():
                 item.kill()
                 item.on_pick_up(player)
 
-        world.all.draw(screen)
+        world.player.draw(screen)
+        world.monster.draw(screen)
+        world.missile.draw(screen)
+        world.items.draw(screen)
         world.hud.draw(screen)
         display_fps(screen, clock, (0, 0))
         pygame.display.flip()
-        clock.tick(25)
+        clock.tick(20)
 
 
 def add_demo_items(world):
@@ -169,7 +171,9 @@ def create_health_bar(player, world):
     world.hud.add(health_bar)
     player.add_observer(health_bar, "vitality")
 
+
 def display_fps(surface, clock, position):
     font = make_font("Times New Roman", 20)
     caption = font.render(str(int(clock.get_fps())), True, (255, 255, 255))
+    pygame.draw.rect(surface, (0, 0, 0), Rect(0, 0, 32, 32))
     surface.blit(caption, position)

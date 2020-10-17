@@ -11,16 +11,16 @@ class TestGenerateMap(unittest.TestCase):
         generate_map(region, DesignType.LARGE_ROOM)
         for column in range(1, 49):
             for row in range(1, 49):
-                self.assertIsNone(region.solid_object((column, row)))
+                self.assertIsNone(region.solid_object_at_position((column, row)))
 
     def test_generate_map_withLargeRoom_hasWallsAroundPerimeterWithExit(self):
         region = Region((50, 50))
         generate_map(region, DesignType.LARGE_ROOM)
         # count solid objects around perimeter
-        top = [region.solid_object((column, 0)) is not None for column in range(50)].count(True)
-        bottom = [region.solid_object((column, 49)) is not None for column in range(50)].count(True)
-        left = [region.solid_object((0, row)) is not None for row in range(1, 49)].count(True)
-        right = [region.solid_object((49, row)) is not None for row in range(1, 49)].count(True)
+        top = [region.solid_object_at_position((column, 0)) is not None for column in range(50)].count(True)
+        bottom = [region.solid_object_at_position((column, 49)) is not None for column in range(50)].count(True)
+        left = [region.solid_object_at_position((0, row)) is not None for row in range(1, 49)].count(True)
+        right = [region.solid_object_at_position((49, row)) is not None for row in range(1, 49)].count(True)
         total = top + bottom + left + right
         self.assertLess(total, 198)
         self.assertGreater(total, 170)
@@ -37,7 +37,7 @@ class TestGenerateMap(unittest.TestCase):
         region = generate_connected_rooms(Region((width, height)))
         walls = 0
         for row in range(height):
-            walls += [region.solid_object((column, row)) is not None
+            walls += [region.solid_object_at_position((column, row)) is not None
                       for column in range(width)].count(True)
         self.assertEqual(walls, len(region.solid_objects), "Solid objects should not be outside bounds of region")
         self.assertLess(walls, int(width * height * 0.9), "Solid objects should be less than 90% of region")

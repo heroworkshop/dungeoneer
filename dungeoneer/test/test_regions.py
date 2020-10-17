@@ -88,8 +88,8 @@ class TestRegion(unittest.TestCase):
         region = Region((1, 1), default_tile=TileType.STONE_FLOOR.value)
         region.place_by_type((0, 0), TileType.STONE_WALL)
         tile = region.tile((0, 0))
-        solid = region.solid_object((0, 0))
-        self.assertEqual(TileType.STONE_FLOOR.value, tile)
+        solid = region.solid_object_at_position((0, 0))
+        self.assertEqual(TileType.STONE_WALL.value, tile)
         self.assertEqual(TileType.STONE_WALL.value, solid)
 
     def test_place_withMonster_addsMonsterTypeToMonsters(self):

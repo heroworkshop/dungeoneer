@@ -11,7 +11,7 @@ from dungeoneer.scenery import ScenerySprite
 from dungeoneer.spritesheet import SpriteSheet
 
 terrain = game_assets.load_image("terrain.png")
-liquids = game_assets.load_image("liquids32.png")
+liquids = game_assets.load_image("liquids.png")
 vegetation = game_assets.load_image("vegetation.png")
 lava = game_assets.load_image("lava.png")
 
@@ -35,7 +35,7 @@ class TileType(Enum):
     LAVA = Tile(SpriteSheet(lava, columns=10, rows=1)),
     WOOD = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 4, 1, 2)))
     GRASS = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 1, 1, 1)))
-    EARTH = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 1, 1, 1)))
+    EARTH = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(1, 1, 1, 1)))
     HEDGE = Tile(SpriteSheet(vegetation, columns=16, rows=16, sub_area=(1, 3, 1, 1)), is_solid=True)
 
 
@@ -64,7 +64,7 @@ class Region:
     def tile(self, position: Position):
         return self.tiles.get(position, self.default_tile)
 
-    def solid_object(self, position: Position):
+    def solid_object_at_position(self, position: Position):
         return self.solid_objects.get(position)
 
     def animated_tile(self, position: Position):
@@ -76,10 +76,10 @@ class Region:
     def place(self, position: Position, tile: Tile):
         if tile.animated:
             self.animated_tiles[position] = tile
-        elif tile.is_solid:
+            return
+        if tile.is_solid:
             self.solid_objects[position] = tile
-        else:
-            self.tiles[position] = tile
+        self.tiles[position] = tile
 
     def place_by_type(self, position: Position, tile_type: TileType):
         self.place(position, tile_type.value)
@@ -104,8 +104,9 @@ class Region:
     def place_sprites(self, tiles, groups):
         for position, tile in tiles.items():
             position = Position(*position)
-            x = position.x * self.tile_width
-            y = position.y * self.tile_height
+            # unlike tiles, sprites are positioned by centre so offset to allow for this
+            x = position.x * self.tile_width + self.tile_width // 2
+            y = position.y * self.tile_height + self.tile_height // 2
             tile_sprite = ScenerySprite(x, y, tile.filmstrip, animated=tile.animated)
             for g in groups:
                 g.add(tile_sprite)
@@ -132,6 +133,7 @@ class Region:
     def clear_nodes(self, nodes: Iterable[Position]):
         for p in nodes:
             self.solid_objects.pop(p, None)
+            self.tiles.pop(p, None)
 
 
 class SubRegion:
