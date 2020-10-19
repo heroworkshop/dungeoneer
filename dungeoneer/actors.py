@@ -235,7 +235,7 @@ class Player(Actor):
             return
 
         return make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                  (dx, dy), self.world,
+                                  (dx, dy), self.world.player_missile,
                                   ammo_item,
                                   repeats=True)
 
@@ -251,11 +251,20 @@ class Player(Actor):
             return None
 
         attack_sprite = make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                           (dx, dy), self.world,
+                                           (dx, dy), self.world.player_missile,
                                            ammo_item,
                                            repeats=False)
         self.connect(attack_sprite)
         return attack_sprite
+
+    def handle_item_pickup(self, world):
+        pick_ups = pygame.sprite.spritecollide(self, world.items, dokill=False, collided=pygame.sprite.collide_mask)
+        # refresh drop-lock
+        self.recently_dropped_items = {item for item in self.recently_dropped_items if item in pick_ups}
+        for item in pick_ups:
+            if item not in self.recently_dropped_items:
+                item.kill()
+                item.on_pick_up(self)
 
 
 class Monster(Actor):
@@ -398,14 +407,14 @@ class GoldItem(VisualEffect):
         self.sound_effect.play()
 
 
-def make_attack_sprite(x, y, direction, world, attack_item: Ammo, repeats=False):
+def make_attack_sprite(x, y, direction, group, attack_item: Ammo, repeats=False):
     if not attack_item:
         return None
     sprite_sheet = make_sprite_sheet(attack_item.name)
 
     sprite = MissileSprite(x, y, sprite_sheet, direction, attack_item, repeats=repeats)
-    world.missile.add(sprite)
-    world.all.add(sprite)
+    group.add(sprite)
+
     return sprite
 
 

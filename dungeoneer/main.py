@@ -43,14 +43,10 @@ def play():
     pygame.mixer.pre_init(frequency=44100)
     pygame.init()
     pygame.mixer.init(frequency=44100)
+    clock = pygame.time.Clock()
     screen_flags = pygame.DOUBLEBUF | pygame.FULLSCREEN
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
     intro.play(screen)
-
-    clock = pygame.time.Clock()
-
-    tile_manager = tiles.TileManager()
-    tile_manager.import_tiles("terrain.png", 8, 16)
 
     world = interfaces.SpriteGroups()
 
@@ -78,59 +74,61 @@ def play():
     pygame.mixer.music.set_volume(0.3)
     pygame.mixer.music.play()
 
+    visible_groups = (world.player, world.monster, world.missile, world.player_missile,
+                      world.items, world.hud)
+
     while True:
-        world.player.clear(screen, background)
-        world.monster.clear(screen, background)
-        world.missile.clear(screen, background)
-        world.items.clear(screen, background)
-        world.hud.clear(screen, background)
-        world.all.update()
-        world.hud.update()
+        for group in visible_groups:
+            group.clear(screen, background)
+            group.update()
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                raise GameInterrupt
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    raise GameInterrupt
-                key_event_dispatcher.event(event.type, event.key)
-        kb = pygame.key.get_pressed()
-        player.handle_keyboard(kb)
-
+        handle_keyboard(key_event_dispatcher, player)
         player.move([world.solid])
+
         for monster in world.monster:
             monster.target_enemy(player)
             monster.move((world.player, world.solid))
             monster.do_actions(world)
-        for missile in world.missile:
-            if out_of_bounds(missile):
-                missile.kill()
+        check_bounds(world.missile)
 
-        # This is for player missiles. The player is not in the solid group so enemy missiles
-        # will need to do collision detection with the player group instead.
-        # It is important that player missiles and items don't collide with the player.
-        missile_hits = pygame.sprite.groupcollide(world.solid, world.missile, False, False)
-        for hit, missiles in missile_hits.items():
-            for m in missiles:
-                m.on_impact(hit, world)
+        handle_missile_collisions(world)
+        player.handle_item_pickup(world)
 
-        pick_ups = pygame.sprite.spritecollide(player, world.items, dokill=False, collided=pygame.sprite.collide_mask)
-        # refresh drop-lock
-        player.recently_dropped_items = {item for item in player.recently_dropped_items if item in pick_ups}
-
-        for item in pick_ups:
-            if item not in player.recently_dropped_items:
-                item.kill()
-                item.on_pick_up(player)
-
-        world.player.draw(screen)
-        world.monster.draw(screen)
-        world.missile.draw(screen)
-        world.items.draw(screen)
-        world.hud.draw(screen)
+        for group in visible_groups:
+            group.draw(screen)
         display_fps(screen, clock, (0, 0))
         pygame.display.flip()
         clock.tick(20)
+
+
+def handle_missile_collisions(world):
+    # The player is not in the solid group so enemy missiles
+    # will need to do collision detection with the player group instead.
+    # It is important that player missiles don't collide with the player.
+    missile_hits = pygame.sprite.groupcollide(world.solid, world.player_missile, False, False)
+    missile_hits.update(pygame.sprite.groupcollide(world.solid, world.missile, False, False))
+    missile_hits.update(pygame.sprite.groupcollide(world.player, world.missile, False, False))
+    for hit, missiles in missile_hits.items():
+        for m in missiles:
+            m.on_impact(hit, world)
+
+
+def check_bounds(group):
+    for missile in group:
+        if out_of_bounds(missile):
+            missile.kill()
+
+
+def handle_keyboard(key_event_dispatcher, player):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            raise GameInterrupt
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                raise GameInterrupt
+            key_event_dispatcher.event(event.type, event.key)
+    kb = pygame.key.get_pressed()
+    player.handle_keyboard(kb)
 
 
 def add_demo_items(world):

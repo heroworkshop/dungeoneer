@@ -66,7 +66,7 @@ class AttackAction(Action):
         direction = x - ox, y - oy
         attack_item: Ammo = copy(items.generated_ammo[self.attack_item])
         attack_item.damage = self.damage
-        parameters = dict(x=x, y=y, direction=direction, world=world,
+        parameters = dict(x=x, y=y, direction=direction, group=world.missile,
                           attack_item=attack_item)
         return Runner("make_attack_sprite", parameters)
 
