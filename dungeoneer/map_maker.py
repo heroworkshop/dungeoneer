@@ -32,11 +32,30 @@ def generate_connected_rooms(region):
     paths = join_nodes(nodes)
     rooms = make_rooms_in_subregions(sub_regions)
     dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
-    region.fill_all(TileType.STONE_WALL)
-    region.clear_nodes(nodes)
-    region.clear_nodes(paths)
-    region.clear_nodes(rooms)
+
+    carve_out_dungeon(region, paths, rooms)
+
     return region
+
+
+def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):
+    region.fill_all(wall_type)
+    region.clear_nodes(paths)
+    for room in rooms:
+        floor_type = random.choice((TileType.STONE_FLOOR, TileType.LARGE_FLAGSTONE, TileType.EARTH,
+                                    TileType.CHECKERED_TILES))
+        region.clear_nodes(room, floor_type)
+
+
+def random_floor_types(region, sub_regions: List[SubRegion]):
+    for area in sub_regions:
+        floor_type = random.choice((TileType.STONE_FLOOR, TileType.LARGE_FLAGSTONE, TileType.EARTH))
+        x1, y1 = area.top_left
+        width, height = area.size
+        for x in range(x1, x1 + width):
+            for y in range(y1, y1 + height):
+                if (x, y) not in region.tiles:
+                    region.place_by_type((x, y), floor_type)
 
 
 def make_nodes(root_region: Region, *, node_count) -> List[Position]:
@@ -117,29 +136,38 @@ def _random_path_segment(x_count, y_count):
 def make_rooms_in_subregions(sub_regions: List[SubRegion]):
     rooms = []
     for r in sub_regions:
+        room = []
         cx, cy = r.node
         x1, y1 = r.top_left
         x2, y2 = x1 + r.size.width, y1 + r.size.height
         # Shrink room by random amount with 2 conditions:
         #  - keep node inside room
         #  - keep room at least one unit inside sub-region boundary
-        dx = cx - x1
+        dx = cx - x1  # distance from centre to left wall
         if dx > 1:
-            x1 = cx - random.randint(1, dx-1)
-        dy = cy - y1
+            x1 = cx - weighted_scale_down(dx)
+        dy = cy - y1  # distance from centre to top wall
         if dy > 1:
-            y1 = cy - random.randint(1, dy-1)
-        dx = x2 - cx
+            y1 = cy - weighted_scale_down(dy)
+        dx = x2 - cx   # distance from centre to right wall
         if dx > 1:
-            x2 = cx + random.randint(1, dx-1)
-        dy = y2 - cy
+            x2 = cx + weighted_scale_down(dx)
+        dy = y2 - cy  # distance from centre to bottom wall
         if dy > 1:
-            y2 = cy + random.randint(1, dy-1)
+            y2 = cy + weighted_scale_down(dy)
 
         for x in range(x1, x2):
             for y in range(y1, y2):
-                rooms.append(Position(x, y))
+                room.append(Position(x, y))
+
+        rooms.append(room)
     return rooms
+
+
+def weighted_scale_down(size):
+    if random.randint(1, 4) > 1:
+        return size - 1
+    return random.randint(1, size - 1)
 
 
 def dump_ascii_map(root_region: Region, sub_regions: List[SubRegion],

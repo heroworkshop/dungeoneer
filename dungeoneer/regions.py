@@ -30,7 +30,9 @@ class Tile:
 
 class TileType(Enum):
     STONE_WALL = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 3, 1, 1)), is_solid=True)
-    STONE_FLOOR = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 0, 1, 1)), is_solid=True)
+    STONE_FLOOR = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 0, 1, 1)))
+    LARGE_FLAGSTONE = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(1, 2, 1, 1)))
+    CHECKERED_TILES = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 1, 1, 1)))
     WATER = Tile(SpriteSheet(liquids, columns=16, rows=12, sub_area=(0, 0, 6, 1)))
     LAVA = Tile(SpriteSheet(lava, columns=10, rows=1)),
     WOOD = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 4, 1, 2)))
@@ -130,10 +132,13 @@ class Region:
             for row in range(y, y + height):
                 self.solid_objects.pop((column, row), None)
 
-    def clear_nodes(self, nodes: Iterable[Position]):
+    def clear_nodes(self, nodes: Iterable[Position], replace_tile=None):
         for p in nodes:
             self.solid_objects.pop(p, None)
-            self.tiles.pop(p, None)
+            if replace_tile:
+                self.place_by_type(p, replace_tile)
+            else:
+                self.tiles.pop(p, None)
 
 
 class SubRegion:
