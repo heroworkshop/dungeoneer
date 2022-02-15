@@ -1,23 +1,16 @@
-import os
 import pygame
 import sys
 from pygame.locals import *
 
-from dungeoneer import fonts, interfaces, tiles
+from dungeoneer import interfaces
+from dungeoneer.events import WARNING_EVENT
 from dungeoneer.floorplan import create_objects
-
-
-def start_music():
-    song = "af.mp3"
-    this_module = os.path.dirname(os.path.abspath(__file__))
-    pygame.mixer.music.load(os.path.join(this_module, "music", song))
-    pygame.mixer.music.set_volume(0.3)
-    pygame.mixer.music.play()
+from dungeoneer.sound_effects import start_music
 
 
 def play(screen):
     clock = pygame.time.Clock()
-    start_music()
+    start_music("af.mp3")
     world = plot_blocks(dungeoneer_pattern)
 
     while True:
@@ -29,6 +22,8 @@ def play(screen):
                 sys.exit()
             if event.type == KEYDOWN:
                 return
+            if event.type == WARNING_EVENT:
+                print(event.message)
         clock.tick(50)
         world.all.draw(screen)
 

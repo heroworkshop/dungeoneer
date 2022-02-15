@@ -185,8 +185,9 @@ def dump_ascii_map(root_region: Region, sub_regions: List[SubRegion],
             for r in sub_regions:
                 r.ascii_render(ascii_map)
 
-            for p in rooms:
-                ascii_map[p] = "/"
+            for room in rooms:
+                for p in room:
+                    ascii_map[p] = "/"
 
             for p in paths:
                 ascii_map[p] = "*"

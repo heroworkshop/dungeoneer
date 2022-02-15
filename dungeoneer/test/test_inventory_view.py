@@ -1,8 +1,5 @@
 import unittest
-import numpy as np
 import pygame
-
-from pygame.pixelarray import PixelArray
 
 from dungeoneer import interfaces
 from dungeoneer.inventory import Inventory

@@ -1,15 +1,15 @@
-import sys
 from random import randint
 
 import pygame
 from pygame.rect import Rect
+from pygame.sprite import Sprite
 
-from dungeoneer import interfaces, floorplan, sprite_effects, game_assets
+from dungeoneer import interfaces, sprite_effects
 from dungeoneer import intro
-from dungeoneer import tiles
-from dungeoneer.actors import Player, make_monster_sprite
+from dungeoneer.actors import Player, make_monster_sprite, Monster
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.event_dispatcher import KeyEventDispatcher
+from dungeoneer.events import WARNING_EVENT
 from dungeoneer.fonts import make_font
 from dungeoneer.game_assets import image_file
 from dungeoneer.interfaces import Item
@@ -17,10 +17,11 @@ from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer import items
-from dungeoneer.map_maker import generate_map, DesignType
+from dungeoneer.messages import MessagesView, Messages
 from dungeoneer.pathfinding import move_to_nearest_empty_space
-from dungeoneer.regions import Region
+from dungeoneer.realms import Realm
 from dungeoneer.score_bar import ScoreBar
+from dungeoneer.sound_effects import start_music
 from dungeoneer.spritesheet import SpriteSheet
 
 GENERATOR_EVENT = pygame.USEREVENT + 1
@@ -44,24 +45,26 @@ def play():
     pygame.init()
     pygame.mixer.init(frequency=44100)
     clock = pygame.time.Clock()
-    screen_flags = pygame.DOUBLEBUF | pygame.FULLSCREEN
+    screen_flags = pygame.DOUBLEBUF  # | pygame.FULLSCREEN
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
     intro.play(screen)
 
     world = interfaces.SpriteGroups()
 
-    region = Region((SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
-    generate_map(region, DesignType.CONNECTED_ROOMS)
+    realm = Realm((10, 10), region_size=(SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
+    realm.generate_map()
+    region = realm.region((5, 5))
     background = region.render_tiles()
     region.build_world(world)
 
-    screen.blit(background, (0, 0))
+    screen.blit(background, dest=(0, 0))
 
     player = create_player(world)
     move_to_nearest_empty_space(player, [world.solid], 50)
     create_health_bar(player, world)
-    InventoryView(player.inventory, SCREEN_WIDTH - 80, 200,
-                  sprite_groups=[world.hud])
+    InventoryView(player.inventory, SCREEN_WIDTH - 80, 200, sprite_groups=[world.hud])
+    message_store = Messages()
+    MessagesView(message_store, Rect(SCREEN_WIDTH // 3, 0, SCREEN_WIDTH // 1.5, SCREEN_HEIGHT // 8), screen)
     key_event_dispatcher = KeyEventDispatcher()
     key_event_dispatcher.register(InventoryController(player.inventory, player))
 
@@ -70,23 +73,31 @@ def play():
     make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
     make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
 
-    pygame.mixer.music.load(game_assets.music_file("Dragon_and_Toast.mp3"))
-    pygame.mixer.music.set_volume(0.3)
-    pygame.mixer.music.play()
+    start_music("Dragon_and_Toast.mp3")
 
     visible_groups = (world.player, world.monster, world.missile, world.player_missile,
                       world.items, world.hud)
+
+    def monster_retarget_seq():
+        n = 0
+        while True:
+            yield bool(n % 15 == 0)
+            n += 1
+
+    monster_retarget = monster_retarget_seq()
 
     while True:
         for group in visible_groups:
             group.clear(screen, background)
             group.update()
 
-        handle_keyboard(key_event_dispatcher, player)
+        handle_events(key_event_dispatcher, player, message_store)
         player.move([world.solid])
 
+        monster: Monster
         for monster in world.monster:
-            monster.target_enemy(player)
+            if next(monster_retarget):
+                monster.target_enemy(player)
             monster.move((world.player, world.solid))
             monster.do_actions(world)
         check_bounds(world.missile)
@@ -98,7 +109,7 @@ def play():
             group.draw(screen)
         display_fps(screen, clock, (0, 0))
         pygame.display.flip()
-        clock.tick(20)
+        clock.tick(30)
 
 
 def handle_missile_collisions(world):
@@ -119,7 +130,7 @@ def check_bounds(group):
             missile.kill()
 
 
-def handle_keyboard(key_event_dispatcher, player):
+def handle_events(key_event_dispatcher, player, message_store):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             raise GameInterrupt
@@ -127,6 +138,8 @@ def handle_keyboard(key_event_dispatcher, player):
             if event.key == pygame.K_ESCAPE:
                 raise GameInterrupt
             key_event_dispatcher.event(event.type, event.key)
+        if event.type == WARNING_EVENT:
+            message_store.send("warning", event.message)
     kb = pygame.key.get_pressed()
     player.handle_keyboard(kb)
 

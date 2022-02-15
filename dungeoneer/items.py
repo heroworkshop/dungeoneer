@@ -53,7 +53,7 @@ specials.update(make_item_dict(Launcher, ("thrown", 1)))
 
 ammo = make_item_dict(
     Ammo,
-    ("arrow", 10, [100], 12, 70, SfxEvents(activate="arrow.wav")),
+    ("arrow", 10, [100], 8, 70, SfxEvents(activate="arrow.wav")),
     # ("stone shot", 4, [100], 6, 90),
     # ("iron shot", 6, [100], 6, 98),
 )

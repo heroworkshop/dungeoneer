@@ -1,3 +1,4 @@
+import itertools
 import unittest
 
 from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms, \
@@ -54,7 +55,8 @@ class TestGenerateMap(unittest.TestCase):
                       [(0, y) for y in range(region.grid_height)] +
                       [(region.grid_width, y) for y in range(region.grid_height)]
                       )
-        self.assertEqual(set(), set(outer_wall).intersection(set(rooms)))
+        room_tiles = set(itertools.chain(*rooms))
+        self.assertEqual(set(), set(outer_wall).intersection(room_tiles))
 
         self.assertGreater(len(rooms), 1)
         self.assertLess(len(rooms), 8 * 8 + 8 * 8)

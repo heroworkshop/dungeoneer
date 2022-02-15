@@ -1,0 +1,2 @@
+from pygame import USEREVENT
+WARNING_EVENT = USEREVENT

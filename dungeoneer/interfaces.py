@@ -46,8 +46,18 @@ class Observable(ABC):
     def __init__(self):
         self.observers = defaultdict(list)
 
-    def add_observer(self, observer: Observer, attribute):
-        """An observer can register an interest in an attribute"""
+    def add_observer(self, observer: Observer, attribute_id):
+        self.observers[attribute_id].append(observer)
+        observer.on_update(attribute_id, self.attribute(attribute_id))
+
+    def notify_observers(self, attribute_id):
+        """Notify all observers that have registered an interest in attribute_id of the current value"""
+        for observer in self.observers[attribute_id]:
+            observer.on_update(attribute_id, self.attribute(attribute_id))
+
+    @abstractmethod
+    def attribute(self, attribute_id):
+        """return the value of attribute_id"""
 
 
 class Observer(ABC):

@@ -27,6 +27,9 @@ class Inventory(Observable):
     def __iter__(self):
         return iter(self._slots)
 
+    def attribute(self, attribute_id):
+        return self.slot(attribute_id)
+
     def slot(self, i: int) -> Item:
         return self._slots[i]
 
@@ -91,14 +94,6 @@ class Inventory(Observable):
         self._slots[slot_a], self._slots[slot_b] = self._slots[slot_b], self._slots[slot_a]
         self.notify_observers(slot_a)
         self.notify_observers(slot_b)
-
-    def notify_observers(self, slot_index):
-        for observer in self.observers[slot_index]:
-            observer.on_update(slot_index, self.slot(slot_index))
-
-    def add_observer(self, observer: Observer, attribute):
-        self.observers[attribute].append(observer)
-        observer.on_update(attribute, self._slots[attribute])
 
     def select(self, slot_index):
         item = self.slot(slot_index)

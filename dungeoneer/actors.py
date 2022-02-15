@@ -2,7 +2,6 @@ import copy
 import math
 from collections import defaultdict
 from random import randint
-import random
 from types import SimpleNamespace
 
 import pygame
@@ -50,7 +49,7 @@ class Actor(pygame.sprite.Sprite):
         self.image = self.filmstrip[self.frame]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = 4
+        self.speed = 6
         self.dx, self.dy = (0, 0)  # unit vector. Actual velocity is speed x this value
         self.facing = (0, 1)  # direction the actor is facing
         self.action_cooloff = 0
@@ -129,7 +128,7 @@ class Actor(pygame.sprite.Sprite):
         self.world.items.add(sprite)
         self.world.all.add(sprite)
         if motion:
-            self.world.missile.add(sprite)
+            self.world.player_missile.add(sprite)
         return sprite
 
     @property
@@ -139,7 +138,7 @@ class Actor(pygame.sprite.Sprite):
 
     def expend_ammo(self):
         del self  # unused
-        """Unlimited ammo"""
+        # Unlimited ammo
         return Item("missile", 1)
 
     def _place_in_front(self, dx, dy, missile):

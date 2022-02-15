@@ -18,7 +18,7 @@ Regions are also arranged in a grid of variable size and this is known as a real
   I    |    |    I
   ================
 """
-
+from dungeoneer.map_maker import generate_map, DesignType
 from dungeoneer.regions import Position, Region
 
 
@@ -38,3 +38,7 @@ class Realm:
 
     def region(self, position: Position):
         return self.regions[position]
+
+    def generate_map(self):
+        for region in self.regions.values():
+            generate_map(region, DesignType.CONNECTED_ROOMS)
