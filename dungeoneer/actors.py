@@ -7,14 +7,14 @@ from types import SimpleNamespace
 import pygame
 
 from dungeoneer import game_assets, treasure, items
-from dungeoneer.inventory import Inventory
-from dungeoneer.item_sprites import drop_item, make_item_sprite
-from dungeoneer.items import Ammo, Melee, Launcher
-from dungeoneer.scenery import VisualEffect, parabolic_motion
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
 from dungeoneer.interfaces import SpriteGroups, Item
+from dungeoneer.inventory import Inventory
+from dungeoneer.item_sprites import drop_item, make_item_sprite
+from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.pathfinding import move_to_nearest_empty_space
+from dungeoneer.scenery import VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
 
 
@@ -50,13 +50,14 @@ class Actor(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.speed = 6
-        self.dx, self.dy = (0, 0)  # unit vector. Actual velocity is speed x this value
-        self.facing = (0, 1)  # direction the actor is facing
+        self.direction = pygame.math.Vector2(0, 0)  # unit vector. Actual velocity is speed x this value
+        self.facing = pygame.math.Vector2(0, 1)  # direction the actor is facing
         self.action_cooloff = 0
         self.actions = copy.deepcopy(character.template.actions)
         self._missile_sfx = None
         self._connected_sprites = []
         self.observers = defaultdict(list)
+        self.collide_ratio = 0.8
 
     def add_observer(self, observer, attribute):
         self.observers[attribute].append(observer)
@@ -76,43 +77,44 @@ class Actor(pygame.sprite.Sprite):
         """overload this to determine what happens when hitting a solid object"""
 
     def move(self, solid_object_groups):
-        if not self.dx and not self.dy:
+        if not self.direction.x and not self.direction.y:
             return
-        vx, vy = self.dx * self.speed, self.dy * self.speed
-        self.filmstrip = self.filmstrip_from_direction(vx, vy)
+        velocity = pygame.math.Vector2(self.direction)
+        velocity.scale_to_length(self.speed)
+        # vx, vy = self.dx * self.speed, self.dy * self.speed
+        self.filmstrip = self.filmstrip_from_direction()
         self.frame = (self.frame + 1) % len(self.filmstrip)
         self.image = self.filmstrip[self.frame]
 
-        self.rect.centerx += vx
+        self.rect.centerx += int(velocity.x)
         if any(filter(self.collided,  solid_object_groups)):
-            self.rect.centerx -= vx
-            vx = 0
-        self.rect.centery += vy
+            self.rect.centerx -= int(velocity.x)
+            velocity.x = 0
+        self.rect.centery += int(velocity.y)
         if any(filter(self.collided, solid_object_groups)):
-            self.rect.centery -= vy
-            vy = 0
+            self.rect.centery -= int(velocity.y)
+            velocity.y = 0
         for sprite in self._connected_sprites:
-            sprite.rect.x += vx
-            sprite.rect.y += vy
+            sprite.rect.x += int(velocity.x)
+            sprite.rect.y += int(velocity.y)
+        return pygame.math.Vector2(-int(velocity.x), -int(velocity.y))
 
-    def filmstrip_from_direction(self, vx, vy):
-        image_table = {(0, 1): self.filmstrips.walk_south,
-                       (-1, 0): self.filmstrips.walk_west,
-                       (1, 0): self.filmstrips.walk_east,
-                       (0, -1): self.filmstrips.walk_north,
-                       }
-
-        if (0, self.dy) in image_table:
-            self.filmstrip = image_table[(0, self.dy)]
-        elif (self.dx, 0) in image_table:
-            self.filmstrip = image_table[(self.dx, 0)]
-        if self.dx or self.dy:
-            self.facing = (self.dx, self.dy)
+    def filmstrip_from_direction(self):
+        if self.direction.length_squared():
+            self.facing = pygame.math.Vector2(self.direction)
+        if self.direction.y > 0:
+            self.filmstrip = self.filmstrips.walk_south
+        elif self.direction.y < 0:
+            self.filmstrip = self.filmstrips.walk_north
+        elif self.direction.x > 0:
+            self.filmstrip = self.filmstrips.walk_east
+        elif self.direction.x < 0:
+            self.filmstrip = self.filmstrips.walk_west
         return self.filmstrip
 
     def collided(self, group):
         collisions = pygame.sprite.spritecollide(self, group, dokill=False,
-                                                 collided=pygame.sprite.collide_rect_ratio(0.8))
+                                                 collided=pygame.sprite.collide_rect_ratio(self.collide_ratio))
         return any([c is not self for c in collisions])
 
     def die(self):
@@ -174,16 +176,16 @@ class Player(Actor):
         return item_sprite
 
     def handle_keyboard(self, kb):
-        self.dx = self.dy = 0
+        self.direction.update(0, 0)
 
         if kb[pygame.K_a]:
-            self.dx = -1
+            self.direction.x = -1
         if kb[pygame.K_d]:
-            self.dx = 1
+            self.direction.x = 1
         if kb[pygame.K_w]:
-            self.dy = -1
+            self.direction.y = -1
         if kb[pygame.K_s]:
-            self.dy = 1
+            self.direction.y = 1
         if kb[pygame.K_RETURN]:
             self.shoot()
         if kb[pygame.K_SPACE]:
@@ -267,17 +269,27 @@ class Player(Actor):
 
 
 class Monster(Actor):
+    @staticmethod
+    def monster_retarget_seq(retarget_period):
+        n = 0
+        while True:
+            yield bool(n % retarget_period == 0)
+            n += 1
+
     def __init__(self, x, y, character, group, direction=(0, 0)):
         super().__init__(x, y, character, group)
-        self.dx, self.dy = direction
+        self.direction.update(direction)
 
         self.speed = self.character.template.speed
         self.targeted_enemy = None
+        self.retarget = self.monster_retarget_seq(character.retarget_period)
 
     def on_collided(self):
-        self.dx, dy = (0, 0)
+        self.direction.update(0, 0)
 
     def target_enemy(self, player):
+        if not next(self.retarget):
+            return
         if self.character.sleeping:
             return
         if not player.alive():
@@ -294,7 +306,7 @@ class Monster(Actor):
                 return -1
             return 0
 
-        self.dx, self.dy = (home_in(x, px), home_in(y, py))
+        self.direction.update(home_in(x, px), home_in(y, py))
 
     def die(self):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)

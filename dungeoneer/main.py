@@ -2,7 +2,6 @@ from random import randint
 
 import pygame
 from pygame.rect import Rect
-from pygame.sprite import Sprite
 
 from dungeoneer import interfaces, sprite_effects
 from dungeoneer import intro
@@ -40,6 +39,24 @@ def out_of_bounds(sprite):
     return not sprite.rect.colliderect(SCREEN_BOUNDS)
 
 
+class Camera:
+    def __init__(self, display_surface, groups):
+        super().__init__()
+        self.display_surface = display_surface
+        self.offset = pygame.math.Vector2()
+        self.groups = list(groups)
+
+    def draw_all(self):
+        for group in self.groups:
+            for sprite in group.sprites():
+                offset_pos = sprite.rect.topleft + self.offset
+                self.display_surface.blit(sprite.image, offset_pos)
+
+    def move(self, by_vector):
+        if by_vector:
+            self.offset.update(self.offset + by_vector)
+
+
 def play():
     pygame.mixer.pre_init(frequency=44100)
     pygame.init()
@@ -57,14 +74,12 @@ def play():
     background = region.render_tiles()
     region.build_world(world)
 
-    screen.blit(background, dest=(0, 0))
-
     player = create_player(world)
     move_to_nearest_empty_space(player, [world.solid], 50)
     create_health_bar(player, world)
     InventoryView(player.inventory, SCREEN_WIDTH - 80, 200, sprite_groups=[world.hud])
     message_store = Messages()
-    MessagesView(message_store, Rect(SCREEN_WIDTH // 3, 0, SCREEN_WIDTH // 1.5, SCREEN_HEIGHT // 8), screen)
+    # MessagesView(message_store, Rect(SCREEN_WIDTH - 200, 0, 200, 50), screen)
     key_event_dispatcher = KeyEventDispatcher()
     key_event_dispatcher.register(InventoryController(player.inventory, player))
 
@@ -75,29 +90,23 @@ def play():
 
     start_music("Dragon_and_Toast.mp3")
 
-    visible_groups = (world.player, world.monster, world.missile, world.player_missile,
-                      world.items, world.hud)
+    # When the player moves, the rest of the world moves. All the groups that need to move
+    # are included here
+    scrolling_groups = (world.player, world.monster, world.missile, world.player_missile,
+                        world.items)
+    # Some things don't move but are still visible. They are included here
+    static_groups = (world.hud, )
 
-    def monster_retarget_seq():
-        n = 0
-        while True:
-            yield bool(n % 15 == 0)
-            n += 1
-
-    monster_retarget = monster_retarget_seq()
+    camera = Camera(screen, scrolling_groups)
 
     while True:
-        for group in visible_groups:
-            group.clear(screen, background)
-            group.update()
-
         handle_events(key_event_dispatcher, player, message_store)
-        player.move([world.solid])
+        move_vector = player.move([world.solid])
+        camera.move(move_vector)
 
         monster: Monster
         for monster in world.monster:
-            if next(monster_retarget):
-                monster.target_enemy(player)
+            monster.target_enemy(player)
             monster.move((world.player, world.solid))
             monster.do_actions(world)
         check_bounds(world.missile)
@@ -105,7 +114,11 @@ def play():
         handle_missile_collisions(world)
         player.handle_item_pickup(world)
 
-        for group in visible_groups:
+        screen.blit(background, dest=camera.offset)
+        camera.draw_all()
+
+        for group in static_groups:
+            group.update()
             group.draw(screen)
         display_fps(screen, clock, (0, 0))
         pygame.display.flip()

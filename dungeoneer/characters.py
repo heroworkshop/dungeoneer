@@ -10,7 +10,8 @@ class CharacterTemplate:
                  speed=4,
                  treasure=10,
                  rate_of_fire=1.0,
-                 actions=None
+                 actions=None,
+                 retarget_period=15
                  ):
         self.vitality = vitality
         self.armour = armour
@@ -19,6 +20,7 @@ class CharacterTemplate:
         self.treasure = treasure
         self.rate_of_fire = rate_of_fire
         self.actions = actions if actions else []
+        self.retarget_period = retarget_period
 
 
 class Character:
@@ -32,6 +34,10 @@ class Character:
     def rate_of_fire(self):
         return self.template.rate_of_fire  # shots per second
 
+    @property
+    def retarget_period(self):
+        return self.template.retarget_period
+
 
 class MonsterType(enum.Enum):
     _CT = CharacterTemplate
@@ -41,7 +47,8 @@ class MonsterType(enum.Enum):
                  )
     ZOMBIE_GENERATOR = _CT(vitality=100, speed=0, rate_of_fire=0.1,
                            sprite_sheet=make_sprite_sheet("zombie generator"),
-                           actions=[SummonAction(["ZOMBIE"], 0.1)]
+                           actions=[SummonAction(["ZOMBIE"], 0.1)],
+                           retarget_period=30
                            )
     MUMMY = _CT(vitality=30, speed=2,
                 sprite_sheet=make_sprite_sheet("mummy"),
