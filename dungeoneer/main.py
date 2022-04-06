@@ -71,7 +71,8 @@ def play():
     realm = Realm((10, 10), region_size=(SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
     realm.generate_map()
     region = realm.region((5, 5))
-    background = region.render_tiles()
+    background = realm.render_tiles()
+    bg_offset = -5 * region.pixel_width, -5 * region.pixel_height
     region.build_world(world)
 
     player = create_player(world)
@@ -114,7 +115,8 @@ def play():
         handle_missile_collisions(world)
         player.handle_item_pickup(world)
 
-        screen.blit(background, dest=camera.offset)
+        offset = camera.offset + bg_offset
+        screen.blit(background, dest=offset)
         camera.draw_all()
 
         for group in static_groups:

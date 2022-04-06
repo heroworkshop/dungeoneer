@@ -89,6 +89,16 @@ class Region:
     def place_monster_egg(self, position: Position, monster_type: MonsterType):
         self.monsters[position] = monster_type
 
+    def render_tiles_to_surface(self, surface, position):
+        for column in range(self.grid_width):
+            for row in range(self.grid_height):
+                tile_to_plot = self.tile((column, row))
+                x = column * self.tile_width
+                y = row * self.tile_height
+                p = position[0] + x, position[1] + y
+                surface.blit(tile_to_plot.filmstrip[0], p)
+        return surface
+
     def render_tiles(self):
         surface = pygame.Surface((self.pixel_width, self.pixel_height))
         for column in range(self.grid_width):

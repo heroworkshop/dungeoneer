@@ -18,6 +18,8 @@ Regions are also arranged in a grid of variable size and this is known as a real
   I    |    |    I
   ================
 """
+import pygame
+
 from dungeoneer.map_maker import generate_map, DesignType
 from dungeoneer.regions import Position, Region
 
@@ -42,3 +44,15 @@ class Realm:
     def generate_map(self):
         for region in self.regions.values():
             generate_map(region, DesignType.CONNECTED_ROOMS)
+
+    def render_tiles(self):
+        pixel_width = self.regions[(0, 0)].pixel_width
+        pixel_height = self.regions[(0, 0)].pixel_height
+
+        surface = pygame.Surface((pixel_width * self.width, pixel_height * self.height))
+
+        for x in range(self.width):
+            for y in range(self.height):
+                position = pygame.math.Vector2(x * pixel_width, y * pixel_height)
+                self.regions[(x, y)].render_tiles_to_surface(surface, position)
+        return surface
