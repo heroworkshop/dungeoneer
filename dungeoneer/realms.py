@@ -18,6 +18,8 @@ Regions are also arranged in a grid of variable size and this is known as a real
   I    |    |    I
   ================
 """
+from random import randint
+
 import pygame
 
 from dungeoneer.map_maker import generate_map, DesignType
@@ -28,12 +30,25 @@ class Realm:
     """A realm is a variable sized grid of Regions"""
 
     def __init__(self, size, region_size=(50, 30)):
+        region_width, region_height = region_size
         self.regions = dict()
         self.width, self.height = size
 
+        self.create_empty_regions(region_height, region_size, region_width)
+
+    def create_empty_regions(self, region_height, region_size, region_width):
         for x in range(self.width):
             for y in range(self.height):
-                self.regions[Position(x, y)] = Region(region_size)
+                region = Region(region_size)
+                if y > 0:
+                    region.exits["N"] = self.regions[Position(x, y - 1)].exits["S"]
+                if y < self.height - 1:
+                    region.exits["S"] = randint(1, region_width - 1)
+                if x > 0:
+                    region.exits["W"] = self.regions[Position(x - 1, y)].exits["E"]
+                if x < self.width - 1:
+                    region.exits["E"] = randint(1, region_height - 1)
+                self.regions[Position(x, y)] = region
 
     def __len__(self):
         return len(self.regions)
@@ -43,7 +58,7 @@ class Realm:
 
     def generate_map(self):
         for region in self.regions.values():
-            generate_map(region, DesignType.CONNECTED_ROOMS)
+            generate_map(region, DesignType.random())
 
     def render_tiles(self):
         pixel_width = self.regions[(0, 0)].pixel_width

@@ -2,7 +2,7 @@ import itertools
 import unittest
 
 from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms, \
-    make_rooms_in_subregions
+    make_rooms_in_subregions, join_exits
 from dungeoneer.regions import Region, Position, SubRegion, Size
 
 
@@ -82,3 +82,57 @@ class TestJoinNodes(unittest.TestCase):
         nodes = (Position(8, 8), Position(2, 2))
         path = join_nodes(nodes)
         self.assertEqual(6 + 6 + 1, len(path))
+
+    def test_join_exits_withOneInLineNorthExit_takesDirectPath(self):
+        nodes = [(2, 3), (5, 5), (8, 6)]
+        exits = {"N": 5}
+        size = 10, 10
+
+        paths = join_exits(nodes, exits, size)
+        expected = {(5, n) for n in range(6)}
+
+        self.assertEqual(expected, set(paths))
+
+    def test_join_exits_withOneInLineSouthExit_takesDirectPath(self):
+        nodes = [(1, 2), (5, 5), (7, 4)]
+        exits = {"S": 5}
+        size = 10, 10
+
+        paths = join_exits(nodes, exits, size)
+        expected = {(5, n) for n in range(5, 10)}
+
+        self.assertEqual(expected, set(paths))
+
+    def test_join_exits_withOneInLineEastExit_takesDirectPath(self):
+        nodes = [(3, 2), (5, 5), (7, 1)]
+        exits = {"E": 5}
+        size = 10, 10
+
+        paths = join_exits(nodes, exits, size)
+
+        expected = {(n, 5) for n in range(5, 10)}
+
+        self.assertEqual(expected, set(paths))
+
+    def test_join_exits_withOneInLineWestExit_takesDirectPath(self):
+        nodes = [(3, 2), (5, 5), (7, 1)]
+        exits = {"W": 5}
+        size = 10, 10
+
+        paths = join_exits(nodes, exits, size)
+
+        expected = {(n, 5) for n in range(6)}
+        self.assertEqual(expected, set(paths))
+
+    def test_join_exits_withOffInLineSouthExit_takesPathFromNearestXNode(self):
+        nodes = [(3, 2), (5, 5), (7, 1)]
+        exits = {"S": 7}
+        size = 10, 10
+
+        paths = join_exits(nodes, exits, size)
+        expected_x_vals = {5, 6, 7}
+        expected_y_vals = set(range(5, 10))
+
+        self.assertEqual(7, len(set(paths)))
+        self.assertEqual(expected_x_vals, {p[0] for p in paths})
+        self.assertEqual(expected_y_vals, {p[1] for p in paths})

@@ -59,6 +59,7 @@ class Region:
         self.pixel_width = self.grid_width * self.tile_width
         self.pixel_height = self.grid_height * self.tile_height
         self.default_tile = default_tile
+        self.exits = dict()
 
     def __len__(self):
         return self.grid_width * self.grid_height

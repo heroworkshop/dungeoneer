@@ -1,3 +1,4 @@
+import heapq
 from collections import defaultdict
 from contextlib import suppress
 from enum import Enum
@@ -10,6 +11,12 @@ from dungeoneer.regions import TileType, Position, SubRegion, Region
 class DesignType(Enum):
     LARGE_ROOM = 0
     CONNECTED_ROOMS = 1
+
+    @classmethod
+    def random(cls):
+        if random.randint(0, 100) < 1:
+            return cls.LARGE_ROOM
+        return cls.CONNECTED_ROOMS
 
 
 def generate_map(region, design: DesignType):
@@ -26,10 +33,36 @@ def generate_large_room(region):
     return region
 
 
+def join_exits(nodes, exits, size):
+    def find_best_node(exit_position):
+        """Find node with shortest manhatten distance to the exit"""
+        x, y = exit_position
+        diffs = [(abs(n[0] - x) + abs(n[1] - y), n) for n in nodes]
+        heapq.heapify(diffs)
+        _, p = diffs[0]
+        return p
+
+    width, height = size
+    paths = []
+    directions = {
+        "N": (exits.get("N"), 0),
+        "S": (exits.get("S"), height - 1),
+        "E": (width - 1, exits.get("E")),
+        "W": (0, exits.get("W"))
+    }
+    for direction, exit_pos in directions.items():
+        if direction in exits:
+            exit_pos = Position(*exit_pos)
+            node = find_best_node(exit_pos)
+            paths.extend(join_two_nodes(node, exit_pos))
+    return paths
+
+
 def generate_connected_rooms(region):
     sub_regions = make_sub_regions(region, node_count=16)
     nodes = sub_regions_to_nodes(sub_regions)
     paths = join_nodes(nodes)
+    paths.extend(join_exits(nodes, region.exits, (region.grid_width, region.grid_height)))
     rooms = make_rooms_in_subregions(sub_regions)
     dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
 
