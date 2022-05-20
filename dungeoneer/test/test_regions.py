@@ -111,12 +111,11 @@ class TestRegion(unittest.TestCase):
         region.fill((1, 1), (2, 2), TileType.STONE_WALL)
         self.assertEqual(4, len(region.solid_objects))
 
-    def test_build_world_withSolidObjects_addsSpritesToSolidLayer(self):
+    def test_build_world_withSolidObjects_addsSpritesToRegionsSolidLayer(self):
         region = Region((4, 4))
         region.fill((1, 1), (2, 2), TileType.STONE_WALL)
-        world = SpriteGroups()
-        region.build_world(world)
-        self.assertEqual(4, len(world.solid))
+        region.build_world((0, 0))
+        self.assertEqual(4, len(region.groups.solid))
 
     def test_clear_area_with2x2Area_removes4SolidObjects(self):
         region = Region((4, 4))

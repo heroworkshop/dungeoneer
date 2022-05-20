@@ -49,17 +49,20 @@ class Region:
     """A region is a variable sized sparse grid of tiles"""
 
     def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value):
-        self.tiles = dict()
-        self.animated_tiles = dict()
-        self.solid_objects = dict()
-        self.monsters = dict()
         self.grid_width, self.grid_height = size
+
+        self.tiles = {}
+        self.animated_tiles = {}
+        self.solid_objects = {}
+        self.monsters = {}
+
+        self.groups = SpriteGroups()
         self.tile_width = default_tile.width
         self.tile_height = default_tile.height
         self.pixel_width = self.grid_width * self.tile_width
         self.pixel_height = self.grid_height * self.tile_height
         self.default_tile = default_tile
-        self.exits = dict()
+        self.exits = {}
 
     def __len__(self):
         return self.grid_width * self.grid_height
@@ -110,16 +113,17 @@ class Region:
                 surface.blit(tile_to_plot.filmstrip[0], (x, y))
         return surface
 
-    def build_world(self, world: SpriteGroups):
-        self.place_sprites(self.solid_objects, [world.all, world.solid])
-        self.place_sprites(self.animated_tiles, [world.all])
+    def build_world(self, base_position):
+        self.place_sprites(self.solid_objects, base_position, [self.groups.all, self.groups.solid])
+        self.place_sprites(self.animated_tiles, base_position, [self.groups.all])
 
-    def place_sprites(self, tiles, groups):
+    def place_sprites(self, tiles, base_position, groups):
+        base_x, base_y = base_position
         for position, tile in tiles.items():
             position = Position(*position)
             # unlike tiles, sprites are positioned by centre so offset to allow for this
-            x = position.x * self.tile_width + self.tile_width // 2
-            y = position.y * self.tile_height + self.tile_height // 2
+            x = base_x + position.x * self.tile_width + self.tile_width // 2
+            y = base_y + position.y * self.tile_height + self.tile_height // 2
             tile_sprite = ScenerySprite(x, y, tile.filmstrip, animated=tile.animated)
             for g in groups:
                 g.add(tile_sprite)

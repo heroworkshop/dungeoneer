@@ -7,6 +7,7 @@ from dungeoneer.characters import MonsterType, Character, PlayerCharacterType
 from dungeoneer.interfaces import SpriteGroups, Item
 from dungeoneer import actors
 from dungeoneer.inventory import Inventory
+from dungeoneer.regions import Region
 
 
 class TestZombie(unittest.TestCase):
@@ -148,9 +149,9 @@ class TestPlayerMovement(unittest.TestCase):
 
 class TestPlayer(unittest.TestCase):
     def setUp(self):
-        self.world = SpriteGroups()
+        self.region = Region((20, 20))
         player_character = Character(PlayerCharacterType.TOBY)
-        self.player = Player(500, 500, player_character, self.world)
+        self.player = Player(500, 500, player_character, self.region)
 
     def test_player_ammo_depletes(self):
         self.player.inventory.add_item(Item("arrow"), slot=Inventory.AMMO)
@@ -164,9 +165,9 @@ class TestPlayer(unittest.TestCase):
     def test_drop_withItem_addsItemSpriteToWorld(self):
         item = Item("arrow")
         item_sprite = self.player.drop(item)
-        self.assertEqual(1, len(self.player.world.items))
-        self.assertIn(item_sprite, self.player.world.items)
-        self.assertIn(item_sprite, self.player.world.all)
+        self.assertEqual(1, len(self.player.region.groups.items))
+        self.assertIn(item_sprite, self.player.region.groups.items)
+        self.assertIn(item_sprite, self.player.region.groups.all)
 
     def test_drop_withItem_addsItemSpriteToPlayerRecentlyDroppedItems(self):
         item = Item("arrow")

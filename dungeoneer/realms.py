@@ -26,17 +26,24 @@ from dungeoneer.map_maker import generate_map, DesignType
 from dungeoneer.regions import Position, Region
 
 
+class PointOutsideRealmBoundary(ValueError):
+    """Raised when trying to access position outside the realms boundaries"""
+
+
 class Realm:
     """A realm is a variable sized grid of Regions"""
 
-    def __init__(self, size, region_size=(50, 30)):
+    def __init__(self, size, tile_size, region_size=(50, 30)):
         region_width, region_height = region_size
+        tile_width, tile_height = tile_size
+        self.region_pixel_size = region_width * tile_width, region_height * tile_height
         self.regions = dict()
         self.width, self.height = size
 
-        self.create_empty_regions(region_height, region_size, region_width)
+        self.create_empty_regions(region_size)
 
-    def create_empty_regions(self, region_height, region_size, region_width):
+    def create_empty_regions(self, region_size):
+        region_width, region_height = region_size
         for x in range(self.width):
             for y in range(self.height):
                 region = Region(region_size)
@@ -54,11 +61,30 @@ class Realm:
         return len(self.regions)
 
     def region(self, position: Position):
-        return self.regions[position]
+        try:
+            return self.regions[position]
+        except KeyError:
+            raise PointOutsideRealmBoundary(f"Position {position} was outside the realm with "
+                                            f"size ({self.width}, {self.height})")
+
+    def region_coord_from_pixel_position(self, pixel_position):
+        x, y = pixel_position
+        width, height = self.region_pixel_size
+        return x // width, y // height
+
+    def region_from_pixel_position(self, pixel_position):
+        try:
+            return self.region(self.region_coord_from_pixel_position(pixel_position))
+        except PointOutsideRealmBoundary:
+            raise PointOutsideRealmBoundary(f"Pixel Position {pixel_position} "
+                                            f"was outside the realm with size ({self.width}, {self.height})")
 
     def generate_map(self):
-        for region in self.regions.values():
+        width, height = self.region_pixel_size
+        for coordinates, region in self.regions.items():
             generate_map(region, DesignType.random())
+            x, y = coordinates
+            region.build_world((x * width, y * height))
 
     def render_tiles(self):
         pixel_width = self.regions[(0, 0)].pixel_width

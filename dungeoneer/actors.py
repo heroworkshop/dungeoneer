@@ -3,6 +3,7 @@ import math
 from collections import defaultdict
 from random import randint
 from types import SimpleNamespace
+from typing import Union
 
 import pygame
 
@@ -14,6 +15,7 @@ from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item, make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.pathfinding import move_to_nearest_empty_space
+from dungeoneer.regions import Region
 from dungeoneer.scenery import VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -38,9 +40,9 @@ def extract_filmstrips(sprite_sheet: SpriteSheet):
 
 
 class Actor(pygame.sprite.Sprite):
-    def __init__(self, x, y, character, world: SpriteGroups):
+    def __init__(self, x, y, character, region: Region):
         pygame.sprite.Sprite.__init__(self)
-        self.world = world
+        self.region = region
         self.filmstrips = extract_filmstrips(character.template.sprite_sheet)
         self.character = character
         self._vitality = character.vitality
@@ -81,7 +83,7 @@ class Actor(pygame.sprite.Sprite):
             return
         velocity = pygame.math.Vector2(self.direction)
         velocity.scale_to_length(self.speed)
-        # vx, vy = self.dx * self.speed, self.dy * self.speed
+
         self.filmstrip = self.filmstrip_from_direction()
         self.frame = (self.frame + 1) % len(self.filmstrip)
         self.image = self.filmstrip[self.frame]
@@ -127,10 +129,10 @@ class Actor(pygame.sprite.Sprite):
     def drop(self, item: Item, motion=None):
         x, y = self.rect.center
         sprite = make_item_sprite(item, x, y, motion=motion)
-        self.world.items.add(sprite)
-        self.world.all.add(sprite)
+        self.region.groups.items.add(sprite)
+        self.region.groups.all.add(sprite)
         if motion:
-            self.world.player_missile.add(sprite)
+            self.region.groups.player_missile.add(sprite)
         return sprite
 
     @property
@@ -165,8 +167,8 @@ class Actor(pygame.sprite.Sprite):
 
 
 class Player(Actor):
-    def __init__(self, x, y, character, world: SpriteGroups):
-        super().__init__(x, y, character, world)
+    def __init__(self, x, y, character, region: Region):
+        super().__init__(x, y, character, region)
         self.inventory = Inventory()
         self.recently_dropped_items = set()  # item_sprites that have recently been dropped. Ignore until move away.
 
@@ -236,7 +238,7 @@ class Player(Actor):
             return
 
         return make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                  (dx, dy), self.world.player_missile,
+                                  (dx, dy), self.region.groups.player_missile,
                                   ammo_item,
                                   repeats=True)
 
@@ -252,7 +254,7 @@ class Player(Actor):
             return None
 
         attack_sprite = make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                           (dx, dy), self.world.player_missile,
+                                           (dx, dy), self.region.groups.player_missile,
                                            ammo_item,
                                            repeats=False)
         self.connect(attack_sprite)
@@ -312,8 +314,8 @@ class Monster(Actor):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)
         if randint(1, 100) < 20:
             item = GoldItem(self.rect.centerx, self.rect.centery, sprite_sheet.filmstrip(scale=scale), value)
-            self.world.all.add(item)
-            self.world.items.add(item)
+            self.region.groups.all.add(item)
+            self.region.groups.items.add(item)
         super().die()
 
     def do_actions(self, world):
@@ -429,7 +431,7 @@ def make_attack_sprite(x, y, direction, group, attack_item: Ammo, repeats=False)
     return sprite
 
 
-def make_monster_sprite(monster_type: MonsterType, x, y, world: SpriteGroups, sleeping=False):
+def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, world: SpriteGroups, sleeping=False):
     if type(monster_type) is str:
         monster_type = MonsterType[monster_type]
     monster = Character(monster_type)
