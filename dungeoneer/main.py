@@ -102,22 +102,20 @@ def play():
 
     while True:
         handle_events(key_event_dispatcher, player, message_store)
-        move_vector = player.move([world.solid])
-        if move_vector:
-            world = realm.region_from_pixel_position(player.rect.center).groups
-            camera.move(move_vector)
+        move_vector = player.move(realm)
+        camera.move(move_vector)
+        world = realm.region_from_pixel_position(player.rect.center).groups
 
         monster: Monster
         for monster in world.monster:
             monster.target_enemy(player)
-            monster.move((world.player, world.solid))
+            monster.move(realm)
             monster.do_actions(world)
         check_bounds(world.missile)
 
         handle_missile_collisions(world)
         player.handle_item_pickup(world)
 
-        # offset = camera.offset + bg_offset
         screen.blit(background, dest=camera.offset)
         camera.draw_all()
 
@@ -202,7 +200,7 @@ def create_health_bar(player, world):
     player.add_observer(health_bar, "vitality")
 
 
-def display_debug(surface, position, clock, player, realm ):
+def display_debug(surface, position, clock, player, realm):
     font = make_font("Times New Roman", 20)
     pygame.draw.rect(surface, (0, 0, 0), Rect(0, 0, 160, 160))
     x, y = position

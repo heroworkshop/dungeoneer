@@ -3,7 +3,7 @@ import math
 from collections import defaultdict
 from random import randint
 from types import SimpleNamespace
-from typing import Union
+from typing import Union, Optional
 
 import pygame
 
@@ -78,28 +78,41 @@ class Actor(pygame.sprite.Sprite):
     def on_collided(self):
         """overload this to determine what happens when hitting a solid object"""
 
-    def move(self, solid_object_groups):
+    def move(self, realm) -> Optional[pygame.math.Vector2]:
+        """Move the actor based on its current direction and speed
+        Detect any collisions and work out the actual possible move vector
+        Returns:
+            pygame.math.Vector2 actual move
+        """
         if not self.direction.x and not self.direction.y:
             return
         velocity = pygame.math.Vector2(self.direction)
         velocity.scale_to_length(self.speed)
 
-        self.filmstrip = self.filmstrip_from_direction()
-        self.frame = (self.frame + 1) % len(self.filmstrip)
-        self.image = self.filmstrip[self.frame]
+        self.update_filmstrip()
 
         self.rect.centerx += int(velocity.x)
-        if any(filter(self.collided,  solid_object_groups)):
+        collide_pixel = self.rect.midleft if velocity.x < 0 else self.rect.midright
+        groups = realm.region_from_pixel_position(collide_pixel).groups
+        if self.collided(groups.solid):
             self.rect.centerx -= int(velocity.x)
             velocity.x = 0
         self.rect.centery += int(velocity.y)
-        if any(filter(self.collided, solid_object_groups)):
+        collide_pixel = self.rect.midtop if velocity.y < 0 else self.rect.midbottom
+        groups = realm.region_from_pixel_position(collide_pixel).groups
+        if self.collided(groups.solid):
             self.rect.centery -= int(velocity.y)
             velocity.y = 0
         for sprite in self._connected_sprites:
             sprite.rect.x += int(velocity.x)
             sprite.rect.y += int(velocity.y)
         return pygame.math.Vector2(-int(velocity.x), -int(velocity.y))
+
+    def update_filmstrip(self):
+        """Animate filmstrip using current direction"""
+        self.filmstrip = self.filmstrip_from_direction()
+        self.frame = (self.frame + 1) % len(self.filmstrip)
+        self.image = self.filmstrip[self.frame]
 
     def filmstrip_from_direction(self):
         if self.direction.length_squared():
