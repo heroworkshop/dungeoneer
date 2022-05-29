@@ -1,3 +1,4 @@
+import threading
 from random import randint
 
 import pygame
@@ -41,10 +42,10 @@ def out_of_bounds(sprite):
 
 
 class Camera:
-    def __init__(self, display_surface, groups, position=(0, 0) ):
+    def __init__(self, display_surface, groups, position=(0, 0)):
         super().__init__()
         self.display_surface = display_surface
-        self.offset = pygame.math.Vector2(position)
+        self.offset = -1 * pygame.math.Vector2(position)
         self.groups = list(groups)
 
     def draw_all(self):
@@ -58,72 +59,90 @@ class Camera:
             self.offset.update(self.offset + by_vector)
 
 
+class DungeoneerGame:
+    def __init__(self):
+        pygame.mixer.pre_init(frequency=44100)
+        pygame.init()
+        pygame.mixer.init(frequency=44100)
+        self.clock = pygame.time.Clock()
+        screen_flags = pygame.DOUBLEBUF  # | pygame.FULLSCREEN
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
+
+        self.realm = Realm((10, 10), tile_size=(40, 40), region_size=(SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
+        self.region = None
+        self.background = None
+        self.player = None
+        self.camera = None
+        self.key_event_dispatcher = KeyEventDispatcher()
+        self.message_store = Messages()
+        self.static_sprites = pygame.sprite.Group()
+
+    def initialise_realm(self):
+        self.realm.generate_map()
+        self.background = self.realm.render_tiles()
+
+    def place_player(self, in_region):
+        self.region = self.realm.region(in_region)
+        x, y = in_region[0] * self.region.pixel_width, in_region[1] * self.region.pixel_height
+        self.player = create_player(self.region, (x + 500, y + 500))
+        world = self.region.groups
+        # When the player moves, the rest of the world moves (blitted with an offset).
+        # All the groups that need to move are included here
+        scrolling_groups = (world.player, world.monster, world.missile, world.player_missile,
+                            world.items)
+        # Some things don't move but are still visible. They are included static_sprites
+        self.camera = Camera(self.screen, scrolling_groups, position=(x, y))
+
+        add_demo_items(self.region.groups, (x, y))
+        # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, randint(0, self.screen.get_height()), world)
+        # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, y + 800, randint(0, self.screen.get_height()), world)
+
+    def place_static_items(self):
+        create_health_bar(self.player, self.region.groups)
+
+        InventoryView(self.player.inventory, SCREEN_WIDTH - 80, 200, sprite_groups=[self.static_sprites])
+        self.key_event_dispatcher.register(InventoryController(self.player.inventory, self.player))
+
+    def game_loop(self):
+        while True:
+            handle_events(self.key_event_dispatcher, self.player, self.message_store)
+            move_vector = self.player.move(self.realm)
+            self.camera.move(move_vector)
+            world = self.realm.region_from_pixel_position(self.player.rect.center).groups
+
+            monster: Monster
+            for monster in world.monster:
+                monster.target_enemy(self.player)
+                monster.move(self.realm)
+                monster.do_actions(world)
+            check_bounds(world.missile)
+
+            handle_missile_collisions(world)
+            self.player.handle_item_pickup(world)
+
+            self.screen.blit(self.background, dest=self.camera.offset)
+            self.camera.draw_all()
+
+            self.static_sprites.update()
+            self.static_sprites.draw(self.screen)
+            display_debug(self.screen, (0, 0), self.clock, self.player, self.realm)
+            pygame.display.flip()
+            self.clock.tick(30)
+
 def play():
-    pygame.mixer.pre_init(frequency=44100)
-    pygame.init()
-    pygame.mixer.init(frequency=44100)
-    clock = pygame.time.Clock()
-    screen_flags = pygame.DOUBLEBUF  # | pygame.FULLSCREEN
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
-    intro.play(screen)
+    game = DungeoneerGame()
+    thread = threading.Thread(target=game.initialise_realm)
+    thread.start()
+    intro.play(game.screen)
 
-    realm = Realm((10, 10), tile_size=(40, 40), region_size=(SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
-    realm.generate_map()
-    region = realm.region((5, 5))
-    world = region.groups
-    background = realm.render_tiles()
-    bg_offset = -5 * region.pixel_width, -5 * region.pixel_height
-
-    x, y = bg_offset
-    player = create_player(region, (-x + 500, -y + 500) )
-    move_to_nearest_empty_space(player, [world.solid], 50)
-    create_health_bar(player, world)
-    static_sprites = pygame.sprite.Group()
-    InventoryView(player.inventory, SCREEN_WIDTH - 80, 200, sprite_groups=[static_sprites])
-    message_store = Messages()
-    # MessagesView(message_store, Rect(SCREEN_WIDTH - 200, 0, 200, 50), screen)
-    key_event_dispatcher = KeyEventDispatcher()
-    key_event_dispatcher.register(InventoryController(player.inventory, player))
-
-    add_demo_items(world, bg_offset)
-
-    make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 200, randint(0, screen.get_height()), world)
-    make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 800, randint(0, screen.get_height()), world)
+    thread.join()
+    # game.initialise_realm()
+    game.place_player((5, 5))
+    game.place_static_items()
 
     start_music("Dragon_and_Toast.mp3")
 
-    # When the player moves, the rest of the world moves (blitted with an offset).
-    # All the groups that need to move are included here
-    scrolling_groups = (world.player, world.monster, world.missile, world.player_missile,
-                        world.items)
-    # Some things don't move but are still visible. They are included static_sprites
-
-    camera = Camera(screen, scrolling_groups, position=bg_offset)
-
-    while True:
-        handle_events(key_event_dispatcher, player, message_store)
-        move_vector = player.move(realm)
-        camera.move(move_vector)
-        world = realm.region_from_pixel_position(player.rect.center).groups
-
-        monster: Monster
-        for monster in world.monster:
-            monster.target_enemy(player)
-            monster.move(realm)
-            monster.do_actions(world)
-        check_bounds(world.missile)
-
-        handle_missile_collisions(world)
-        player.handle_item_pickup(world)
-
-        screen.blit(background, dest=camera.offset)
-        camera.draw_all()
-
-        static_sprites.update()
-        static_sprites.draw(screen)
-        display_debug(screen, (0, 0), clock, player, realm )
-        pygame.display.flip()
-        clock.tick(30)
+    game.game_loop()
 
 
 def handle_missile_collisions(world):
@@ -160,7 +179,6 @@ def handle_events(key_event_dispatcher, player, message_store):
 
 def add_demo_items(world, position):
     x, y = position
-    x, y = -x, -y
     arrows: Item = items.ammo["arrow"]
     arrows.count = 5
     arrow_sprite = make_item_sprite(arrows, x + 500, y + 450)
