@@ -1,12 +1,14 @@
 import unittest
 
 import pygame
+from assertpy import assert_that
 
 from dungeoneer.actors import Player
 from dungeoneer.characters import MonsterType, Character, PlayerCharacterType
 from dungeoneer.interfaces import SpriteGroups, Item
 from dungeoneer import actors
 from dungeoneer.inventory import Inventory
+from dungeoneer.realms import Realm
 from dungeoneer.regions import Region
 
 
@@ -75,21 +77,23 @@ class TestGenerator(unittest.TestCase):
 
 class TestPlayerMovement(unittest.TestCase):
     def setUp(self):
-        self.world = SpriteGroups()
+        self.realm = Realm((4, 4), tile_size=(50, 50), region_size=(20, 20))
+        self.region = self.realm.region((0, 0))
+        self.world = self.region.groups
         player_character = Character(PlayerCharacterType.TOBY)
-        self.player = Player(500, 500, player_character, self.world)
+        self.player = Player(500, 500, player_character, self.region)
         self.player.collide_ratio = 1
 
     def test_moveRight_withNoObstruction_movesSpeedPixels(self):
         self.player.direction.update(1, 0)
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         expected_x = 500 + self.player.speed
         self.assertEqual(expected_x, self.player.rect.centerx)
         self.assertEqual(500, self.player.rect.centery)
 
     def test_moveLeft_withNoObstruction_movesSpeedPixels(self):
         self.player.direction.update(-1, 0)
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         expected_x = 500 - self.player.speed
         self.assertEqual(expected_x, self.player.rect.centerx)
         self.assertEqual(500, self.player.rect.centery)
@@ -97,7 +101,7 @@ class TestPlayerMovement(unittest.TestCase):
     def test_moveDiagonal_withNoObstruction_movesSpeedResolvedInXandYPixels(self):
         self.player.direction.update(1, -1)
         self.player.speed = 6
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         expected_x = int(500 + 4)  # 6sin(45) = 4.2
         expected_y = int(500 - 4)  # 6cos(45) = 4.2
         self.assertEqual(expected_x, self.player.rect.centerx)
@@ -108,7 +112,7 @@ class TestPlayerMovement(unittest.TestCase):
         block.rect = pygame.Rect(self.player.rect.right, 450, 100, 100)
         self.world.solid.add(block)
         self.player.direction.update(1, 0)
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         self.assertEqual(500, self.player.rect.centerx)
 
     @unittest.skip("As an optimisation, we don't bother about these pixels")
@@ -117,7 +121,7 @@ class TestPlayerMovement(unittest.TestCase):
         block.rect = pygame.Rect(self.player.rect.right+2, 450, 100, 100)
         self.world.solid.add(block)
         self.player.direction.update(1, 0)
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         self.assertEqual(502, self.player.rect.centerx)
 
     def test_moveLeft_withDirectlyLeft_doesNotMove(self):
@@ -125,7 +129,7 @@ class TestPlayerMovement(unittest.TestCase):
         block.rect = pygame.Rect(self.player.rect.left - 100, 450, 100, 100)
         self.world.solid.add(block)
         self.player.direction.update(-1, 0)
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         self.assertEqual(500, self.player.rect.centerx)
 
     def test_moveDiagonalRight_withWallToRight_MovesAlongWall(self):
@@ -133,7 +137,7 @@ class TestPlayerMovement(unittest.TestCase):
         block.rect = pygame.Rect(self.player.rect.right, 450, 100, 100)
         self.world.solid.add(block)
         self.player.direction.update(1, -1)
-        self.player.move([self.world.solid])
+        self.player.move(self.realm)
         self.assertEqual(500, self.player.rect.centerx)
         self.assertEqual(496, self.player.rect.centery)
 
@@ -142,9 +146,8 @@ class TestPlayerMovement(unittest.TestCase):
         block.rect = pygame.Rect(self.player.rect.left - 100, 450, 100, 100)
         self.world.solid.add(block)
         self.player.direction.update(-1, -1)
-        self.player.move([self.world.solid])
-        self.assertEqual(500, self.player.rect.centerx)
-        self.assertEqual(496, self.player.rect.centery)
+        self.player.move(self.realm)
+        assert_that(self.player.rect.center).is_equal_to((500, 496))
 
 
 class TestPlayer(unittest.TestCase):

@@ -31,12 +31,18 @@ class PointOutsideRealmBoundary(ValueError):
 
 
 class Realm:
-    """A realm is a variable sized grid of Regions"""
+    """A realm is a variable sized grid of Regions
+
+    Args:
+        size (tuple[int, int]): Number of regions in the x and y direction
+        tile_size (tuple[int, int]): pixel dimensions of a tile
+        region_size  (tuple[int, int]): tile dimensions of a region
+    """
 
     def __init__(self, size, tile_size, region_size=(50, 30)):
         region_width, region_height = region_size
         tile_width, tile_height = tile_size
-        self.region_pixel_size = region_width * tile_width, region_height * tile_height
+        self.region_pixel_size = int(region_width * tile_width), int(region_height * tile_height)
         self.regions = dict()
         self.width, self.height = size
 
@@ -78,6 +84,15 @@ class Realm:
         except PointOutsideRealmBoundary:
             raise PointOutsideRealmBoundary(f"Pixel Position {pixel_position} "
                                             f"was outside the realm with size ({self.width}, {self.height})")
+
+    def neighbouring_regions_from_pixel_position(self, pixel_position):
+        pixel_position = pygame.Vector2(pixel_position)
+        dx, dy = pygame.Vector2(self.region_pixel_size) // 2
+        neighbours = [(-dx, -dy), (0, -dy), (dx, -dy),
+                       (-dx, 0), (0, 0), (dx, 0),
+                       (-dx, dy), (0, dy), (dx, dy)]
+        region_coords = {self.region_coord_from_pixel_position(pygame.Vector2(n) + pixel_position) for n in neighbours}
+        return [self.region(p) for p in region_coords]
 
     def generate_map(self):
         width, height = self.region_pixel_size

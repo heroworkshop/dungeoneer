@@ -60,22 +60,23 @@ class Camera:
 
 
 class DungeoneerGame:
-    def __init__(self):
+    def __init__(self, screen_size: tuple[int, int], tile_size=(40, 40), realm_size=(10, 10)):
         pygame.mixer.pre_init(frequency=44100)
         pygame.init()
         pygame.mixer.init(frequency=44100)
         self.clock = pygame.time.Clock()
         screen_flags = pygame.DOUBLEBUF  # | pygame.FULLSCREEN
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), screen_flags)
-
-        self.realm = Realm((10, 10), tile_size=(40, 40), region_size=(SCREEN_WIDTH // 40, SCREEN_HEIGHT // 40))
+        self.screen = pygame.display.set_mode(screen_size, screen_flags)
+        self.region_size = screen_size[0] // tile_size[0], screen_size[1] // tile_size[1]
+        self.realm = Realm(realm_size , tile_size, self.region_size)
         self.region = None
         self.background = None
         self.player = None
-        self.camera = None
+        self.camera = Camera(self.screen, [])
         self.key_event_dispatcher = KeyEventDispatcher()
         self.message_store = Messages()
         self.static_sprites = pygame.sprite.Group()
+        self.fps = 40
 
     def initialise_realm(self):
         self.realm.generate_map()
@@ -84,13 +85,14 @@ class DungeoneerGame:
     def place_player(self, in_region):
         self.region = self.realm.region(in_region)
         x, y = in_region[0] * self.region.pixel_width, in_region[1] * self.region.pixel_height
-        self.player = create_player(self.region, (x + 500, y + 500))
+        region_offset = (self.region.pixel_width // 2, self.region.pixel_height // 2)
+        self.player = create_player(self.region, (x + region_offset[0], y + region_offset[1]))
         world = self.region.groups
         # When the player moves, the rest of the world moves (blitted with an offset).
         # All the groups that need to move are included here
         scrolling_groups = (world.player, world.monster, world.missile, world.player_missile,
                             world.items)
-        # Some things don't move but are still visible. They are included static_sprites
+        # Some things don't move but are still visible. They are in included static_sprites
         self.camera = Camera(self.screen, scrolling_groups, position=(x, y))
 
         add_demo_items(self.region.groups, (x, y))
@@ -108,16 +110,20 @@ class DungeoneerGame:
             handle_events(self.key_event_dispatcher, self.player, self.message_store)
             move_vector = self.player.move(self.realm)
             self.camera.move(move_vector)
-            world = self.realm.region_from_pixel_position(self.player.rect.center).groups
 
-            monster: Monster
-            for monster in world.monster:
-                monster.target_enemy(self.player)
-                monster.move(self.realm)
-                monster.do_actions(world)
-            check_bounds(world.missile)
+            # Move actors in current region and neighbouring regions
+            for region in self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center):
+                world = self.realm.region_from_pixel_position(self.player.rect.center).groups
 
-            handle_missile_collisions(world)
+                monster: Monster
+                for monster in world.monster:
+                    monster.target_enemy(self.player)
+                    monster.move(self.realm)
+                    monster.do_actions(world)
+                check_bounds(world.missile)
+
+                handle_missile_collisions(world)
+
             self.player.handle_item_pickup(world)
 
             self.screen.blit(self.background, dest=self.camera.offset)
@@ -127,16 +133,16 @@ class DungeoneerGame:
             self.static_sprites.draw(self.screen)
             display_debug(self.screen, (0, 0), self.clock, self.player, self.realm)
             pygame.display.flip()
-            self.clock.tick(30)
+            self.clock.tick(self.fps)
+
 
 def play():
-    game = DungeoneerGame()
+    game = DungeoneerGame((SCREEN_WIDTH, SCREEN_HEIGHT))
     thread = threading.Thread(target=game.initialise_realm)
     thread.start()
     intro.play(game.screen)
 
     thread.join()
-    # game.initialise_realm()
     game.place_player((5, 5))
     game.place_static_items()
 

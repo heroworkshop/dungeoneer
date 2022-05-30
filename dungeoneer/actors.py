@@ -15,6 +15,7 @@ from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item, make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.pathfinding import move_to_nearest_empty_space
+from dungeoneer.realms import Realm
 from dungeoneer.regions import Region
 from dungeoneer.scenery import VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
@@ -78,7 +79,7 @@ class Actor(pygame.sprite.Sprite):
     def on_collided(self):
         """overload this to determine what happens when hitting a solid object"""
 
-    def move(self, realm) -> Optional[pygame.math.Vector2]:
+    def move(self, realm: Realm) -> Optional[pygame.math.Vector2]:
         """Move the actor based on its current direction and speed
         Detect any collisions and work out the actual possible move vector
         Returns:
@@ -94,19 +95,22 @@ class Actor(pygame.sprite.Sprite):
         self.rect.centerx += int(velocity.x)
         collide_pixel = self.rect.midleft if velocity.x < 0 else self.rect.midright
         groups = realm.region_from_pixel_position(collide_pixel).groups
-        if self.collided(groups.solid):
+        if self.any_solid_collisions(groups):
             self.rect.centerx -= int(velocity.x)
             velocity.x = 0
         self.rect.centery += int(velocity.y)
         collide_pixel = self.rect.midtop if velocity.y < 0 else self.rect.midbottom
         groups = realm.region_from_pixel_position(collide_pixel).groups
-        if self.collided(groups.solid):
+        if self.any_solid_collisions(groups):
             self.rect.centery -= int(velocity.y)
             velocity.y = 0
         for sprite in self._connected_sprites:
             sprite.rect.x += int(velocity.x)
             sprite.rect.y += int(velocity.y)
         return pygame.math.Vector2(-int(velocity.x), -int(velocity.y))
+
+    def any_solid_collisions(self, groups):
+        return self.collided(groups.solid) or self.collided(groups.player)
 
     def update_filmstrip(self):
         """Animate filmstrip using current direction"""
@@ -184,6 +188,9 @@ class Player(Actor):
         super().__init__(x, y, character, region)
         self.inventory = Inventory()
         self.recently_dropped_items = set()  # item_sprites that have recently been dropped. Ignore until move away.
+
+    def any_solid_collisions(self, groups):
+        return self.collided(groups.solid)
 
     def drop(self, item: Item, motion=None):
         item_sprite = super().drop(item, motion=motion)
@@ -288,7 +295,7 @@ class Monster(Actor):
     def monster_retarget_seq(retarget_period):
         n = 0
         while True:
-            yield bool(n % retarget_period == 0)
+            yield n % retarget_period == 0
             n += 1
 
     def __init__(self, x, y, character, group, direction=(0, 0)):
