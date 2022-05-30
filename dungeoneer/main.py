@@ -94,8 +94,8 @@ class DungeoneerGame:
         self.camera = Camera(self.screen, scrolling_groups, position=(x, y))
 
         add_demo_items(self.region.groups, (x, y))
-        # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, randint(0, self.screen.get_height()), world)
-        # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, y + 800, randint(0, self.screen.get_height()), world)
+        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), world)
+        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), world)
 
     def place_static_items(self):
         create_health_bar(self.player, self.region.groups)
