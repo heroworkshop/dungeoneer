@@ -86,7 +86,7 @@ class DungeoneerGame:
         self.region = self.realm.region(in_region)
         x, y = in_region[0] * self.region.pixel_width, in_region[1] * self.region.pixel_height
         region_offset = (self.region.pixel_width // 2, self.region.pixel_height // 2)
-        self.player = create_player(self.region, (x + region_offset[0], y + region_offset[1]))
+        self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
         world = self.region.groups
         # When the player moves, the rest of the world moves (blitted with an offset).
         # All the groups that need to move are included here
@@ -96,8 +96,8 @@ class DungeoneerGame:
         self.camera = Camera(self.screen, scrolling_groups, position=(x, y))
 
         add_demo_items(self.region.groups, (x, y))
-        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), world)
-        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), world)
+        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
+        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
 
     def place_static_items(self):
         create_health_bar(self.player, self.region.groups)
@@ -119,7 +119,7 @@ class DungeoneerGame:
                 for monster in world.monster:
                     monster.target_enemy(self.player)
                     monster.move(self.realm)
-                    monster.do_actions(world)
+                    monster.do_actions(self.realm)
                 check_bounds(world.missile)
 
                 handle_missile_collisions(world)
@@ -205,10 +205,11 @@ def add_demo_items(world, position):
             world.all.add(item_sprite)
 
 
-def create_player(region: Region, position) -> Player:
+def create_player(realm: Realm, position) -> Player:
     player_character = Character(PlayerCharacterType.TOBY)
     x, y = position
-    player = Player(x, y, player_character, region)
+    player = Player(x, y, player_character, realm)
+    region = player.region
     move_to_nearest_empty_space(player, [region.groups.solid], 100)
     region.groups.all.add(player)
     region.groups.player.add(player)

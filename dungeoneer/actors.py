@@ -41,9 +41,9 @@ def extract_filmstrips(sprite_sheet: SpriteSheet):
 
 
 class Actor(pygame.sprite.Sprite):
-    def __init__(self, x, y, character, region: Region):
+    def __init__(self, x, y, character, realm: Realm):
         pygame.sprite.Sprite.__init__(self)
-        self.region = region
+        self.realm = realm
         self.filmstrips = extract_filmstrips(character.template.sprite_sheet)
         self.character = character
         self._vitality = character.vitality
@@ -61,6 +61,10 @@ class Actor(pygame.sprite.Sprite):
         self._connected_sprites = []
         self.observers = defaultdict(list)
         self.collide_ratio = 0.8
+
+    @property
+    def region(self):
+        return self.realm.region_from_pixel_position(self.rect.center)
 
     def add_observer(self, observer, attribute):
         self.observers[attribute].append(observer)
@@ -338,10 +342,10 @@ class Monster(Actor):
             self.region.groups.items.add(item)
         super().die()
 
-    def do_actions(self, world):
+    def do_actions(self, realm):
         for action in self.actions:
             if action.ready_action(self, self.targeted_enemy):
-                runner = action.create(world, self, self.targeted_enemy)
+                runner = action.create(realm, self, self.targeted_enemy)
                 runner_func = globals()[runner.name]
                 result = runner_func(**runner.parameters)
                 action.on_activated(result, self, self.targeted_enemy)
@@ -451,11 +455,12 @@ def make_attack_sprite(x, y, direction, group, attack_item: Ammo, repeats=False)
     return sprite
 
 
-def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, world: SpriteGroups, sleeping=False):
+def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, realm: Realm, sleeping=False):
     if type(monster_type) is str:
         monster_type = MonsterType[monster_type]
     monster = Character(monster_type)
-    monster_sprite = Monster(x, y, monster, world)
+    monster_sprite = Monster(x, y, monster, realm)
+    world = monster_sprite.region.groups
     if move_to_nearest_empty_space(monster_sprite, (world.solid, world.player), 500):
         monster.sleeping = sleeping
         world.all.add(monster_sprite)

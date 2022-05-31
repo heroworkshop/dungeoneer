@@ -45,10 +45,10 @@ class SummonAction(Action):
         self.monster_type_names = monster_type_names
         self.rate_of_fire = rate_of_fire
 
-    def create(self, world, owner, target) -> Runner:
+    def create(self, realm, owner, target) -> Runner:
         x, y = owner.rect.center
         monster_type_name = random.choice(self.monster_type_names)
-        parameters = dict(monster_type=monster_type_name, x=x, y=y, world=world)
+        parameters = dict(monster_type=monster_type_name, x=x, y=y, realm=realm)
         return Runner("make_monster_sprite", parameters)
 
 
@@ -60,12 +60,13 @@ class AttackAction(Action):
         self.rate_of_fire = rate_of_fire
         self.reach_squared = reach ** 2
 
-    def create(self, world, owner, target):
+    def create(self, realm, owner, target):
         x, y = target.rect.center
         ox, oy = owner.rect.center
         direction = x - ox, y - oy
         attack_item: Ammo = copy(items.generated_ammo[self.attack_item])
         attack_item.damage = self.damage
+        world = realm.region_from_pixel_position((x, y)).groups
         parameters = dict(x=x, y=y, direction=direction, group=world.missile,
                           attack_item=attack_item)
         return Runner("make_attack_sprite", parameters)
