@@ -90,7 +90,7 @@ class Realm:
 
     def neighbouring_regions_from_pixel_position(self, pixel_position):
         pixel_position = pygame.Vector2(pixel_position)
-        dx, dy = pygame.Vector2(self.region_pixel_size) // 2
+        dx, dy = self.region_pixel_size
         neighbours = [(-dx, -dy), (0, -dy), (dx, -dy),
                       (-dx, 0), (0, 0), (dx, 0),
                       (-dx, dy), (0, dy), (dx, dy)]
