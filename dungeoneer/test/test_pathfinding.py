@@ -11,11 +11,11 @@ class TinyBlock(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.rect = pygame.Rect(x, y, 1, 1)
 
+
 class BigBlock(pygame.sprite.Sprite):
     def __init__(self, x, y, *groups):
         super().__init__(*groups)
         self.rect = pygame.Rect(x, y, 10, 10)
-
 
 
 class TestMoveToNearestEmptySpace(unittest.TestCase):
@@ -24,7 +24,6 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
         tile = TinyBlock(1, 1)
         result = move_to_nearest_empty_space(tile, [world.solid], 3)
         self.assertEqual((1, 1), result.rect.center)
-
 
     def test_move_withSpriteOnTop_movesAdjacent(self):
         world = SpriteGroups()

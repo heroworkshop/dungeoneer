@@ -1,7 +1,7 @@
 import unittest
 
-from dungeoneer.score_bar import ScoreBar
 from dungeoneer.interfaces import Direction
+from dungeoneer.score_bar import ScoreBar
 from dungeoneer.spritesheet import SpriteSheet
 from dungeoneer.test.pixel_grid import make_pixel_grid
 

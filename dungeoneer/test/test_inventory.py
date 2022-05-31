@@ -1,7 +1,8 @@
 import unittest
 from contextlib import suppress
-from dungeoneer.inventory import Inventory, InventoryFull
+
 from dungeoneer.interfaces import Item, Observer
+from dungeoneer.inventory import Inventory, InventoryFull
 from dungeoneer.items import Food
 
 

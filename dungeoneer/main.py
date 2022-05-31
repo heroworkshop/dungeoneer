@@ -4,8 +4,9 @@ from random import randint
 import pygame
 from pygame.rect import Rect
 
-from dungeoneer import sprite_effects
 from dungeoneer import intro
+from dungeoneer import items
+from dungeoneer import sprite_effects
 from dungeoneer.actors import Player, make_monster_sprite, Monster
 from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
 from dungeoneer.event_dispatcher import KeyEventDispatcher
@@ -16,7 +17,6 @@ from dungeoneer.interfaces import Item
 from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
-from dungeoneer import items
 from dungeoneer.messages import Messages
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.realms import Realm
@@ -68,7 +68,7 @@ class DungeoneerGame:
         screen_flags = pygame.DOUBLEBUF  # | pygame.FULLSCREEN
         self.screen = pygame.display.set_mode(screen_size, screen_flags)
         self.region_size = screen_size[0] // tile_size[0], screen_size[1] // tile_size[1]
-        self.realm = Realm(realm_size , tile_size, self.region_size)
+        self.realm = Realm(realm_size, tile_size, self.region_size)
         self.region = None
         self.background = None
         self.player = None

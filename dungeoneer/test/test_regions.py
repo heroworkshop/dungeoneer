@@ -3,7 +3,6 @@ import unittest
 import pygame
 
 from dungeoneer.characters import MonsterType
-from dungeoneer.interfaces import SpriteGroups
 from dungeoneer.regions import Region, Tile, TileType, SubRegion
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -16,6 +15,7 @@ def make_test_tile(colour, width=32, height=32):
 
 RED_TILE = make_test_tile((255, 0, 0))
 BLUE_TILE = make_test_tile((0, 0, 255))
+
 
 class TestRegion(unittest.TestCase):
 
@@ -52,8 +52,8 @@ class TestRegion(unittest.TestCase):
         w, h = surface.get_size()
         # examine colour of tile midpoints
         red = RED_TILE.filmstrip[0].get_at((0, 0))
-        for x in range(w//6, w, w//3):
-            for y in range(h//6, h, h//3):
+        for x in range(w // 6, w, w // 3):
+            for y in range(h // 6, h, h // 3):
                 result = surface.get_at((x, y))
                 self.assertEqual(red, result)
 
@@ -70,10 +70,10 @@ class TestRegion(unittest.TestCase):
         # examine colour of tile midpoints
         red = RED_TILE.filmstrip[0].get_at((0, 0))
         blue = BLUE_TILE.filmstrip[0].get_at((0, 0))
-        for x in range(w//6, w, w//3):
-            for y in range(h//6, h, h//3):
+        for x in range(w // 6, w, w // 3):
+            for y in range(h // 6, h, h // 3):
                 result = surface.get_at((x, y))
-                expected = blue if x == w//2 and y == h//2 else red
+                expected = blue if x == w // 2 and y == h // 2 else red
                 self.assertEqual(expected, result)
 
     def test_place_withAnimatedTile_addsTileToAnimatedTiles(self):

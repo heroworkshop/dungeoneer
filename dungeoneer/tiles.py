@@ -3,9 +3,7 @@ from collections import namedtuple
 import pygame
 
 from dungeoneer import game_assets
-
 from dungeoneer.spritesheet import SpriteSheet
-
 
 Coord = namedtuple("coord", "x y")
 

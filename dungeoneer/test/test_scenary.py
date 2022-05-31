@@ -2,9 +2,9 @@ import unittest
 
 from dungeoneer.interfaces import SpriteGroups
 from dungeoneer.scenery import VisualEffect
+from dungeoneer.scenery import parabolic_motion
 from dungeoneer.spritesheet import SpriteSheet
 from dungeoneer.test.pixel_grid import make_pixel_grid
-from dungeoneer.scenery import parabolic_motion
 
 SPRITE_SHEET = SpriteSheet(make_pixel_grid(5, 2), 5, 2)
 FILM_STRIP = SPRITE_SHEET.filmstrip(0, 10)
@@ -63,4 +63,3 @@ class TestMotionPathGeneration(unittest.TestCase):
         result = parabolic_motion(-15, 5, -2, 1)
         expected = [(-3, -2), (-3, -1), (-3, 0), (-3, 1), (-3, 2)]
         self.assertEqual(expected, result)
-

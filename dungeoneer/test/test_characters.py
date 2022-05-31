@@ -1,4 +1,5 @@
 import unittest
+
 from dungeoneer.characters import Character, MonsterType, PlayerCharacterType
 
 

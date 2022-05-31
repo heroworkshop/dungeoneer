@@ -1,7 +1,7 @@
 from contextlib import suppress
 from copy import copy
 
-from dungeoneer.interfaces import Observable, Observer, Item
+from dungeoneer.interfaces import Observable, Item
 
 
 class InventoryFull(RuntimeError):

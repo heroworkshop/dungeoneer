@@ -1,6 +1,6 @@
-from dungeoneer.sound_effects import SfxEvents
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory import Inventory
+from dungeoneer.sound_effects import SfxEvents
 
 
 class Ammo(Item):
@@ -50,7 +50,6 @@ def make_item_dict(using_class, *args):
 specials = make_item_dict(Melee, ("unarmed strike", "swipe", 1.5, 2))
 specials.update(make_item_dict(Launcher, ("thrown", 1)))
 
-
 ammo = make_item_dict(
     Ammo,
     ("arrow", 10, [100], 8, 70, SfxEvents(activate="arrow.wav")),
@@ -96,7 +95,7 @@ food = make_item_dict(
 
 potions = make_item_dict(
     Potion,
-    ("red potion", ),
+    ("red potion",),
     ("orange potion",),
     ("yellow potion",),
     ("blue potion",),

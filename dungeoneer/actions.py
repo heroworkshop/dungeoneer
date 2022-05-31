@@ -1,9 +1,9 @@
+import abc
 import random
 from collections import namedtuple
 from copy import copy
 
 import pygame
-import abc
 
 from dungeoneer import items
 from dungeoneer.items import Ammo

@@ -3,8 +3,6 @@ from unittest.mock import MagicMock
 
 import pygame
 
-from dungeoneer import interfaces
-from dungeoneer.actors import Player
 from dungeoneer.event_dispatcher import KeyEventDispatcher
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory import Inventory
@@ -33,7 +31,6 @@ class TestInventoryController(unittest.TestCase):
         self.assertEqual(None, inventory.current_selection)
 
     def test_on_key_down_withDropKey_tellsPlayerToDropItem(self):
-
         player = MagicMock()
         inventory = Inventory()
         arrow = Item("arrow")

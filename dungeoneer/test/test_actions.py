@@ -1,12 +1,15 @@
 import unittest
+
 import pygame
 
 from dungeoneer import actions
+
 
 class TestSprite(pygame.sprite.Sprite):
     def __init__(self, rect):
         super().__init__()
         self.rect = rect
+
 
 class TestBaseClass(unittest.TestCase):
     def test_createActionBaseClass_raisesTypeError(self):
@@ -37,6 +40,6 @@ class TestAttackAction(unittest.TestCase):
         result = attack_action.valid_target(owner, target)
         self.assertEqual(False, result)
 
-        
+
 if __name__ == '__main__':
     unittest.main()

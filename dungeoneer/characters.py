@@ -54,7 +54,7 @@ class MonsterType(enum.Enum):
                 sprite_sheet=make_sprite_sheet("mummy"),
                 actions=[AttackAction("swipe", 20)]
                 )
-    
+
 
 class PlayerCharacterType(enum.Enum):
     _CT = CharacterTemplate

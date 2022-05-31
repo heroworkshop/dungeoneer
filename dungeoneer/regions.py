@@ -212,4 +212,4 @@ class SubRegion:
             ascii_map[(x, self.top_left.y + self.size.height - 1)] = "."
         for y in range(self.top_left.y, self.top_left.y + self.size.height):
             ascii_map[(self.top_left.x, y)] = "."
-            ascii_map[(self.top_left.x + self.size.width-1, y)] = "."
+            ascii_map[(self.top_left.x + self.size.width - 1, y)] = "."

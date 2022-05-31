@@ -1,14 +1,13 @@
 import math
 from collections import OrderedDict
-from functools import partial
 
 import pygame
 from pygame.sprite import Sprite
+
 from dungeoneer.interfaces import SpriteGroups
 
 
 def move_to_nearest_empty_space(tile: Sprite, solid_groups, max_distance: int):
-
     initial_x, initial_y = tile.rect.center
     locations = OrderedDict()
     checked = set()
@@ -48,7 +47,6 @@ def move_to_nearest_empty_space(tile: Sprite, solid_groups, max_distance: int):
 
 
 def move_to_nearest_empty_space_tiled(tile: Sprite, world: SpriteGroups, max_distance: int):
-
     initial_x, initial_y = tile.rect.center
     locations = OrderedDict()
     checked = set()
@@ -62,7 +60,7 @@ def move_to_nearest_empty_space_tiled(tile: Sprite, world: SpriteGroups, max_dis
     height = tile.rect.height
     search_breadth = 1
 
-    while search_breadth*width < max_distance:
+    while search_breadth * width < max_distance:
         while locations:
             x, y = locations.pop(0)
             checked.add((x, y))

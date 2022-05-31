@@ -1,7 +1,7 @@
+import random
 from contextlib import suppress
 
 import pygame
-import random
 
 from dungeoneer.actors import Player
 from dungeoneer.interfaces import KeyObserver
@@ -39,7 +39,9 @@ class InventoryController(KeyObserver):
 
     It is intended that this is used in conjunction with a KeyEventDispatcher.
     """
-    def __init__(self, inventory: Inventory, player: Player, key_map=SLOT_KEYS):
+
+    def __init__(self, inventory: Inventory, player: Player, key_map=None):
+        key_map = key_map or SLOT_KEYS
         self.inventory = inventory
         self.key_map = key_map
         self.player = player

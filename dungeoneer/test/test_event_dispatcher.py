@@ -1,4 +1,5 @@
 import unittest
+
 import pygame
 
 from dungeoneer.event_dispatcher import KeyEventDispatcher

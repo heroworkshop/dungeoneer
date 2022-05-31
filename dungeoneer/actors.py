@@ -176,7 +176,7 @@ class Actor(pygame.sprite.Sprite):
         return missile
 
     def make_missile(self, dx, dy, ammo_item):
-        raise NotImplemented
+        raise NotImplementedError
 
     def connect(self, sprite):
         """A connected sprite will move when the other sprite moves"""

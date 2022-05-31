@@ -35,6 +35,5 @@ class TestScalingEffects(unittest.TestCase):
         self.assertEqual(corners[0], centers[1])
 
 
-
 if __name__ == '__main__':
     unittest.main()

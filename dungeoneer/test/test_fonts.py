@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import patch
 from unittest.mock import MagicMock
+from unittest.mock import patch
+
 from dungeoneer import fonts
 
 
@@ -47,7 +48,6 @@ class TestCaptions(unittest.TestCase):
         while caption.update():
             pass
         self.assertLess(mock_screen.blit.call_count, slow_count)
-
 
 
 if __name__ == '__main__':

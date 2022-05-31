@@ -1,5 +1,6 @@
-import pygame
 import sys
+
+import pygame
 from pygame.locals import *
 
 from dungeoneer import interfaces
@@ -38,7 +39,6 @@ dungeoneer_pattern = """
 
 
 def plot_blocks(pattern):
-
     world = interfaces.SpriteGroups()
     create_objects([pattern], 0, world, (-150, 200))
 

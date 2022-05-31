@@ -25,6 +25,7 @@ class Messages(Observable):
     def attribute(self, attribute_id):
         return [message for message in self.messages if attribute_id == message.type]
 
+
 @dataclass
 class Margin:
     top: int

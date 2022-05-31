@@ -1,8 +1,8 @@
 import unittest
+
 import pygame
 
 from dungeoneer import tiles
-
 
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)

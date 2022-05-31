@@ -3,10 +3,10 @@ import unittest
 import pygame
 from assertpy import assert_that
 
+from dungeoneer import actors
 from dungeoneer.actors import Player
 from dungeoneer.characters import MonsterType, Character, PlayerCharacterType
 from dungeoneer.interfaces import SpriteGroups, Item
-from dungeoneer import actors
 from dungeoneer.inventory import Inventory
 from dungeoneer.realms import Realm
 from dungeoneer.regions import Region
@@ -118,7 +118,7 @@ class TestPlayerMovement(unittest.TestCase):
     @unittest.skip("As an optimisation, we don't bother about these pixels")
     def test_moveRight_withWall2PixelsLeft_Moves2Pixels(self):
         block = pygame.sprite.Sprite()
-        block.rect = pygame.Rect(self.player.rect.right+2, 450, 100, 100)
+        block.rect = pygame.Rect(self.player.rect.right + 2, 450, 100, 100)
         self.world.solid.add(block)
         self.player.direction.update(1, 0)
         self.player.move(self.realm)

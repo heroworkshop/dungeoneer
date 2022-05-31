@@ -1,11 +1,12 @@
 import unittest
+
 import pygame
 
 from dungeoneer import interfaces
-from dungeoneer.inventory import Inventory
-from dungeoneer.inventory_view import InventoryView, SlotView
 from dungeoneer import inventory_view
 from dungeoneer.interfaces import Direction, Item
+from dungeoneer.inventory import Inventory
+from dungeoneer.inventory_view import InventoryView, SlotView
 
 
 class TestInventoryView(unittest.TestCase):

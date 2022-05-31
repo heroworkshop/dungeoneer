@@ -1,8 +1,8 @@
 import heapq
+import random
 from collections import defaultdict
 from contextlib import suppress
 from enum import Enum
-import random
 from typing import Iterable, List
 
 from dungeoneer.regions import TileType, Position, SubRegion, Region
@@ -182,7 +182,7 @@ def make_rooms_in_subregions(sub_regions: List[SubRegion]):
         dy = cy - y1  # distance from centre to top wall
         if dy > 1:
             y1 = cy - weighted_scale_down(dy)
-        dx = x2 - cx   # distance from centre to right wall
+        dx = x2 - cx  # distance from centre to right wall
         if dx > 1:
             x2 = cx + weighted_scale_down(dx)
         dy = y2 - cy  # distance from centre to bottom wall

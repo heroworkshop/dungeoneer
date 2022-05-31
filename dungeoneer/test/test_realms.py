@@ -13,7 +13,6 @@ class TestRealm(unittest.TestCase):
         assert_that(realm).is_length(25)
         assert_that(realm.region((0, 0))).is_instance_of(Region)
 
-
     def test_region_from_pixel_position_with10x10Regions_returnsCorrectRegion(self):
         coords = {
             (0, 0): (0, 0),
@@ -40,7 +39,6 @@ class TestRealm(unittest.TestCase):
         realm = Realm((10, 10), tile_size=(10, 20), region_size=(10, 10))
         for pixel_pos in coords:
             with self.subTest(pixel_pos=pixel_pos):
-                assert_that(realm.region_from_pixel_position).\
-                    raises(PointOutsideRealmBoundary).\
+                assert_that(realm.region_from_pixel_position). \
+                    raises(PointOutsideRealmBoundary). \
                     when_called_with(pixel_pos)
-

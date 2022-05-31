@@ -5,8 +5,7 @@ from dungeoneer.spritesheet import SpriteSheet
 TILE_HEIGHT = 32
 TILE_WIDTH = 32
 
-baby_dungeon_design = []
-baby_dungeon_design.append("""
+baby_dungeon_design = ["""
 #########~~~###############################
 #.....   ~~~      z,z        #            #
 #....    ___   #z zZz        #
@@ -33,7 +32,7 @@ baby_dungeon_design.append("""
 #               ~~~    %     #
 #          #   ~~~           #
 ##############################################
-""")
+"""]
 
 
 class SceneryType:

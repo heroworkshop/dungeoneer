@@ -1,4 +1,5 @@
 import unittest
+
 from assertpy import assert_that
 
 from dungeoneer.main import DungeoneerGame
