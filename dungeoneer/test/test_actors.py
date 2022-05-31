@@ -13,14 +13,15 @@ from dungeoneer.regions import Region
 
 
 class TestZombie(unittest.TestCase):
+    def setUp(self):
+        self.realm = Realm(size=(10, 10), tile_size=(40, 40))
+
     def test_make_monster_withZombie(self):
-        world = SpriteGroups()
-        zombie = actors.make_monster_sprite(MonsterType.ZOMBIE, 0, 0, world)
+        zombie = actors.make_monster_sprite(MonsterType.ZOMBIE, 0, 0, self.realm)
         self.assertEqual(3, len(zombie.filmstrips.walk_south))
 
     def test_monsters_have_unlimited_ammo(self):
-        world = SpriteGroups()
-        zombie = actors.make_monster_sprite(MonsterType.ZOMBIE, 0, 0, world)
+        zombie = actors.make_monster_sprite(MonsterType.ZOMBIE, 0, 0, self.realm)
         ammo = zombie.ammo
         self.assertGreater(ammo, 0)
         zombie.expend_ammo()
@@ -28,51 +29,48 @@ class TestZombie(unittest.TestCase):
 
 
 class TestGenerator(unittest.TestCase):
-    def test_generator_withOneGenerator_produceMonsters(self):
-        world = SpriteGroups()
+    def setUp(self):
+        self.realm = Realm(size=(10, 10), tile_size=(40, 40))
+        self.groups = self.realm.region((0, 0)).groups
         player_character = Character(PlayerCharacterType.TOBY)
-        player = Player(500, 500, player_character, world)
-        generator = actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, world)
-        generator.targeted_enemy = player
-        self.assertEqual(1, len(world.solid))
-        generator.do_actions(world)
-        self.assertEqual(2, len(world.solid))
+        self.player = Player(50, 50, player_character, self.realm)
+
+
+    def test_generator_withOneGenerator_produceMonsters(self):
+        generator = actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, self.realm)
+        generator.targeted_enemy = self.player
+        self.assertEqual(1, len(self.groups.solid))
+        generator.do_actions(self.realm)
+        self.assertEqual(2, len(self.groups.solid))
 
     def test_generator_withTwoGenerators_produceTwoMonsters(self):
-        world = SpriteGroups()
-        self.assertEqual(0, len(world.solid))
-        player_character = Character(PlayerCharacterType.TOBY)
-        player = Player(500, 500, player_character, world)
-        generators = [actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
-                      actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
+        generators = [actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, self.realm),
+                      actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 100, 100, self.realm)]
 
-        self.assertEqual(2, len(world.solid))
+        self.assertEqual(2, len(self.groups.solid))
         for g in generators:
-            g.targeted_enemy = player
-            g.do_actions(world)
-        self.assertEqual(4, len(world.solid))
+            g.targeted_enemy = self.player
+            g.do_actions(self.realm)
+        self.assertEqual(4, len(self.groups.solid))
 
     def test_generator_withTime_producesMonstersAtRateOfFire(self):
         pygame.time.Clock()
-        world = SpriteGroups()
-        player_character = Character(PlayerCharacterType.TOBY)
-        player = Player(500, 500, player_character, world)
-        generators = [actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, world),
-                      actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 100, 100, world)]
+        generators = [actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 0, 0, self.realm),
+                      actors.make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, 100, 100, self.realm)]
 
-        self.assertEqual(2, len(world.solid))
+        self.assertEqual(2, len(self.groups.solid))
         for g in generators:
-            g.targeted_enemy = player
+            g.targeted_enemy = self.player
             g.actions[0].rate_of_fire = 10
-            g.do_actions(world)
-        self.assertEqual(4, len(world.solid))
+            g.do_actions(self.realm)
+        self.assertEqual(4, len(self.groups.solid))
         t = pygame.time.get_ticks()
         while True:
             for g in generators:
-                g.do_actions(world)
+                g.do_actions(self.realm)
             if t + 150 < pygame.time.get_ticks():
                 break
-        self.assertEqual(6, len(world.solid))
+        self.assertEqual(6, len(self.groups.solid))
 
 
 class TestPlayerMovement(unittest.TestCase):
@@ -152,9 +150,9 @@ class TestPlayerMovement(unittest.TestCase):
 
 class TestPlayer(unittest.TestCase):
     def setUp(self):
-        self.region = Region((20, 20))
+        self.realm = Realm(size=(10, 10), tile_size=(20, 20))
         player_character = Character(PlayerCharacterType.TOBY)
-        self.player = Player(500, 500, player_character, self.region)
+        self.player = Player(500, 500, player_character, self.realm)
 
     def test_player_ammo_depletes(self):
         self.player.inventory.add_item(Item("arrow"), slot=Inventory.AMMO)
