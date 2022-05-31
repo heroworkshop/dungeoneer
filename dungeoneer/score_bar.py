@@ -4,7 +4,7 @@ from dungeoneer.interfaces import Observer, Item, Direction
 
 
 class ScoreBar(pygame.sprite.Sprite, Observer):
-    def __init__(self, x, y, unit_filmstrip, score, score_per_unit=10,
+    def __init__(self, x:int, y:int, unit_filmstrip, score: int, score_per_unit=10,
                  direction=Direction.LEFT_TO_RIGHT, frame_length=1):
         super().__init__()
         self.unit_filmstrip = unit_filmstrip

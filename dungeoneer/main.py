@@ -20,7 +20,6 @@ from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.messages import Messages
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.realms import Realm
-from dungeoneer.regions import Region
 from dungeoneer.score_bar import ScoreBar
 from dungeoneer.sound_effects import start_music
 from dungeoneer.spritesheet import SpriteSheet
@@ -100,7 +99,7 @@ class DungeoneerGame:
         make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
 
     def place_static_items(self):
-        create_health_bar(self.player, self.region.groups)
+        create_health_bar(self.player, self.static_sprites)
 
         InventoryView(self.player.inventory, SCREEN_WIDTH - 80, 200, sprite_groups=[self.static_sprites])
         self.key_event_dispatcher.register(InventoryController(self.player.inventory, self.player))
@@ -127,6 +126,7 @@ class DungeoneerGame:
             self.player.handle_item_pickup(world)
 
             self.screen.blit(self.background, dest=self.camera.offset)
+            pygame.draw.rect(self.screen, (0, 0, 0), Rect(0, 0, SCREEN_WIDTH, 50))
             self.camera.draw_all()
 
             self.static_sprites.update()
@@ -216,18 +216,18 @@ def create_player(realm: Realm, position) -> Player:
     return player
 
 
-def create_health_bar(player, world):
+def create_health_bar(player, group):
     heart = pygame.image.load(image_file("heart.png"))
     heart_filmstrip = SpriteSheet(heart, 1, 1).filmstrip(scale=0.1)
     throbbing_heart = sprite_effects.throbbing(heart_filmstrip[0])
-    health_bar = ScoreBar(30, 30, throbbing_heart, 100, 10, frame_length=50)
-    world.hud.add(health_bar)
+    health_bar = ScoreBar(SCREEN_WIDTH - 500, 20, throbbing_heart, 100, 10, frame_length=50)
+    group.add(health_bar)
     player.add_observer(health_bar, "vitality")
 
 
 def display_debug(surface, position, clock, player, realm):
     font = make_font("Times New Roman", 20)
-    pygame.draw.rect(surface, (0, 0, 0), Rect(0, 0, 160, 160))
+    pygame.draw.rect(surface, (0, 0, 0), Rect(0, 50, 160, 100))
     x, y = position
 
     caption = font.render(str(int(clock.get_fps())), True, (255, 255, 255))
