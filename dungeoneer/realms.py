@@ -18,10 +18,12 @@ Regions are also arranged in a grid of variable size and this is known as a real
   I    |    |    I
   ================
 """
+from contextlib import suppress
 from random import randint
 
 import pygame
 
+from dungeoneer.interfaces import SpriteGroups
 from dungeoneer.map_maker import generate_map, DesignType
 from dungeoneer.regions import Position, Region
 
@@ -43,8 +45,9 @@ class Realm:
         region_width, region_height = region_size
         tile_width, tile_height = tile_size
         self.region_pixel_size = int(region_width * tile_width), int(region_height * tile_height)
-        self.regions = dict()
+        self.regions = {}
         self.width, self.height = size
+        self.groups = SpriteGroups()  # global across all regions
 
         self.create_empty_regions(region_size)
 
@@ -92,7 +95,11 @@ class Realm:
                       (-dx, 0), (0, 0), (dx, 0),
                       (-dx, dy), (0, dy), (dx, dy)]
         region_coords = {self.region_coord_from_pixel_position(pygame.Vector2(n) + pixel_position) for n in neighbours}
-        return [self.region(p) for p in region_coords]
+        results = []
+        for p in region_coords:
+            with suppress(PointOutsideRealmBoundary):
+                results.append(self.region(p))
+        return results
 
     def generate_map(self):
         width, height = self.region_pixel_size

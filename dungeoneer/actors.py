@@ -10,7 +10,7 @@ import pygame
 from dungeoneer import game_assets, treasure, items
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
-from dungeoneer.interfaces import SpriteGroups, Item
+from dungeoneer.interfaces import Item
 from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item, make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher
@@ -99,13 +99,13 @@ class Actor(pygame.sprite.Sprite):
         self.rect.centerx += int(velocity.x)
         collide_pixel = self.rect.midleft if velocity.x < 0 else self.rect.midright
         groups = realm.region_from_pixel_position(collide_pixel).groups
-        if self.any_solid_collisions(groups):
+        if self.any_solid_collisions(groups) or self.any_solid_collisions(realm.groups):
             self.rect.centerx -= int(velocity.x)
             velocity.x = 0
         self.rect.centery += int(velocity.y)
         collide_pixel = self.rect.midtop if velocity.y < 0 else self.rect.midbottom
         groups = realm.region_from_pixel_position(collide_pixel).groups
-        if self.any_solid_collisions(groups):
+        if self.any_solid_collisions(groups) or self.any_solid_collisions(realm.groups):
             self.rect.centery -= int(velocity.y)
             velocity.y = 0
         for sprite in self._connected_sprites:
@@ -188,8 +188,8 @@ class Actor(pygame.sprite.Sprite):
 
 
 class Player(Actor):
-    def __init__(self, x, y, character, region: Region):
-        super().__init__(x, y, character, region)
+    def __init__(self, x, y, character, realm: Realm):
+        super().__init__(x, y, character, realm)
         self.inventory = Inventory()
         self.recently_dropped_items = set()  # item_sprites that have recently been dropped. Ignore until move away.
 

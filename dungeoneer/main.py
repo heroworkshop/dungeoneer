@@ -2,6 +2,7 @@ import threading
 from random import randint
 
 import pygame
+from pygame import Surface
 from pygame.rect import Rect
 
 from dungeoneer import intro
@@ -41,17 +42,26 @@ def out_of_bounds(sprite):
 
 
 class Camera:
-    def __init__(self, display_surface, groups, position=(0, 0)):
+    def __init__(self, display_surface: Surface, realm: Realm, position=(0, 0)):
         super().__init__()
         self.display_surface = display_surface
         self.offset = -1 * pygame.math.Vector2(position)
-        self.groups = list(groups)
+        self.realm = realm
+
+    def draw_groups(self, groups):
+        return (groups.player, groups.monster, groups.missile, groups.player_missile,
+                groups.items)
 
     def draw_all(self):
-        for group in self.groups:
-            for sprite in group.sprites():
-                offset_pos = sprite.rect.topleft + self.offset
-                self.display_surface.blit(sprite.image, offset_pos)
+        """Draw all drawable groups in each nearby region plus in the realm's global group"""
+        position = -1 * self.offset
+        all_groups = [region.groups for region in self.realm.neighbouring_regions_from_pixel_position(position)]
+        all_groups.append(self.realm.groups)
+        for groups in all_groups:
+            for group in self.draw_groups(groups):
+                for sprite in group.sprites():
+                    offset_pos = sprite.rect.topleft + self.offset
+                    self.display_surface.blit(sprite.image, offset_pos)
 
     def move(self, by_vector):
         if by_vector:
@@ -71,7 +81,7 @@ class DungeoneerGame:
         self.region = None
         self.background = None
         self.player = None
-        self.camera = Camera(self.screen, [])
+        self.camera = Camera(self.screen, self.realm)
         self.key_event_dispatcher = KeyEventDispatcher()
         self.message_store = Messages()
         self.static_sprites = pygame.sprite.Group()
@@ -86,13 +96,7 @@ class DungeoneerGame:
         x, y = in_region[0] * self.region.pixel_width, in_region[1] * self.region.pixel_height
         region_offset = (self.region.pixel_width // 2, self.region.pixel_height // 2)
         self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
-        world = self.region.groups
-        # When the player moves, the rest of the world moves (blitted with an offset).
-        # All the groups that need to move are included here
-        scrolling_groups = (world.player, world.monster, world.missile, world.player_missile,
-                            world.items)
-        # Some things don't move but are still visible. They are in included static_sprites
-        self.camera = Camera(self.screen, scrolling_groups, position=(x, y))
+        self.camera = Camera(self.screen, self.realm, position=(x, y))
 
         add_demo_items(self.region.groups, (x, y))
         make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
@@ -110,30 +114,41 @@ class DungeoneerGame:
             move_vector = self.player.move(self.realm)
             self.camera.move(move_vector)
 
-            # Move actors in current region and neighbouring regions
-            for region in self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center):
-                world = self.realm.region_from_pixel_position(self.player.rect.center).groups
+            self.move_monsters()
 
-                monster: Monster
-                for monster in world.monster:
-                    monster.target_enemy(self.player)
-                    monster.move(self.realm)
-                    monster.do_actions(self.realm)
-                check_bounds(world.missile)
+            world = self.realm.region_from_pixel_position(self.player.rect.center).groups
+            check_bounds(world.missile)
 
-                handle_missile_collisions(world)
+            handle_missile_collisions(world)
 
             self.player.handle_item_pickup(world)
 
             self.screen.blit(self.background, dest=self.camera.offset)
-            pygame.draw.rect(self.screen, (0, 0, 0), Rect(0, 0, SCREEN_WIDTH, 50))
             self.camera.draw_all()
 
+            pygame.draw.rect(self.screen, (0, 0, 0), Rect(0, 0, SCREEN_WIDTH, 50))
             self.static_sprites.update()
             self.static_sprites.draw(self.screen)
             display_debug(self.screen, (0, 0), self.clock, self.player, self.realm)
             pygame.display.flip()
             self.clock.tick(self.fps)
+
+    def move_monsters(self):
+        # Move monsters in current region and neighbouring regions
+        for region in self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center):
+            world = region.groups
+
+            monster: Monster
+            for monster in world.monster:
+                monster.target_enemy(self.player)
+                monster.move(self.realm)
+                # update region if monster has moved across regions
+                if monster not in monster.region.groups.monster:
+                    world.monster.remove(monster)
+                    actual_region = monster.region
+                    monster.add(actual_region.groups.monster)
+
+                monster.do_actions(self.realm)
 
 
 def play():
@@ -211,8 +226,7 @@ def create_player(realm: Realm, position) -> Player:
     player = Player(x, y, player_character, realm)
     region = player.region
     move_to_nearest_empty_space(player, [region.groups.solid], 100)
-    region.groups.all.add(player)
-    region.groups.player.add(player)
+    realm.groups.player.add(player)
     return player
 
 
