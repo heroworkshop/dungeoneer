@@ -1,5 +1,6 @@
 import unittest
 
+import pygame
 from assertpy import assert_that
 
 from dungeoneer.realms import Realm, PointOutsideRealmBoundary
@@ -7,6 +8,19 @@ from dungeoneer.regions import Region
 
 
 class TestRealm(unittest.TestCase):
+    def test_out_of_bounds_withSpriteInsideRealm_returnsFalse(self):
+        realm = Realm((5, 5), tile_size=(20, 20))
+        sprite = pygame.sprite.Sprite()
+        sprite.rect = pygame.Rect(100, 100, 5, 5)
+        assert_that(realm.out_of_bounds(sprite)).is_false()
+
+    def test_out_of_bounds_withSpriteOutsideRealm_returnsFalse(self):
+        realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
+        sprite = pygame.sprite.Sprite()
+        sprite.rect = pygame.Rect(1050, 100, 5, 5)
+        assert_that(realm.out_of_bounds(sprite)).is_true()
+
+
     def test_Realm_withSize5by5_has25Regions(self):
         realm = Realm((5, 5), tile_size=(20, 20))
 
@@ -51,7 +65,7 @@ class TestRealm(unittest.TestCase):
         assert_that(neighbours).is_length(4)
 
 
-    def test_neighbouring_regions_withPixelInCornerOfRegion_has4Neighbours(self):
+    def test_neighbouring_regions_withPixelNotInCornerOfRegion_has9Neighbours(self):
         realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
         # region pixel width and height are 10 * 20 = (200 x 200)
         # pick pixel in region(1, 1) which should have 9 neighbours

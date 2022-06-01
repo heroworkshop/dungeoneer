@@ -138,7 +138,7 @@ class Actor(pygame.sprite.Sprite):
     def collided(self, group):
         collisions = pygame.sprite.spritecollide(self, group, dokill=False,
                                                  collided=pygame.sprite.collide_rect_ratio(self.collide_ratio))
-        return any([c is not self for c in collisions])
+        return any(c is not self for c in collisions)
 
     def die(self):
         self.kill()
@@ -366,8 +366,7 @@ def rotation_from_direction(direction):
     dx, dy = direction
     rads = math.atan2(-dy, dx)
     rads %= 2 * math.pi
-    degs = math.degrees(rads)
-    return degs
+    return math.degrees(rads)
 
 
 def make_small_impact(x, y):
@@ -404,7 +403,7 @@ class MissileSprite(pygame.sprite.Sprite):
         if self.frame >= len(self.filmstrip) and not self.repeats:
             self.kill()
             return
-        self.frame = self.frame % len(self.filmstrip)
+        self.frame %= len(self.filmstrip)
         self.image = self.filmstrip[self.frame]
         if not self.dx and not self.dy:
             return

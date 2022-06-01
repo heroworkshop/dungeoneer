@@ -48,6 +48,8 @@ class Realm:
         self.region_pixel_size = int(region_width * tile_width), int(region_height * tile_height)
         self.regions: Dict[Position, Region] = {}
         self.width, self.height = size
+        self.pixel_bounds = pygame.Rect(0, 0, self.width * region_width * tile_width,
+                                        self.height * region_height * tile_height)
         self.groups = SpriteGroups()  # global across all regions
 
         self.create_empty_regions(region_size)
@@ -122,3 +124,11 @@ class Realm:
                 position = pygame.math.Vector2(x * pixel_width, y * pixel_height)
                 self.regions[(x, y)].render_tiles_to_surface(surface, position)
         return surface
+
+    def out_of_bounds(self, sprite):
+        return not sprite.rect.colliderect(self.pixel_bounds)
+
+    def check_bounds(self, group):
+        for sprite in group:
+            if self.out_of_bounds(sprite):
+                sprite.kill()
