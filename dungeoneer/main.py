@@ -119,7 +119,7 @@ class DungeoneerGame:
             world = self.realm.region_from_pixel_position(self.player.rect.center).groups
             # check_bounds(world.missile)
 
-            handle_missile_collisions(world)
+            handle_missile_collisions(self.realm)
 
             self.player.handle_item_pickup(world)
 
@@ -166,16 +166,23 @@ def play():
     game.game_loop()
 
 
-def handle_missile_collisions(world):
+def handle_missile_collisions(realm: Realm):
     # The player is not in the solid group so enemy missiles
     # will need to do collision detection with the player group instead.
     # It is important that player missiles don't collide with the player.
-    missile_hits = pygame.sprite.groupcollide(world.solid, world.player_missile, False, False)
-    missile_hits.update(pygame.sprite.groupcollide(world.solid, world.missile, False, False))
-    missile_hits.update(pygame.sprite.groupcollide(world.player, world.missile, False, False))
-    for hit, missiles in missile_hits.items():
-        for m in missiles:
-            m.on_impact(hit, world)
+    for missile in realm.groups.player_missile:
+        region = realm.region_from_pixel_position(missile.rect.center)
+        hit = pygame.sprite.spritecollideany(missile, region.groups.solid)
+        if hit:
+            missile.on_impact(hit, realm)
+
+    for missile in realm.groups.missile:
+        region = realm.region_from_pixel_position(missile.rect.center)
+
+        hit = pygame.sprite.spritecollideany(missile, region.groups.solid)
+        hit = hit or pygame.sprite.spritecollideany(missile, realm.groups.player)
+        if hit:
+            missile.on_impact(hit, realm)
 
 
 def check_bounds(group):

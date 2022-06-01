@@ -4,6 +4,7 @@ from random import randint
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory import InventoryFull
+from dungeoneer.realms import Realm
 from dungeoneer.scenery import VisualEffect, parabolic_motion
 
 
@@ -26,11 +27,12 @@ class ItemSprite(VisualEffect):
             actor.drop(self.item_spec, motion=iter(arc))
 
 
-def drop_item(item_spec: Item, world, x: int, y: int, count=1):
+def drop_item(item_spec: Item, realm: Realm, x: int, y: int, count=1):
     drop_x, drop_y = x + randint(-16, 16), y + randint(-16, 16)
     new_item = copy.copy(item_spec)
     new_item.count = count
     item = make_item_sprite(new_item, drop_x, drop_y)
-    world.items.add(item)
-    world.all.add(item)
+    groups = realm.region_from_pixel_position((x, y)).groups
+    groups.items.add(item)
+    groups.all.add(item)
     return item

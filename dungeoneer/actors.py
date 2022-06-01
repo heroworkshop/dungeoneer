@@ -411,7 +411,7 @@ class MissileSprite(pygame.sprite.Sprite):
         self.rect.x += self.dx * self.speed
         self.rect.y += self.dy * self.speed
 
-    def on_impact(self, target, world):
+    def on_impact(self, target, realm: Realm):
         if not self.damage_profile:
             return
         factor = self.damage_profile[self.frame % len(self.damage_profile)]
@@ -424,9 +424,10 @@ class MissileSprite(pygame.sprite.Sprite):
         target.vitality -= actual_damage
         self.hit_sfx.play()
         x, y = target.rect.center
-        world.all.add(self.make_impact_effect(x, y))
+        realm.groups.all.add(self.make_impact_effect(x, y))
         if randint(0, 100) < self.shot_from_item.survivability:
-            drop_item(self.shot_from_item, world, x, y)
+
+            drop_item(self.shot_from_item, realm, x, y)
         target.on_hit()
 
     def make_impact_effect(self, x, y):

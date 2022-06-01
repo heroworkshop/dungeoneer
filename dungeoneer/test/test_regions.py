@@ -1,6 +1,7 @@
 import unittest
 
 import pygame
+from assertpy import assert_that
 
 from dungeoneer.characters import MonsterType
 from dungeoneer.regions import Region, Tile, TileType, SubRegion
@@ -18,6 +19,17 @@ BLUE_TILE = make_test_tile((0, 0, 255))
 
 
 class TestRegion(unittest.TestCase):
+
+    def test_Region_name_withNoIdCode_isUniqueShortString(self):
+        region1 = Region((5, 5))
+        region2 = Region((5, 5))
+        assert_that(len(region1.name)).is_between(1, 15)
+        assert_that(region1.name).is_not_equal_to(region2.name)
+
+    def test_Region_name_withIdCode_usesIdCodeInName(self):
+        region = Region((5, 5), id_code=(5, 12))
+        assert_that(region.name).is_equal_to("Region-(5, 12)")
+
 
     def test_Region_withSize5by5_has25Tiles(self):
         region = Region((5, 5))

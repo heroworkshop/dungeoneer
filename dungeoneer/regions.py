@@ -1,3 +1,4 @@
+import itertools
 from collections import namedtuple
 from enum import Enum
 from typing import Iterable
@@ -47,8 +48,11 @@ Size = namedtuple("size", "width height")
 
 class Region:
     """A region is a variable sized sparse grid of tiles"""
+    region_id = itertools.count()
 
-    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value):
+    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None):
+        id_code = id_code or next(self.region_id)
+        self.name = f"Region-{id_code}"
         self.grid_width, self.grid_height = size
 
         self.tiles = {}
@@ -63,6 +67,9 @@ class Region:
         self.pixel_height = self.grid_height * self.tile_height
         self.default_tile = default_tile
         self.exits = {}
+
+    def __repr__(self):
+        return str(self.name)
 
     def __len__(self):
         return self.grid_width * self.grid_height

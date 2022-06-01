@@ -20,6 +20,7 @@ Regions are also arranged in a grid of variable size and this is known as a real
 """
 from contextlib import suppress
 from random import randint
+from typing import Dict
 
 import pygame
 
@@ -45,7 +46,7 @@ class Realm:
         region_width, region_height = region_size
         tile_width, tile_height = tile_size
         self.region_pixel_size = int(region_width * tile_width), int(region_height * tile_height)
-        self.regions = {}
+        self.regions: Dict[Position, Region] = {}
         self.width, self.height = size
         self.groups = SpriteGroups()  # global across all regions
 
@@ -55,7 +56,7 @@ class Realm:
         region_width, region_height = region_size
         for x in range(self.width):
             for y in range(self.height):
-                region = Region(region_size)
+                region = Region(region_size, id_code=(x, y))
                 if y > 0:
                     region.exits["N"] = self.regions[Position(x, y - 1)].exits["S"]
                 if y < self.height - 1:
@@ -91,6 +92,8 @@ class Realm:
     def neighbouring_regions_from_pixel_position(self, pixel_position):
         pixel_position = pygame.Vector2(pixel_position)
         dx, dy = self.region_pixel_size
+        dx -= 1
+        dy -= 1
         neighbours = [(-dx, -dy), (0, -dy), (dx, -dy),
                       (-dx, 0), (0, 0), (dx, 0),
                       (-dx, dy), (0, dy), (dx, dy)]
