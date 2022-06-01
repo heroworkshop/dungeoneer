@@ -15,7 +15,7 @@ def play(screen):
     world = plot_blocks(dungeoneer_pattern)
 
     while True:
-        world.all.update()
+        world.effects.update()
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -26,7 +26,7 @@ def play(screen):
             if event.type == WARNING_EVENT:
                 print(event.message)
         clock.tick(50)
-        world.all.draw(screen)
+        world.effects.draw(screen)
 
 
 dungeoneer_pattern = """

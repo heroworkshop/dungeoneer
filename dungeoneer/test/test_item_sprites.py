@@ -23,7 +23,7 @@ class TestItemSpriteActions(unittest.TestCase):
     def test_drop_item_addsItemToAllGroup(self):
         item_spec = Item("sword")
         dropped_item = item_sprites.drop_item(item_spec, self.realm, 0, 0, count=5)
-        self.assertTrue(self.region.groups.all.has(dropped_item))
+        self.assertTrue(self.region.groups.effects.has(dropped_item))
 
     def test_drop_item_addsItemToItemsGroup(self):
         item_spec = Item("sword")

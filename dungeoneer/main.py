@@ -92,6 +92,8 @@ class DungeoneerGame:
             self.realm.groups.player_missile.update()
             handle_missile_collisions(self.realm)
 
+            self.realm.groups.effects.update()
+
             self.player.handle_item_pickup(world)
 
             self.screen.blit(self.background, dest=self.camera.offset)
@@ -177,11 +179,11 @@ def add_demo_items(world, position):
     arrow_sprite = make_item_sprite(arrows, x + 500, y + 450)
     if move_to_nearest_empty_space(arrow_sprite, [world.solid], 50):
         world.items.add(arrow_sprite)
-        world.all.add(arrow_sprite)
+        world.effects.add(arrow_sprite)
     melon = make_item_sprite(items.food["melon"], x + 550, y + 500)
     if move_to_nearest_empty_space(melon, [world.solid], 50):
         world.items.add(melon)
-        world.all.add(melon)
+        world.effects.add(melon)
 
     x += 650
     y += 500
@@ -189,7 +191,7 @@ def add_demo_items(world, position):
         item_sprite = make_item_sprite(item, x + 32 * (i % 8), y + 32 * (i // 8))
         if move_to_nearest_empty_space(arrow_sprite, [world.solid], 50):
             world.items.add(item_sprite)
-            world.all.add(item_sprite)
+            world.effects.add(item_sprite)
 
 
 def create_player(realm: Realm, position) -> Player:

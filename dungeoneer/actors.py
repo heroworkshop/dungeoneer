@@ -151,7 +151,7 @@ class Actor(pygame.sprite.Sprite):
         x, y = self.rect.center
         sprite = make_item_sprite(item, x, y, motion=motion)
         self.region.groups.items.add(sprite)
-        self.region.groups.all.add(sprite)
+        self.region.groups.effects.add(sprite)
         if motion:
             self.region.groups.player_missile.add(sprite)
         return sprite
@@ -338,7 +338,7 @@ class Monster(Actor):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)
         if randint(1, 100) < 20:
             item = GoldItem(self.rect.centerx, self.rect.centery, sprite_sheet.filmstrip(scale=scale), value)
-            self.region.groups.all.add(item)
+            self.region.groups.effects.add(item)
             self.region.groups.items.add(item)
         super().die()
 
@@ -423,7 +423,7 @@ class MissileSprite(pygame.sprite.Sprite):
         target.vitality -= actual_damage
         self.hit_sfx.play()
         x, y = target.rect.center
-        realm.groups.all.add(self.make_impact_effect(x, y))
+        realm.groups.effects.add(self.make_impact_effect(x, y))
         if randint(0, 100) < self.shot_from_item.survivability:
 
             drop_item(self.shot_from_item, realm, x, y)
@@ -464,7 +464,7 @@ def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, realm: Real
     world = monster_sprite.region.groups
     if move_to_nearest_empty_space(monster_sprite, (world.solid, world.player), 500):
         monster.sleeping = sleeping
-        world.all.add(monster_sprite)
+        world.effects.add(monster_sprite)
         world.solid.add(monster_sprite)
         world.monster.add(monster_sprite)
         return monster_sprite

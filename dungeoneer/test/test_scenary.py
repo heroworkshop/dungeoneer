@@ -30,7 +30,7 @@ class TestScenery(unittest.TestCase):
         effect = VisualEffect(0, 0, FILM_STRIP, repeats=0, frame_length=-1)
         count = 0
         world = SpriteGroups()
-        world.all.add(effect)
+        world.effects.add(effect)
         while effect.alive():
             effect.update()
             count += 1

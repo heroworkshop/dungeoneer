@@ -70,7 +70,7 @@ def create_objects(design, level, world, offset=None, tile_width=TILE_WIDTH, til
             if scenery:
                 filmstrip = scenery.sprite_sheet.filmstrip()
                 effect = ScenerySprite(x, y, filmstrip, animated=scenery.animated)
-                world.all.add(effect)
+                world.effects.add(effect)
                 if scenery.is_solid:
                     world.solid.add(effect)
     return col_num, row_num

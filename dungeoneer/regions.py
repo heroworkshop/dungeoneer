@@ -121,8 +121,8 @@ class Region:
         return surface
 
     def build_world(self, base_position):
-        self.place_sprites(self.solid_objects, base_position, [self.groups.all, self.groups.solid])
-        self.place_sprites(self.animated_tiles, base_position, [self.groups.all])
+        self.place_sprites(self.solid_objects, base_position, [self.groups.effects, self.groups.solid])
+        self.place_sprites(self.animated_tiles, base_position, [self.groups.effects])
 
     def place_sprites(self, tiles, base_position, groups):
         base_x, base_y = base_position

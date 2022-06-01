@@ -13,7 +13,7 @@ class Camera:
 
     def draw_groups(self, groups):
         return (groups.player, groups.monster, groups.missile, groups.player_missile,
-                groups.items)
+                groups.items, groups.effects)
 
     def draw_all(self):
         """Draw all drawable groups in each nearby region plus in the realm's global group"""

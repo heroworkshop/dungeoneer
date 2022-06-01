@@ -34,5 +34,5 @@ def drop_item(item_spec: Item, realm: Realm, x: int, y: int, count=1):
     item = make_item_sprite(new_item, drop_x, drop_y)
     groups = realm.region_from_pixel_position((x, y)).groups
     groups.items.add(item)
-    groups.all.add(item)
+    groups.effects.add(item)
     return item

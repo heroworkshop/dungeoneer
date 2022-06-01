@@ -8,7 +8,7 @@ from pygame.sprite import Group
 
 @dataclass
 class SpriteGroups:
-    all: Group = field(default_factory=Group)
+    effects: Group = field(default_factory=Group)
     solid: Group = field(default_factory=Group)
     player: Group = field(default_factory=Group)
     monster: Group = field(default_factory=Group)

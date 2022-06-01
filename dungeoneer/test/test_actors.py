@@ -168,7 +168,7 @@ class TestPlayer(unittest.TestCase):
         item_sprite = self.player.drop(item)
         self.assertEqual(1, len(self.player.region.groups.items))
         self.assertIn(item_sprite, self.player.region.groups.items)
-        self.assertIn(item_sprite, self.player.region.groups.all)
+        self.assertIn(item_sprite, self.player.region.groups.effects)
 
     def test_drop_withItem_addsItemSpriteToPlayerRecentlyDroppedItems(self):
         item = Item("arrow")
