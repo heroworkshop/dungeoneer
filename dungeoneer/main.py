@@ -86,7 +86,7 @@ class DungeoneerGame:
             self.move_monsters()
 
             world = self.realm.region_from_pixel_position(self.player.rect.center).groups
-            check_bounds(world.missile)
+            self.realm.check_bounds(world.missile)
 
             # update missiles
             self.realm.groups.player_missile.update()
