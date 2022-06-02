@@ -4,7 +4,7 @@ import pygame
 from assertpy import assert_that
 
 from dungeoneer.characters import MonsterType
-from dungeoneer.regions import Region, Tile, TileType, SubRegion
+from dungeoneer.regions import Region, Tile, TileType, SubRegion, NoFreeSpaceFound
 from dungeoneer.spritesheet import SpriteSheet
 
 
@@ -134,6 +134,53 @@ class TestRegion(unittest.TestCase):
         region.fill_all(TileType.STONE_WALL)
         region.clear_area((1, 1), (2, 2))
         self.assertEqual(16 - 4, len(region.solid_objects))
+
+
+class TestFindNearestFreeSpace(unittest.TestCase):
+    def test_withEmptyRegion_returnsXY(self):
+        region = Region((11, 11))
+        space = region.nearest_free_space(5, 5)
+        assert_that(space).is_equal_to((5, 5))
+
+    def test_withOneEmptySpot_returnsFreeSpot(self):
+        region = Region((11, 11))
+        region.fill_all(TileType.STONE_WALL)
+        region.clear_nodes([(5, 6)])
+        space = region.nearest_free_space(5, 5)
+        assert_that(space).is_equal_to((5, 6))
+
+    def test_withTwoEmptySpots_returnsNearestFreeSpot(self):
+        region = Region((11, 11))
+        region.fill_all(TileType.STONE_WALL)
+        region.clear_nodes([(6, 6), (3, 3)])
+        space = region.nearest_free_space(5, 5)
+        assert_that(space).is_equal_to((6, 6))
+
+    def test_withSpotInTopLeftCorner_returnsNearestFreeSpot(self):
+        region = Region((11, 11))
+        region.fill_all(TileType.STONE_WALL)
+        region.clear_nodes([(6, 6), (3, 3)])
+        space = region.nearest_free_space(1, 1, 10)
+        assert_that(space).is_equal_to((3, 3))
+
+    def test_withSpotInBottomRightCorner_returnsNearestFreeSpot(self):
+        region = Region((11, 11))
+        region.fill_all(TileType.STONE_WALL)
+        region.clear_nodes([(6, 6), (3, 3)])
+        space = region.nearest_free_space(10, 10, 10)
+        assert_that(space).is_equal_to((6, 6))
+
+    def test_withAllSolidWalls_raisesNoFreeSpaceFound(self):
+        region = Region((11, 11))
+        region.fill_all(TileType.STONE_WALL)
+
+        assert_that(region.nearest_free_space).raises(NoFreeSpaceFound).when_called_with(5, 5, max_distance=11)
+
+    def test_coordinate_from_absolute_position(self):
+        region = Region((11, 11), pixel_base=(1000, 1100))
+        coord = region.coordinate_from_absolute_position(1400, 1400)
+        expected = 400 // region.tile_width, 300 // region.tile_height
+        assert_that(coord).is_equal_to(expected)
 
 
 class TestSubRegion(unittest.TestCase):

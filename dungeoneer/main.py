@@ -1,4 +1,5 @@
 import threading
+from contextlib import suppress
 from random import randint
 
 import pygame
@@ -19,8 +20,8 @@ from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.messages import Messages
-from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.realms import Realm
+from dungeoneer.regions import Region, NoFreeSpaceFound
 from dungeoneer.score_bar import ScoreBar
 from dungeoneer.sound_effects import start_music
 from dungeoneer.spritesheet import SpriteSheet
@@ -67,7 +68,7 @@ class DungeoneerGame:
         self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
         self.camera = Camera(self.screen, self.realm, position=(x, y))
 
-        add_demo_items(self.region.groups, (x, y))
+        add_demo_items(self.region, (20, 20))
         make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
         make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
 
@@ -172,34 +173,39 @@ def handle_events(key_event_dispatcher, player, message_store):
     player.handle_keyboard(kb)
 
 
-def add_demo_items(world, position):
-    x, y = position
+def add_demo_items(region: Region, position):
+    col, row = position
     arrows: Item = items.ammo["arrow"]
     arrows.count = 5
-    arrow_sprite = make_item_sprite(arrows, x + 500, y + 450)
-    if move_to_nearest_empty_space(arrow_sprite, [world.solid], 50):
-        world.items.add(arrow_sprite)
-        world.effects.add(arrow_sprite)
-    melon = make_item_sprite(items.food["melon"], x + 550, y + 500)
-    if move_to_nearest_empty_space(melon, [world.solid], 50):
-        world.items.add(melon)
-        world.effects.add(melon)
+    with suppress(NoFreeSpaceFound):
+        p = region.nearest_free_space(col, row, 20)
+        x, y = region.pixel_position(p)
+        arrow_sprite = make_item_sprite(arrows, x, y)
+        region.groups.items.add(arrow_sprite)
+        region.groups.effects.add(arrow_sprite)
 
-    x += 650
-    y += 500
     for i, item in enumerate(items.all_items.values()):
-        item_sprite = make_item_sprite(item, x + 32 * (i % 8), y + 32 * (i // 8))
-        if move_to_nearest_empty_space(arrow_sprite, [world.solid], 50):
-            world.items.add(item_sprite)
-            world.effects.add(item_sprite)
+            col, row = 10 + i % 8, 10 + i // 8
+            try:
+                p = region.nearest_free_space(col, row, 20)
+            except NoFreeSpaceFound:
+                print("Couldn't place demo item sprite")
+                continue
+            x, y = region.pixel_position(p)
+            item_sprite = make_item_sprite(item, x, y)
+            item_sprite.rect.topleft = x,y
+            region.groups.items.add(item_sprite)
+            region.groups.effects.add(item_sprite)
 
 
-def create_player(realm: Realm, position) -> Player:
+def create_player(realm: Realm, pixel_position) -> Player:
     player_character = Character(PlayerCharacterType.TOBY)
-    x, y = position
+    x, y = pixel_position
     player = Player(x, y, player_character, realm)
     region = player.region
-    move_to_nearest_empty_space(player, [region.groups.solid], 100)
+    pos = region.coordinate_from_absolute_position(x, y)
+    empty_space = region.nearest_free_space(*pos, 10)
+    player.rect.topleft = region.pixel_position(empty_space)
     realm.groups.player.add(player)
     return player
 

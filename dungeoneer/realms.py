@@ -58,7 +58,8 @@ class Realm:
         region_width, region_height = region_size
         for x in range(self.width):
             for y in range(self.height):
-                region = Region(region_size, id_code=(x, y))
+                pixel_base = x * self.region_pixel_size[0], y * self.region_pixel_size[1]
+                region = Region(region_size, id_code=(x, y), pixel_base=pixel_base)
                 if y > 0:
                     region.exits["N"] = self.regions[Position(x, y - 1)].exits["S"]
                 if y < self.height - 1:

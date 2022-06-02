@@ -16,7 +16,6 @@ from dungeoneer.item_sprites import drop_item, make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.realms import Realm
-from dungeoneer.regions import Region
 from dungeoneer.scenery import VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
 

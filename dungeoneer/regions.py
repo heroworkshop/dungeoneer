@@ -1,5 +1,5 @@
 import itertools
-from collections import namedtuple
+from collections import namedtuple, deque
 from enum import Enum
 from typing import Iterable
 
@@ -46,12 +46,17 @@ Position = namedtuple("position", "x y")
 Size = namedtuple("size", "width height")
 
 
+class NoFreeSpaceFound(Exception):
+    """Raised when trying to find a free space near a specfic spot but a space could not be found"""
+
+
 class Region:
     """A region is a variable sized sparse grid of tiles"""
     region_id = itertools.count()
 
-    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None):
+    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None, pixel_base=(0,0)):
         id_code = id_code or next(self.region_id)
+        self.pixel_base = pixel_base
         self.name = f"Region-{id_code}"
         self.grid_width, self.grid_height = size
 
@@ -73,6 +78,21 @@ class Region:
 
     def __len__(self):
         return self.grid_width * self.grid_height
+
+    def pixel_position(self, pos):
+        col, row = pos
+        bx, by = self.pixel_base
+        return col * self.tile_width + bx, row * self.tile_height + by
+
+    def coordinate_from_absolute_position(self, x, y):
+        bx, by = self.pixel_base
+        col = (x - bx) // self.tile_width
+        row = (y - by) // self.tile_height
+        return col, row
+
+    def out_of_bounds(self, position):
+        x, y = position
+        return any([x < 0, y < 0, x >= self.grid_width, y >= self.grid_height])
 
     def tile(self, position: Position):
         return self.tiles.get(position, self.default_tile)
@@ -162,6 +182,35 @@ class Region:
             else:
                 self.tiles.pop(p, None)
 
+    def nearest_free_space(self, x0: int, y0: int, max_distance=5):
+        """Find nearest empty tile in the region
+        Args:
+            x0, y0 (int): start position
+            max_distance (int): largest manhatten distance from x, y
+        Raises:
+            NoFreeSpaceFound
+        """
+        neighbours = [(-1, -1), (0, -1), (1, -1),
+                      (-1, 0), (1, 0),
+                      (-1, 1), (1, 0), (1, 1)]
+        queue = deque([(x0, y0)])
+        checked = set()
+        while queue:
+            x, y = queue.popleft()
+            checked.add((x, y))
+            if (x, y) not in self.solid_objects:
+                return x, y
+            for dx, dy in neighbours:
+                manhatten_distance = abs(x + dx - x0) + abs(y + dy - y0)
+                pos = (x + dx, y + dy)
+                if self.out_of_bounds(pos):
+                    continue
+                if pos in checked:
+                    continue
+                if manhatten_distance > max_distance:
+                    continue
+                queue.append((x + dx, y + dy))
+        raise NoFreeSpaceFound(f"Couldn't find free space within {max_distance} of {(x, y)}")
 
 class SubRegion:
     def __init__(self, region, top_left=Position(0, 0), size: Size = None):
@@ -178,7 +227,7 @@ class SubRegion:
 
     def split_horizontally(self, split=0.5):
         if self.size.width < 2:
-            raise ValueError("Cannot split SubRegion with width {}".format(self.size[0]))
+            raise ValueError(f"Cannot split SubRegion with width {self.size[0]}")
         subregion1 = SubRegion(self.region, self.top_left, self.size)
         subregion2 = SubRegion(self.region, self.top_left, self.size)
         split_point = int(self.size.width * split) + self.top_left.x
@@ -194,7 +243,7 @@ class SubRegion:
 
     def split_vertically(self, split=0.5):
         if self.size.height < 2:
-            raise ValueError("Cannot split SubRegion with height {}".format(self.size[1]))
+            raise ValueError(f"Cannot split SubRegion with height {self.size[1]}")
         subregion1 = SubRegion(self.region, self.top_left, self.size)
         subregion2 = SubRegion(self.region, self.top_left, self.size)
         split_point = int(self.size.height * split) + self.top_left.y

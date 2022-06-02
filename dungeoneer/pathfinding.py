@@ -29,7 +29,6 @@ def move_to_nearest_empty_space(tile: Sprite, solid_groups, max_distance: int):
             continue
         tile.rect.center = (x, y)
 
-        collided = None
         for g in solid_groups:
             collided = pygame.sprite.spritecollideany(tile, g)
             if collided:
