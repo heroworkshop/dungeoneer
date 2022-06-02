@@ -63,7 +63,7 @@ class DungeoneerGame:
 
     def place_player(self, in_region):
         self.region = self.realm.region(in_region)
-        x, y = in_region[0] * self.region.pixel_width, in_region[1] * self.region.pixel_height
+        x, y = self.region.pixel_base
         region_offset = (self.region.pixel_width // 2, self.region.pixel_height // 2)
         self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
         self.camera = Camera(self.screen, self.realm, position=(x, y))
@@ -193,7 +193,8 @@ def add_demo_items(region: Region, position):
                 continue
             x, y = region.pixel_position(p)
             item_sprite = make_item_sprite(item, x, y)
-            item_sprite.rect.topleft = x,y
+            dx, dy = randint(-15, 15), randint(-15, 15)  # subtile variance in position
+            item_sprite.rect.topleft = x + dx, y + dy
             region.groups.items.add(item_sprite)
             region.groups.effects.add(item_sprite)
 

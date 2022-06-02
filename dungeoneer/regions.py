@@ -189,6 +189,8 @@ class Region:
             max_distance (int): largest manhatten distance from x, y
         Raises:
             NoFreeSpaceFound
+        Returns:
+            col, row in region of free space
         """
         neighbours = [(-1, -1), (0, -1), (1, -1),
                       (-1, 0), (1, 0),
