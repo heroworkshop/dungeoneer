@@ -277,7 +277,7 @@ class Player(Actor):
             return None
 
         attack_sprite = make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                           (dx, dy), self.region.groups.player_missile,
+                                           (dx, dy), self.realm.groups.player_missile,
                                            ammo_item,
                                            repeats=False)
         self.connect(attack_sprite)
@@ -443,7 +443,7 @@ class GoldItem(VisualEffect):
         self.sound_effect.play()
 
 
-def make_attack_sprite(x:int, y:int, direction, group,
+def make_attack_sprite(x: int, y: int, direction, group,
                        attack_item: Ammo, repeats=False):
     if not attack_item:
         return None
