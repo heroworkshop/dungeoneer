@@ -14,7 +14,7 @@ class DesignType(Enum):
 
     @classmethod
     def random(cls):
-        if random.randint(0, 100) < 1:
+        if random.randint(0, 100) < 2:
             return cls.LARGE_ROOM
         return cls.CONNECTED_ROOMS
 
@@ -28,8 +28,15 @@ def generate_map(region, design: DesignType):
 
 
 def generate_large_room(region):
-    region.fill_all(TileType.STONE_WALL)
-    region.clear_area((1, 1), (region.grid_width - 2, region.grid_height - 2))
+    #region.fill_all(TileType.STONE_WALL)
+    region.clear_area((1, 1), (region.grid_width - 1, region.grid_height - 1))
+    rooms = [[Position(x, y)
+            for x in range(1, region.grid_width - 1)
+            for y in range(1, region.grid_height - 1)]]
+    nodes = [Position(10, 10)]
+    paths = join_exits(nodes, region.exits, (region.grid_width, region.grid_height))
+
+    carve_out_dungeon(region, paths, rooms)
     return region
 
 
@@ -64,7 +71,7 @@ def generate_connected_rooms(region):
     paths = join_nodes(nodes)
     paths.extend(join_exits(nodes, region.exits, (region.grid_width, region.grid_height)))
     rooms = make_rooms_in_subregions(sub_regions)
-    dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
+    # dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
 
     carve_out_dungeon(region, paths, rooms)
 
@@ -169,7 +176,7 @@ def _random_path_segment(x_count, y_count):
 def make_rooms_in_subregions(sub_regions: List[SubRegion]):
     rooms = []
     for r in sub_regions:
-        room = []
+
         cx, cy = r.node
         x1, y1 = r.top_left
         x2, y2 = x1 + r.size.width, y1 + r.size.height
@@ -189,9 +196,9 @@ def make_rooms_in_subregions(sub_regions: List[SubRegion]):
         if dy > 1:
             y2 = cy + weighted_scale_down(dy)
 
-        for x in range(x1, x2):
-            for y in range(y1, y2):
-                room.append(Position(x, y))
+        room = [Position(x, y)
+                for x in range(x1, x2)
+                for y in range(y1, y2)]
 
         rooms.append(room)
     return rooms

@@ -1,5 +1,7 @@
+from dungeoneer.game_assets import load_sound_file, sfx_file
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory import Inventory
+from dungeoneer.scenery import VisualEffect
 from dungeoneer.sound_effects import SfxEvents
 
 
@@ -107,4 +109,17 @@ potions = make_item_dict(
 
 # all_items does not include generated items. The intention is that all_items encompasses
 # all the items that can be dropped.
-all_items = {**ammo, **weapons, **launchers, **armour, **launchers, **food, **potions}
+all_items = {**ammo, **weapons, **armour, **launchers, **food, **potions}
+
+
+class GoldItem(VisualEffect):
+    """Gold is not an item because it does not fill up slots in the inventory.
+    Instead, it has a side-effect when picked up (increases gold score)"""
+    def __init__(self, x, y, filmstrip, value):
+        super().__init__(x, y, filmstrip, repeats=VisualEffect.FOREVER)
+        self.value = value
+        self.sound_effect = load_sound_file(sfx_file("handleCoins.ogg"))
+
+    def on_pick_up(self, player):
+        player.character.gold += self.value
+        self.sound_effect.play()

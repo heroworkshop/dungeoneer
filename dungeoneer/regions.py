@@ -214,6 +214,7 @@ class Region:
                 queue.append((x + dx, y + dy))
         raise NoFreeSpaceFound(f"Couldn't find free space within {max_distance} of {(x, y)}")
 
+
 class SubRegion:
     def __init__(self, region, top_left=Position(0, 0), size: Size = None):
         self.top_left = Position(*top_left)

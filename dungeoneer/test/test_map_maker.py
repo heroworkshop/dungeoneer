@@ -36,10 +36,10 @@ class TestGenerateMap(unittest.TestCase):
     def test_generate_connected_rooms(self):
         width, height = 50, 40
         region = generate_connected_rooms(Region((width, height)))
-        walls = 0
-        for row in range(height):
-            walls += [region.solid_object_at_position((column, row)) is not None
-                      for column in range(width)].count(True)
+        walls = sum([region.solid_object_at_position((column, row)) is not None
+                     for column in range(width)].count(True)
+                     for row in range(height))
+
         self.assertEqual(walls, len(region.solid_objects), "Solid objects should not be outside bounds of region")
         self.assertLess(walls, int(width * height * 0.9), "Solid objects should be less than 90% of region")
         self.assertGreater(walls, int(width * height * 0.10), "Solid objects should be at least 10% of region")

@@ -182,7 +182,6 @@ def add_demo_items(region: Region, position):
         x, y = region.pixel_position(p)
         arrow_sprite = make_item_sprite(arrows, x, y)
         region.groups.items.add(arrow_sprite)
-        region.groups.effects.add(arrow_sprite)
 
     for i, item in enumerate(items.all_items.values()):
             col, row = 10 + i % 8, 10 + i // 8
@@ -196,7 +195,6 @@ def add_demo_items(region: Region, position):
             dx, dy = randint(-15, 15), randint(-15, 15)  # subtile variance in position
             item_sprite.rect.topleft = x + dx, y + dy
             region.groups.items.add(item_sprite)
-            region.groups.effects.add(item_sprite)
 
 
 def create_player(realm: Realm, pixel_position) -> Player:

@@ -13,7 +13,7 @@ from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory import Inventory
 from dungeoneer.item_sprites import drop_item, make_item_sprite
-from dungeoneer.items import Ammo, Melee, Launcher
+from dungeoneer.items import Ammo, Melee, Launcher, GoldItem
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.realms import Realm
 from dungeoneer.scenery import VisualEffect
@@ -430,17 +430,6 @@ class MissileSprite(pygame.sprite.Sprite):
 
     def make_impact_effect(self, x, y):
         return self.impact_maker(x, y)
-
-
-class GoldItem(VisualEffect):
-    def __init__(self, x, y, filmstrip, value):
-        super().__init__(x, y, filmstrip, repeats=VisualEffect.FOREVER)
-        self.value = value
-        self.sound_effect = load_sound_file(sfx_file("handleCoins.ogg"))
-
-    def on_pick_up(self, player):
-        player.character.gold += self.value
-        self.sound_effect.play()
 
 
 def make_attack_sprite(x: int, y: int, direction, group,
