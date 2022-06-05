@@ -28,11 +28,11 @@ def generate_map(region, design: DesignType):
 
 
 def generate_large_room(region):
-    #region.fill_all(TileType.STONE_WALL)
+    # region.fill_all(TileType.STONE_WALL)
     region.clear_area((1, 1), (region.grid_width - 1, region.grid_height - 1))
     rooms = [[Position(x, y)
-            for x in range(1, region.grid_width - 1)
-            for y in range(1, region.grid_height - 1)]]
+              for x in range(1, region.grid_width - 1)
+              for y in range(1, region.grid_height - 1)]]
     nodes = [Position(10, 10)]
     paths = join_exits(nodes, region.exits, (region.grid_width, region.grid_height))
 
@@ -79,12 +79,15 @@ def generate_connected_rooms(region):
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):
+    def random_floor():
+        return random.choice((TileType.STONE_FLOOR, TileType.LARGE_FLAGSTONE, TileType.EARTH,
+                              TileType.CHECKERED_TILES))
+
+    floor_type = random_floor()  # floor types are themed (mostly)
     region.fill_all(wall_type)
     region.clear_nodes(paths)
     for room in rooms:
-        floor_type = random.choice((TileType.STONE_FLOOR, TileType.LARGE_FLAGSTONE, TileType.EARTH,
-                                    TileType.CHECKERED_TILES))
-        region.clear_nodes(room, floor_type)
+        region.clear_nodes(room, floor_type if random.randint(0, 100) < 95 else random_floor())
 
 
 def random_floor_types(region, sub_regions: List[SubRegion]):
