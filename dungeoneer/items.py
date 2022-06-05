@@ -6,6 +6,18 @@ from dungeoneer.sound_effects import SfxEvents
 
 
 class Ammo(Item):
+    """
+    Args:
+        name (str): name of item, for example "arrow"
+        damage(int): how much damage the item does on a hit
+        damage_profile (List[int]): some hits do damage on each frame of the animation until
+                                    all the damage is delivered. Each entry represents a percentage
+                                    of the damage. A damage profile pf [100] means it all gets delivered
+                                    in a single burst
+        speed (int): how fast the ammo item travels (pixels/frame)
+        survivability (int): percent change that the ammo item will drop after hitting
+        sfx_events (SfxEvents): sound effects to play on different events
+    """
     def __init__(self, name, damage, damage_profile, speed, survivability, sfx_events):
         super().__init__(name, sfx_events=sfx_events)
         self.damage = damage
@@ -42,11 +54,7 @@ class Potion(Item):
 
 
 def make_item_dict(using_class, *args):
-    result = dict()
-    for item in args:
-        name = item[0]
-        result[name] = using_class(*item)
-    return result
+    return {item[0]: using_class(*item) for item in args}
 
 
 specials = make_item_dict(Melee, ("unarmed strike", "swipe", 1.5, 2))
