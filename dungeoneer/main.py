@@ -184,17 +184,17 @@ def add_demo_items(region: Region, position):
         region.groups.items.add(arrow_sprite)
 
     for i, item in enumerate(items.all_items.values()):
-            col, row = 10 + i % 8, 10 + i // 8
-            try:
-                p = region.nearest_free_space(col, row, 20)
-            except NoFreeSpaceFound:
-                print("Couldn't place demo item sprite")
-                continue
-            x, y = region.pixel_position(p)
-            item_sprite = make_item_sprite(item, x, y)
-            dx, dy = randint(-15, 15), randint(-15, 15)  # subtile variance in position
-            item_sprite.rect.topleft = x + dx, y + dy
-            region.groups.items.add(item_sprite)
+        col, row = 10 + i % 8, 10 + i // 8
+        try:
+            p = region.nearest_free_space(col, row, 20)
+        except NoFreeSpaceFound:
+            print("Couldn't place demo item sprite")
+            continue
+        x, y = region.pixel_position(p)
+        item_sprite = make_item_sprite(item, x, y)
+        dx, dy = randint(-15, 15), randint(-15, 15)  # subtile variance in position
+        item_sprite.rect.topleft = x + dx, y + dy
+        region.groups.items.add(item_sprite)
 
 
 def create_player(realm: Realm, pixel_position) -> Player:

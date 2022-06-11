@@ -1,7 +1,7 @@
 import itertools
 from collections import namedtuple, deque
 from enum import Enum
-from typing import Iterable
+from typing import Iterable, Dict, Type
 
 import pygame
 
@@ -17,12 +17,26 @@ vegetation = game_assets.load_image("vegetation.png")
 lava = game_assets.load_image("lava.png")
 
 
+class Prefab:
+    def __init__(self, sprite_class: Type[pygame.sprite.Sprite], filmstrip: Iterable, **parameters):
+        self.sprite_class = sprite_class
+        self.filmstrip = filmstrip
+        self.parameters = parameters
+        self.width = filmstrip[0].get_width()
+        self.height = filmstrip[0].get_height()
+
+    def make_sprite(self, x, y):
+        return self.sprite_class(x, y, self.filmstrip, **self.parameters)
+
+
 class Tile:
-    def __init__(self, sprite_sheet: SpriteSheet, is_solid=False):
-        self.filmstrip = sprite_sheet.filmstrip()
+    def __init__(self, prefab: Prefab, is_solid=False, layer=0):
         self.is_solid = is_solid
-        self.width = self.filmstrip[0].get_width()
-        self.height = self.filmstrip[0].get_height()
+        self.width = prefab.width
+        self.height = prefab.height
+        self.prefab = prefab
+        self.layer = layer
+        self.filmstrip = prefab.filmstrip
 
     @property
     def animated(self):
@@ -30,16 +44,21 @@ class Tile:
 
 
 class TileType(Enum):
-    STONE_WALL = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 3, 1, 1)), is_solid=True)
-    STONE_FLOOR = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 0, 1, 1)))
-    LARGE_FLAGSTONE = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(1, 2, 1, 1)))
-    CHECKERED_TILES = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 1, 1, 1)))
-    WATER = Tile(SpriteSheet(liquids, columns=16, rows=12, sub_area=(0, 0, 6, 1)))
-    LAVA = Tile(SpriteSheet(lava, columns=10, rows=1)),
-    WOOD = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 4, 1, 2)))
-    GRASS = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 1, 1, 1)))
-    EARTH = Tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(1, 1, 1, 1)))
-    HEDGE = Tile(SpriteSheet(vegetation, columns=16, rows=16, sub_area=(1, 3, 1, 1)), is_solid=True)
+    @staticmethod
+    def make_tile(sprite_sheet, is_solid=False):
+        prefab = Prefab(ScenerySprite, sprite_sheet.filmstrip(), animated=False)
+        return Tile(prefab, is_solid)
+
+    STONE_WALL = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 3, 1, 1)), is_solid=True)
+    STONE_FLOOR = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 0, 1, 1)))
+    LARGE_FLAGSTONE = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(1, 2, 1, 1)))
+    CHECKERED_TILES = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 1, 1, 1)))
+    WATER = make_tile(SpriteSheet(liquids, columns=16, rows=12, sub_area=(0, 0, 6, 1)))
+    LAVA = make_tile(SpriteSheet(lava, columns=10, rows=1)),
+    WOOD = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 4, 1, 2)))
+    GRASS = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(0, 1, 1, 1)))
+    EARTH = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(1, 1, 1, 1)))
+    HEDGE = make_tile(SpriteSheet(vegetation, columns=16, rows=16, sub_area=(1, 3, 1, 1)), is_solid=True)
 
 
 Position = namedtuple("position", "x y")
@@ -54,14 +73,14 @@ class Region:
     """A region is a variable sized sparse grid of tiles"""
     region_id = itertools.count()
 
-    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None, pixel_base=(0,0)):
+    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None, pixel_base=(0, 0)):
         id_code = id_code or next(self.region_id)
         self.pixel_base = pixel_base
         self.name = f"Region-{id_code}"
         self.grid_width, self.grid_height = size
 
         self.tiles = {}
-        self.animated_tiles = {}
+        self.visual_effects = {}
         self.solid_objects = {}
         self.monsters = {}
 
@@ -101,18 +120,18 @@ class Region:
         return self.solid_objects.get(position)
 
     def animated_tile(self, position: Position):
-        return self.animated_tiles.get(position)
+        return self.visual_effects.get(position)
 
     def monster_eggs(self, position: Position):
         return self.monsters.get(position)
 
     def place(self, position: Position, tile: Tile):
-        if tile.animated:
-            self.animated_tiles[position] = tile
-            return
         if tile.is_solid:
             self.solid_objects[position] = tile
-        self.tiles[position] = tile
+        if tile.layer == 0:
+            self.tiles[position] = tile
+            return
+        self.visual_effects[position] = tile
 
     def place_by_type(self, position: Position, tile_type: TileType):
         self.place(position, tile_type.value)
@@ -127,7 +146,7 @@ class Region:
                 x = column * self.tile_width
                 y = row * self.tile_height
                 p = position[0] + x, position[1] + y
-                surface.blit(tile_to_plot.filmstrip[0], p)
+                surface.blit(tile_to_plot.prefab.filmstrip[0], p)
         return surface
 
     def render_tiles(self):
@@ -142,16 +161,16 @@ class Region:
 
     def build_world(self, base_position):
         self.place_sprites(self.solid_objects, base_position, [self.groups.effects, self.groups.solid])
-        self.place_sprites(self.animated_tiles, base_position, [self.groups.effects])
+        self.place_sprites(self.visual_effects, base_position, [self.groups.effects, self.groups.items])
 
-    def place_sprites(self, tiles, base_position, groups):
+    def place_sprites(self, tiles: Dict[Position, Tile], base_position, groups):
         base_x, base_y = base_position
         for position, tile in tiles.items():
             position = Position(*position)
             # unlike tiles, sprites are positioned by centre so offset to allow for this
             x = base_x + position.x * self.tile_width + self.tile_width // 2
             y = base_y + position.y * self.tile_height + self.tile_height // 2
-            tile_sprite = ScenerySprite(x, y, tile.filmstrip, animated=tile.animated)
+            tile_sprite = tile.prefab.make_sprite(x, y)
             for g in groups:
                 g.add(tile_sprite)
 

@@ -1,8 +1,10 @@
 import itertools
 import unittest
 
+from assertpy import assert_that
+
 from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms, \
-    make_rooms_in_subregions, join_exits
+    make_rooms_in_subregions, join_exits, place_treasure
 from dungeoneer.regions import Region, Position, SubRegion, Size
 
 
@@ -136,3 +138,11 @@ class TestJoinNodes(unittest.TestCase):
         self.assertEqual(7, len(set(paths)))
         self.assertEqual(expected_x_vals, {p[0] for p in paths})
         self.assertEqual(expected_y_vals, {p[1] for p in paths})
+
+
+class TestItemDrops(unittest.TestCase):
+    def test_drop_treasure_withOneDrop_putsOneItemInVisualEffectsTable(self):
+        region = Region((10, 10))
+        generate_map(region, DesignType.LARGE_ROOM)
+        place_treasure((5, 5), region)
+        assert_that(region.visual_effects).is_length(1)

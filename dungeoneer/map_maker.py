@@ -5,7 +5,9 @@ from contextlib import suppress
 from enum import Enum
 from typing import Iterable, List
 
-from dungeoneer.regions import TileType, Position, SubRegion, Region
+from dungeoneer import treasure
+from dungeoneer.items import GoldItem
+from dungeoneer.regions import TileType, Position, SubRegion, Region, Tile, Prefab
 
 
 class DesignType(Enum):
@@ -37,6 +39,8 @@ def generate_large_room(region):
     paths = join_exits(nodes, region.exits, (region.grid_width, region.grid_height))
 
     carve_out_dungeon(region, paths, rooms)
+    for room in rooms:
+        item_drops(room, region)
     return region
 
 
@@ -74,8 +78,24 @@ def generate_connected_rooms(region):
     # dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
 
     carve_out_dungeon(region, paths, rooms)
-
+    for room in rooms:
+        item_drops(room, region)
     return region
+
+
+def item_drops(room, region):
+    p = 40
+    while random.randint(0, 100) <= p:
+        p //= 2
+        pos = random.choice(room)
+        place_treasure(pos, region)
+
+
+def place_treasure(pos, region):
+    sprite_sheet, value, scale = treasure.random_treasure(1)
+    prefab = Prefab(GoldItem, sprite_sheet.filmstrip(scale=scale), value=value)
+    item = Tile(prefab, layer=1)
+    region.visual_effects[pos] = item
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):
@@ -137,9 +157,8 @@ def join_nodes(nodes: Iterable[Position]) -> List[Position]:
 
 
 def join_two_nodes(src: Position, dest: Position):
-    path = []
     x, y = src
-    path.append((x, y))
+    path = [(x, y)]
     while True:
         x_count = dest.x - x
         y_count = dest.y - y

@@ -4,14 +4,17 @@ import pygame
 from assertpy import assert_that
 
 from dungeoneer.characters import MonsterType
-from dungeoneer.regions import Region, Tile, TileType, SubRegion, NoFreeSpaceFound
+from dungeoneer.regions import Region, Tile, TileType, SubRegion, NoFreeSpaceFound, Prefab
+from dungeoneer.scenery import ScenerySprite
 from dungeoneer.spritesheet import SpriteSheet
 
 
 def make_test_tile(colour, width=32, height=32):
     surface = pygame.Surface((width, height))
     surface.fill(colour)
-    return Tile(SpriteSheet(surface, columns=1, rows=1), is_solid=False)
+    sprite_sheet = SpriteSheet(surface, columns=1, rows=1)
+    prefab = Prefab(ScenerySprite, sprite_sheet.filmstrip())
+    return Tile(prefab, is_solid=False)
 
 
 RED_TILE = make_test_tile((255, 0, 0))
