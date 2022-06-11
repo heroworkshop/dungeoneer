@@ -204,7 +204,7 @@ def create_player(realm: Realm, pixel_position) -> Player:
     region = player.region
     pos = region.coordinate_from_absolute_position(x, y)
     empty_space = region.nearest_free_space(*pos, 10)
-    player.rect.topleft = region.pixel_position(empty_space)
+    player.rect.center = region.pixel_position(empty_space, align="center")
     realm.groups.player.add(player)
     return player
 

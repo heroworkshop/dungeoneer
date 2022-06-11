@@ -93,7 +93,7 @@ class TestRegion(unittest.TestCase):
 
     def test_place_withAnimatedTile_addsTileToAnimatedTiles(self):
         region = Region((1, 1), default_tile=TileType.STONE_FLOOR.value)
-        region.place_by_type((0, 0), TileType.WATER)
+        region.place_by_type((0, 0), TileType.WATER, layer=1)
         tile = region.tile((0, 0))
         animated = region.animated_tile((0, 0))
         self.assertEqual(TileType.STONE_FLOOR.value, tile)

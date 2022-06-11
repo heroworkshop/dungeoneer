@@ -98,10 +98,16 @@ class Region:
     def __len__(self):
         return self.grid_width * self.grid_height
 
-    def pixel_position(self, pos):
+    def pixel_position(self, pos, align="topleft"):
+        align_offsets = {
+            "topleft": (0, 0),
+            "center": (self.tile_width // 2, self.tile_height //2)
+        }
         col, row = pos
         bx, by = self.pixel_base
-        return col * self.tile_width + bx, row * self.tile_height + by
+        x, y = col * self.tile_width + bx, row * self.tile_height + by
+        dx, dy = align_offsets[align]
+        return x + dx, y + dy
 
     def coordinate_from_absolute_position(self, x, y):
         bx, by = self.pixel_base
@@ -133,8 +139,10 @@ class Region:
             return
         self.visual_effects[position] = tile
 
-    def place_by_type(self, position: Position, tile_type: TileType):
-        self.place(position, tile_type.value)
+    def place_by_type(self, position: Position, tile_type: TileType, layer=0):
+        tile = tile_type.value
+        tile.layer = layer
+        self.place(position, tile)
 
     def place_monster_egg(self, position: Position, monster_type: MonsterType):
         self.monsters[position] = monster_type
