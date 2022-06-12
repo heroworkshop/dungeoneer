@@ -9,7 +9,7 @@ from dungeoneer import treasure, items
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.item_sprites import ItemSprite
 from dungeoneer.items import GoldItem
-from dungeoneer.regions import TileType, Position, SubRegion, Region, Tile, Prefab
+from dungeoneer.regions import TileType, Position, SubRegion, Region, Tile
 
 
 class DesignType(Enum):
@@ -103,16 +103,13 @@ def item_drops(room, region):
 
 def place_treasure(pos, region):
     sprite_sheet, value, scale = treasure.random_treasure(1)
-    prefab = Prefab(GoldItem, sprite_sheet.filmstrip(scale=scale), value=value)
-    item = Tile(prefab, layer=1)
-    region.visual_effects[pos] = item
+    region.visual_effects[pos] = Tile(GoldItem, sprite_sheet.filmstrip(scale=scale), layer=1, value=value)
 
 
 def place_item(pos, region):
     item = random.choice(list(items.all_items.values()))
     sprite_sheet = make_sprite_sheet(item.name)
-    prefab = Prefab(ItemSprite, sprite_sheet.filmstrip(), item_spec=item)
-    region.visual_effects[pos] = Tile(prefab, layer=1)
+    region.visual_effects[pos] = Tile(ItemSprite, sprite_sheet.filmstrip(), layer=1, item_spec=item)
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):

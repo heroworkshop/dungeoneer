@@ -17,26 +17,18 @@ vegetation = game_assets.load_image("vegetation.png")
 lava = game_assets.load_image("lava.png")
 
 
-class Prefab:
-    def __init__(self, sprite_class: Type[pygame.sprite.Sprite], filmstrip: List, **parameters):
+class Tile:
+    def __init__(self, sprite_class: Type[pygame.sprite.Sprite], filmstrip: List, layer=0, is_solid=False, **parameters):
         self.sprite_class = sprite_class
         self.filmstrip = filmstrip
         self.parameters = parameters
         self.width = filmstrip[0].get_width()
         self.height = filmstrip[0].get_height()
+        self.layer = layer
+        self.is_solid = is_solid
 
     def make_sprite(self, x, y):
         return self.sprite_class(x, y, self.filmstrip, **self.parameters)
-
-
-class Tile:
-    def __init__(self, prefab: Prefab, is_solid=False, layer=0):
-        self.is_solid = is_solid
-        self.width = prefab.width
-        self.height = prefab.height
-        self.prefab = prefab
-        self.layer = layer
-        self.filmstrip = prefab.filmstrip
 
     @property
     def animated(self):
@@ -46,8 +38,7 @@ class Tile:
 class TileType(Enum):
     @staticmethod
     def make_tile(sprite_sheet, is_solid=False):
-        prefab = Prefab(ScenerySprite, sprite_sheet.filmstrip(), animated=False)
-        return Tile(prefab, is_solid)
+        return Tile(ScenerySprite, sprite_sheet.filmstrip(), is_solid=is_solid)
 
     STONE_WALL = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 3, 1, 1)), is_solid=True)
     STONE_FLOOR = make_tile(SpriteSheet(terrain, columns=8, rows=16, sub_area=(7, 0, 1, 1)))
@@ -154,7 +145,7 @@ class Region:
                 x = column * self.tile_width
                 y = row * self.tile_height
                 p = position[0] + x, position[1] + y
-                surface.blit(tile_to_plot.prefab.filmstrip[0], p)
+                surface.blit(tile_to_plot.filmstrip[0], p)
         return surface
 
     def render_tiles(self):
@@ -178,7 +169,7 @@ class Region:
             # unlike tiles, sprites are positioned by centre so offset to allow for this
             x = base_x + position.x * self.tile_width + self.tile_width // 2
             y = base_y + position.y * self.tile_height + self.tile_height // 2
-            tile_sprite = tile.prefab.make_sprite(x, y)
+            tile_sprite = tile.make_sprite(x, y)
             for g in groups:
                 g.add(tile_sprite)
 
