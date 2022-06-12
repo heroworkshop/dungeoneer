@@ -68,7 +68,6 @@ class DungeoneerGame:
         self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
         self.camera = Camera(self.screen, self.realm, position=(x, y))
 
-        add_demo_items(self.region, (20, 20))
         make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
         make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
 

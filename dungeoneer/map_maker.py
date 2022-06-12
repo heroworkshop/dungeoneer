@@ -5,7 +5,9 @@ from contextlib import suppress
 from enum import Enum
 from typing import Iterable, List
 
-from dungeoneer import treasure
+from dungeoneer import treasure, items
+from dungeoneer.game_assets import make_sprite_sheet
+from dungeoneer.item_sprites import ItemSprite
 from dungeoneer.items import GoldItem
 from dungeoneer.regions import TileType, Position, SubRegion, Region, Tile, Prefab
 
@@ -26,21 +28,6 @@ def generate_map(region, design: DesignType):
         generate_large_room(region)
     if design == DesignType.CONNECTED_ROOMS:
         generate_connected_rooms(region)
-    return region
-
-
-def generate_large_room(region):
-    # region.fill_all(TileType.STONE_WALL)
-    region.clear_area((1, 1), (region.grid_width - 1, region.grid_height - 1))
-    rooms = [[Position(x, y)
-              for x in range(1, region.grid_width - 1)
-              for y in range(1, region.grid_height - 1)]]
-    nodes = [Position(10, 10)]
-    paths = join_exits(nodes, region.exits, (region.grid_width, region.grid_height))
-
-    carve_out_dungeon(region, paths, rooms)
-    for room in rooms:
-        item_drops(room, region)
     return region
 
 
@@ -69,6 +56,21 @@ def join_exits(nodes, exits, size):
     return paths
 
 
+def generate_large_room(region):
+    region.clear_area((1, 1), (region.grid_width - 1, region.grid_height - 1))
+    rooms = [[Position(x, y)
+              for x in range(1, region.grid_width - 1)
+              for y in range(1, region.grid_height - 1)]]
+    nodes = [Position(10, 10)]
+    paths = join_exits(nodes, region.exits, (region.grid_width, region.grid_height))
+
+    carve_out_dungeon(region, paths, rooms)
+    for room in rooms:
+        for _ in range(4):
+            item_drops(room, region)
+    return region
+
+
 def generate_connected_rooms(region):
     sub_regions = make_sub_regions(region, node_count=16)
     nodes = sub_regions_to_nodes(sub_regions)
@@ -84,11 +86,19 @@ def generate_connected_rooms(region):
 
 
 def item_drops(room, region):
+    drop_table = (
+        (20, place_treasure),
+        (100, place_item)
+    )
     p = 40
     while random.randint(0, 100) <= p:
         p //= 2
         pos = random.choice(room)
-        place_treasure(pos, region)
+        roll = random.randint(0, 100)
+        for prob, dropper in drop_table:
+            if roll <= prob:
+                dropper(pos, region)
+                break
 
 
 def place_treasure(pos, region):
@@ -96,6 +106,13 @@ def place_treasure(pos, region):
     prefab = Prefab(GoldItem, sprite_sheet.filmstrip(scale=scale), value=value)
     item = Tile(prefab, layer=1)
     region.visual_effects[pos] = item
+
+
+def place_item(pos, region):
+    item = random.choice(list(items.all_items.values()))
+    sprite_sheet = make_sprite_sheet(item.name)
+    prefab = Prefab(ItemSprite, sprite_sheet.filmstrip(), item_spec=item)
+    region.visual_effects[pos] = Tile(prefab, layer=1)
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):

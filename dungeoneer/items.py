@@ -75,6 +75,7 @@ generated_ammo = make_item_dict(
 
 weapons = make_item_dict(
     Melee,
+    ("dagger", "swipe", 1.2, 4),
     ("sword", "swipe", 1.0, 10),
     ("battle axe", "swipe", 0.8, 12)
 )

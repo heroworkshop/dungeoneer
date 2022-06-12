@@ -18,13 +18,15 @@ Regions are also arranged in a grid of variable size and this is known as a real
   I    |    |    I
   ================
 """
+import copy
 from contextlib import suppress
 from random import randint
 from typing import Dict
 
 import pygame
 
-from dungeoneer.interfaces import SpriteGroups
+from dungeoneer.interfaces import SpriteGroups, Item
+from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.map_maker import generate_map, DesignType
 from dungeoneer.regions import Position, Region
 
@@ -133,3 +135,14 @@ class Realm:
         for sprite in group:
             if self.out_of_bounds(sprite):
                 sprite.kill()
+
+
+def drop_item(item_spec: Item, realm: Realm, x: int, y: int, count=1):
+    drop_x, drop_y = x + randint(-16, 16), y + randint(-16, 16)
+    new_item = copy.copy(item_spec)
+    new_item.count = count
+    item = make_item_sprite(new_item, drop_x, drop_y)
+    groups = realm.region_from_pixel_position((x, y)).groups
+    groups.items.add(item)
+    groups.effects.add(item)
+    return item
