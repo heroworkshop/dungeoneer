@@ -141,8 +141,9 @@ class TestJoinNodes(unittest.TestCase):
 
 
 class TestItemDrops(unittest.TestCase):
-    def test_drop_treasure_withOneDrop_putsOneItemInVisualEffectsTable(self):
+    def test_drop_treasure_withOneDrop_putsAddsOneItemInVisualEffectsTable(self):
         region = Region((10, 10))
         generate_map(region, DesignType.LARGE_ROOM)
+        original = len(region.visual_effects)
         place_treasure((5, 5), region)
-        assert_that(region.visual_effects).is_length(1)
+        assert_that(region.visual_effects).is_length(1 + original)
