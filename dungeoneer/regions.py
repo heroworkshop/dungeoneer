@@ -1,7 +1,7 @@
 import itertools
 from collections import namedtuple, deque
 from enum import Enum
-from typing import Iterable, Dict, Type
+from typing import Iterable, Dict, Type, List
 
 import pygame
 
@@ -18,7 +18,7 @@ lava = game_assets.load_image("lava.png")
 
 
 class Prefab:
-    def __init__(self, sprite_class: Type[pygame.sprite.Sprite], filmstrip: Iterable, **parameters):
+    def __init__(self, sprite_class: Type[pygame.sprite.Sprite], filmstrip: List, **parameters):
         self.sprite_class = sprite_class
         self.filmstrip = filmstrip
         self.parameters = parameters
