@@ -2,8 +2,12 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Protocol, Tuple, Type
 
+import pygame.sprite
 from pygame.sprite import Group
+
+from dungeoneer.sound_effects import SfxEvents
 
 
 @dataclass
@@ -18,10 +22,32 @@ class SpriteGroups:
     hud: Group = field(default_factory=Group)
 
 
+class Collider(Protocol):
+    def collided(self, group: pygame.sprite.Group):
+        ...
+
+
+class SpriteGrouper(Protocol):
+    def any_solid_collisions(self, other: Collider, position: Tuple[int]) -> bool:
+        ...
+
+    def shoot(self, sprite, affects_player):
+        ...
+
+    def drop(self, item, position, motion=None):
+        ...
+
+    def drop_item_sprite(self, item_sprite, position):
+        ...
+
+    def effect(self, effect_sprite: pygame.sprite.Sprite):
+        ...
+
+
 class Observer(ABC):
     @abstractmethod
-    def notify(self, value):
-        pass
+    def on_update(self, attribute, value):
+        """Notify an observer of a change to an attribute"""
 
 
 class Item:
@@ -29,7 +55,7 @@ class Item:
         self.count = count
         self.name = name
         self.preferred_slot = None
-        self.sfx_events = sfx_events
+        self.sfx_events = sfx_events or SfxEvents()
         self.selected = False
 
     def __eq__(self, other):
@@ -58,12 +84,6 @@ class Observable(ABC):
     @abstractmethod
     def attribute(self, attribute_id):
         """return the value of attribute_id"""
-
-
-class Observer(ABC):
-    @abstractmethod
-    def on_update(self, attribute, value):
-        """Notify an observer of a change to an attribute"""
 
 
 class KeyObserver(ABC):

@@ -60,8 +60,8 @@ scenery_types = {"#": SceneryType(SpriteSheet(wood_sheet2, columns=8, rows=16, s
                  }
 
 
-def create_objects(design, level, world, offset=None, tile_width=TILE_WIDTH, tile_height=TILE_HEIGHT):
-    ox, oy = offset or (0, 0)
+def create_objects(design, level, world, offset=(0, 0), tile_width=TILE_WIDTH, tile_height=TILE_HEIGHT):
+    ox, oy = offset
     rows = [line for line in design[level].split("\n") if line]
     for row_num, row in enumerate(rows):
         for col_num, ch in enumerate(row):

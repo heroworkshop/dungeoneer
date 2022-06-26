@@ -11,7 +11,8 @@ class Camera:
         self.offset = -1 * pygame.math.Vector2(position)
         self.realm = realm
 
-    def draw_groups(self, groups):
+    @staticmethod
+    def draw_groups(groups):
         return (groups.player, groups.monster, groups.missile, groups.player_missile,
                 groups.items, groups.effects)
 

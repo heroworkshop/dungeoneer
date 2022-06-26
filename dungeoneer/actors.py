@@ -10,12 +10,9 @@ import pygame
 from dungeoneer import game_assets, treasure, items
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
-from dungeoneer.interfaces import Item
+from dungeoneer.interfaces import Item, Collider, SpriteGrouper
 from dungeoneer.inventory import Inventory
-from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.items import Ammo, Melee, Launcher, GoldItem
-from dungeoneer.pathfinding import move_to_nearest_empty_space
-from dungeoneer.realms import Realm, drop_item
 from dungeoneer.scenery import VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -39,10 +36,10 @@ def extract_filmstrips(sprite_sheet: SpriteSheet):
     return filmstrips
 
 
-class Actor(pygame.sprite.Sprite):
-    def __init__(self, x, y, character, realm: Realm):
+class Actor(pygame.sprite.Sprite, Collider):
+    def __init__(self, x, y, character, world: SpriteGrouper):
         pygame.sprite.Sprite.__init__(self)
-        self.realm = realm
+        self.world = world
         self.filmstrips = extract_filmstrips(character.template.sprite_sheet)
         self.character = character
         self._vitality = character.vitality
@@ -61,10 +58,6 @@ class Actor(pygame.sprite.Sprite):
         self.observers = defaultdict(list)
         self.collide_ratio = 0.8
 
-    @property
-    def region(self):
-        return self.realm.region_from_pixel_position(self.rect.center)
-
     def add_observer(self, observer, attribute):
         self.observers[attribute].append(observer)
         observer.on_update(attribute, Item(attribute, count=getattr(self, attribute)))
@@ -82,7 +75,7 @@ class Actor(pygame.sprite.Sprite):
     def on_collided(self):
         """overload this to determine what happens when hitting a solid object"""
 
-    def move(self, realm: Realm) -> Optional[pygame.math.Vector2]:
+    def move(self) -> Optional[pygame.math.Vector2]:
         """Move the actor based on its current direction and speed
         Detect any collisions and work out the actual possible move vector
         Returns:
@@ -97,23 +90,19 @@ class Actor(pygame.sprite.Sprite):
 
         self.rect.centerx += int(velocity.x)
         collide_pixel = self.rect.midleft if velocity.x < 0 else self.rect.midright
-        groups = realm.region_from_pixel_position(collide_pixel).groups
-        if self.any_solid_collisions(groups) or self.any_solid_collisions(realm.groups):
+
+        if self.world.any_solid_collisions(self, collide_pixel):
             self.rect.centerx -= int(velocity.x)
             velocity.x = 0
         self.rect.centery += int(velocity.y)
         collide_pixel = self.rect.midtop if velocity.y < 0 else self.rect.midbottom
-        groups = realm.region_from_pixel_position(collide_pixel).groups
-        if self.any_solid_collisions(groups) or self.any_solid_collisions(realm.groups):
+        if self.world.any_solid_collisions(self, collide_pixel):
             self.rect.centery -= int(velocity.y)
             velocity.y = 0
         for sprite in self._connected_sprites:
             sprite.rect.x += int(velocity.x)
             sprite.rect.y += int(velocity.y)
         return pygame.math.Vector2(-int(velocity.x), -int(velocity.y))
-
-    def any_solid_collisions(self, groups):
-        return self.collided(groups.solid) or self.collided(groups.player)
 
     def update_filmstrip(self):
         """Animate filmstrip using current direction"""
@@ -134,7 +123,7 @@ class Actor(pygame.sprite.Sprite):
             self.filmstrip = self.filmstrips.walk_west
         return self.filmstrip
 
-    def collided(self, group):
+    def collided(self, group: pygame.sprite.Group):
         collisions = pygame.sprite.spritecollide(self, group, dokill=False,
                                                  collided=pygame.sprite.collide_rect_ratio(self.collide_ratio))
         return any(c is not self for c in collisions)
@@ -147,13 +136,7 @@ class Actor(pygame.sprite.Sprite):
             self.die()
 
     def drop(self, item: Item, motion=None):
-        x, y = self.rect.center
-        sprite = make_item_sprite(item, x, y, motion=motion)
-        self.region.groups.items.add(sprite)
-        self.region.groups.effects.add(sprite)
-        if motion:
-            self.region.groups.player_missile.add(sprite)
-        return sprite
+        return self.world.drop(item, self.rect.center, motion)
 
     @property
     def ammo(self):
@@ -187,13 +170,10 @@ class Actor(pygame.sprite.Sprite):
 
 
 class Player(Actor):
-    def __init__(self, x, y, character, realm: Realm):
-        super().__init__(x, y, character, realm)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.inventory = Inventory()
         self.recently_dropped_items = set()  # item_sprites that have recently been dropped. Ignore until move away.
-
-    def any_solid_collisions(self, groups):
-        return self.collided(groups.solid)
 
     def drop(self, item: Item, motion=None):
         item_sprite = super().drop(item, motion=motion)
@@ -251,7 +231,9 @@ class Player(Actor):
         dx, dy = self.facing
 
         missile = self.make_missile(dx, dy, ammo_item)
-        return self._place_in_front(dx, dy, missile)
+        self._place_in_front(dx, dy, missile)
+        self.world.shoot(missile, affects_player=False)
+        return missile
 
     def expend_ammo(self):
         return self.inventory.remove_item(slot_index=self.inventory.AMMO)
@@ -261,9 +243,7 @@ class Player(Actor):
             return
 
         return make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                  (dx, dy), self.realm.groups.player_missile,
-                                  ammo_item,
-                                  repeats=True)
+                                  (dx, dy), attack_item=ammo_item, repeats=True)
 
     def make_attack(self, dx, dy, weapon_item):
 
@@ -277,9 +257,8 @@ class Player(Actor):
             return None
 
         attack_sprite = make_attack_sprite(self.rect.centerx, self.rect.centery,
-                                           (dx, dy), self.realm.groups.player_missile,
-                                           ammo_item,
-                                           repeats=False)
+                                           (dx, dy), attack_item=ammo_item, repeats=False)
+        self.world.shoot(attack_sprite, affects_player=False)
         self.connect(attack_sprite)
         return attack_sprite
 
@@ -301,8 +280,8 @@ class Monster(Actor):
             yield n % retarget_period == 0
             n += 1
 
-    def __init__(self, x, y, character, group, direction=(0, 0)):
-        super().__init__(x, y, character, group)
+    def __init__(self, x, y, character, world: SpriteGrouper, direction=(0, 0)):
+        super().__init__(x, y, character, world)
         self.direction.update(direction)
 
         self.speed = self.character.template.speed
@@ -336,9 +315,8 @@ class Monster(Actor):
     def die(self):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)
         if randint(1, 100) < 20:
-            item = GoldItem(self.rect.centerx, self.rect.centery, sprite_sheet.filmstrip(scale=scale), value)
-            self.region.groups.effects.add(item)
-            self.region.groups.items.add(item)
+            item = GoldItem(0, 0, sprite_sheet.filmstrip(scale=scale), value)
+            self.world.drop_item_sprite(item, self.rect.center)
         super().die()
 
     def do_actions(self, realm):
@@ -409,7 +387,7 @@ class MissileSprite(pygame.sprite.Sprite):
         self.rect.x += self.dx * self.speed
         self.rect.y += self.dy * self.speed
 
-    def on_impact(self, target, realm: Realm):
+    def on_impact(self, target, realm: SpriteGrouper):
         if not self.damage_profile:
             return
         factor = self.damage_profile[self.frame % len(self.damage_profile)]
@@ -422,38 +400,29 @@ class MissileSprite(pygame.sprite.Sprite):
         target.vitality -= actual_damage
         self.hit_sfx.play()
         x, y = target.rect.center
-        realm.groups.effects.add(self.make_impact_effect(x, y))
+        realm.effect(self.make_impact_effect(x, y))
         if randint(0, 100) < self.shot_from_item.survivability:
+            realm.drop(self.shot_from_item, (x, y))
 
-            drop_item(self.shot_from_item, realm, x, y)
         target.on_hit()
 
     def make_impact_effect(self, x, y):
         return self.impact_maker(x, y)
 
 
-def make_attack_sprite(x: int, y: int, direction, group,
-                       attack_item: Ammo, repeats=False):
+def make_attack_sprite(x: int, y: int, direction, attack_item: Ammo, repeats=False):
     if not attack_item:
         return None
     sprite_sheet = make_sprite_sheet(attack_item.name)
 
-    sprite = MissileSprite(x, y, sprite_sheet, direction, attack_item, repeats=repeats)
-    group.add(sprite)
-
-    return sprite
+    return MissileSprite(x, y, sprite_sheet, direction, attack_item, repeats=repeats)
 
 
-def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, realm: Realm, sleeping=False):
+def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, realm: SpriteGrouper, sleeping=False):
     if type(monster_type) is str:
         monster_type = MonsterType[monster_type]
     monster = Character(monster_type)
+    monster.sleeping = sleeping
     monster_sprite = Monster(x, y, monster, realm)
-    world = monster_sprite.region.groups
-    if move_to_nearest_empty_space(monster_sprite, (world.solid, world.player), 500):
-        monster.sleeping = sleeping
-        world.effects.add(monster_sprite)
-        world.solid.add(monster_sprite)
-        world.monster.add(monster_sprite)
-        return monster_sprite
-    return None
+    return realm.spawn(monster_sprite)
+

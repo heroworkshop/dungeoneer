@@ -4,6 +4,7 @@ import pygame
 from assertpy import assert_that
 
 from dungeoneer.characters import MonsterType
+from dungeoneer.realms import Realm
 from dungeoneer.regions import Region, Tile, TileType, SubRegion, NoFreeSpaceFound
 from dungeoneer.scenery import ScenerySprite
 from dungeoneer.spritesheet import SpriteSheet
@@ -31,7 +32,6 @@ class TestRegion(unittest.TestCase):
     def test_Region_name_withIdCode_usesIdCodeInName(self):
         region = Region((5, 5), id_code=(5, 12))
         assert_that(region.name).is_equal_to("Region-(5, 12)")
-
 
     def test_Region_withSize5by5_has25Tiles(self):
         region = Region((5, 5))
@@ -110,7 +110,7 @@ class TestRegion(unittest.TestCase):
         region = Region((1, 1))
         region.place_monster_egg((0, 0), MonsterType.ZOMBIE_GENERATOR)
 
-        monster_type = region.monster_eggs((0, 0))
+        monster_type = region.monster_eggs[(0, 0)]
 
         self.assertEqual(MonsterType.ZOMBIE_GENERATOR, monster_type)
 
@@ -126,9 +126,10 @@ class TestRegion(unittest.TestCase):
         self.assertEqual(4, len(region.solid_objects))
 
     def test_build_world_withSolidObjects_addsSpritesToRegionsSolidLayer(self):
+        realm = Realm((10, 10), (10, 10))
         region = Region((4, 4))
         region.fill((1, 1), (2, 2), TileType.STONE_WALL)
-        region.build_world((0, 0))
+        region.build_world(realm)
         self.assertEqual(4, len(region.groups.solid))
 
     def test_clear_area_with2x2Area_removes4SolidObjects(self):

@@ -1,5 +1,6 @@
 from contextlib import suppress
 from copy import copy
+from typing import Optional
 
 from dungeoneer.interfaces import Observable, Item
 
@@ -30,7 +31,7 @@ class Inventory(Observable):
     def attribute(self, attribute_id):
         return self.slot(attribute_id)
 
-    def slot(self, i: int) -> Item:
+    def slot(self, i: int) -> Optional[Item]:
         return self._slots[i]
 
     @property

@@ -20,7 +20,6 @@ class TestRealm(unittest.TestCase):
         sprite.rect = pygame.Rect(1050, 100, 5, 5)
         assert_that(realm.out_of_bounds(sprite)).is_true()
 
-
     def test_Realm_withSize5by5_has25Regions(self):
         realm = Realm((5, 5), tile_size=(20, 20))
 
@@ -64,14 +63,12 @@ class TestRealm(unittest.TestCase):
         neighbours = realm.neighbouring_regions_from_pixel_position((200, 200))
         assert_that(neighbours).is_length(4)
 
-
     def test_neighbouring_regions_withPixelNotInCornerOfRegion_has9Neighbours(self):
         realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
         # region pixel width and height are 10 * 20 = (200 x 200)
         # pick pixel in region(1, 1) which should have 9 neighbours
         neighbours = realm.neighbouring_regions_from_pixel_position((201, 201))
         assert_that(neighbours).is_length(9)
-
 
     def test_neighbouring_regions_withPixelInCornerOfBorderRegion_has1Neighbour(self):
         # Because it is a corner region, there are no neighbours so the only match is

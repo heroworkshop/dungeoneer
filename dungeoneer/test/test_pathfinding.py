@@ -34,7 +34,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
         self.assertTrue(-1 < result.rect.centerx < 3)
         self.assertTrue(-1 < result.rect.centery < 3)
 
-    def test_move_withSpriteNextToFreeSpace_movesIntoSpace(self):
+    def test_move_withSpriteNextToFreeSpace_movesRightIntoSpace(self):
         """
           ###
           ##
@@ -49,7 +49,7 @@ class TestMoveToNearestEmptySpace(unittest.TestCase):
         result = move_to_nearest_empty_space(tile, [world.solid], 3)
         self.assertEqual((2, 1), result.rect.center)
 
-    def test_move_withSpriteNextToFreeSpace_movesIntoSpace(self):
+    def test_move_withSpriteNextToFreeSpace_movesLeftIntoSpace(self):
         """
           ####
           # ##

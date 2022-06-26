@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Iterable, List
 
 from dungeoneer import treasure, items
+from dungeoneer.characters import MonsterType
 from dungeoneer.game_assets import make_sprite_sheet
 from dungeoneer.item_sprites import ItemSprite
 from dungeoneer.items import GoldItem
@@ -68,6 +69,7 @@ def generate_large_room(region):
     for room in rooms:
         for _ in range(4):
             item_drops(room, region)
+            monster_drops(room, region)
     return region
 
 
@@ -82,6 +84,7 @@ def generate_connected_rooms(region):
     carve_out_dungeon(region, paths, rooms)
     for room in rooms:
         item_drops(room, region)
+        monster_drops(room, region)
     return region
 
 
@@ -89,6 +92,21 @@ def item_drops(room, region):
     drop_table = (
         (20, place_treasure),
         (100, place_item)
+    )
+    p = 40
+    while random.randint(0, 100) <= p:
+        p //= 2
+        pos = random.choice(room)
+        roll = random.randint(0, 100)
+        for prob, dropper in drop_table:
+            if roll <= prob:
+                dropper(pos, region)
+                break
+
+
+def monster_drops(room, region):
+    drop_table = (
+        (100, place_monster),
     )
     p = 40
     while random.randint(0, 100) <= p:
@@ -110,6 +128,10 @@ def place_item(pos, region):
     item = random.choice(list(items.all_items.values()))
     sprite_sheet = make_sprite_sheet(item.name)
     region.visual_effects[pos] = Tile(ItemSprite, sprite_sheet.filmstrip(), layer=1, item_spec=item)
+
+
+def place_monster(pos, region):
+    region.monster_eggs[pos] = MonsterType.ZOMBIE
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):

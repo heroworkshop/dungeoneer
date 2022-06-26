@@ -6,9 +6,10 @@ from typing import Iterable, Dict, Type, List
 import pygame
 
 from dungeoneer import game_assets
+from dungeoneer.actors import make_monster_sprite
 from dungeoneer.characters import MonsterType
 from dungeoneer.interfaces import SpriteGroups
-from dungeoneer.scenery import ScenerySprite
+from dungeoneer.scenery import ScenerySprite, VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
 
 terrain = game_assets.load_image("terrain.png")
@@ -18,7 +19,7 @@ lava = game_assets.load_image("lava.png")
 
 
 class Tile:
-    def __init__(self, sprite_class: Type[pygame.sprite.Sprite], filmstrip: List, layer=0, is_solid=False, **parameters):
+    def __init__(self, sprite_class: Type[VisualEffect], filmstrip: List, layer=0, is_solid=False, **parameters):
         self.sprite_class = sprite_class
         self.filmstrip = filmstrip
         self.parameters = parameters
@@ -64,7 +65,8 @@ class Region:
     """A region is a variable sized sparse grid of tiles"""
     region_id = itertools.count()
 
-    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None, pixel_base=(0, 0)):
+    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None,
+                 pixel_base=(0, 0)):
         id_code = id_code or next(self.region_id)
         self.pixel_base = pixel_base
         self.name = f"Region-{id_code}"
@@ -73,7 +75,7 @@ class Region:
         self.tiles = {}
         self.visual_effects = {}
         self.solid_objects = {}
-        self.monsters = {}
+        self.monster_eggs = {}
 
         self.groups = SpriteGroups()
         self.tile_width = default_tile.width
@@ -119,9 +121,6 @@ class Region:
     def animated_tile(self, position: Position):
         return self.visual_effects.get(position)
 
-    def monster_eggs(self, position: Position):
-        return self.monsters.get(position)
-
     def place(self, position: Position, tile: Tile):
         if tile.is_solid:
             self.solid_objects[position] = tile
@@ -136,7 +135,7 @@ class Region:
         self.place(position, tile)
 
     def place_monster_egg(self, position: Position, monster_type: MonsterType):
-        self.monsters[position] = monster_type
+        self.monster_eggs[position] = monster_type
 
     def render_tiles_to_surface(self, surface, position):
         for column in range(self.grid_width):
@@ -158,12 +157,24 @@ class Region:
                 surface.blit(tile_to_plot.filmstrip[0], (x, y))
         return surface
 
-    def build_world(self, base_position):
-        self.place_sprites(self.solid_objects, base_position, [self.groups.effects, self.groups.solid])
-        self.place_sprites(self.visual_effects, base_position, [self.groups.effects, self.groups.items])
+    def build_world(self, realm):
+        self.place_sprites(self.solid_objects, [self.groups.effects, self.groups.solid])
+        self.place_sprites(self.visual_effects, [self.groups.effects, self.groups.items])
+        self.place_monsters(self.monster_eggs, [self.groups.monster, self.groups.solid], realm)
 
-    def place_sprites(self, tiles: Dict[Position, Tile], base_position, groups):
-        base_x, base_y = base_position
+    def place_monsters(self, monster_eggs, groups, realm):
+        base_x, base_y = self.pixel_base
+        for position, monster_type in monster_eggs.items():
+            position = Position(*position)
+            x = base_x + position.x * self.tile_width + self.tile_width // 2
+            y = base_y + position.y * self.tile_height + self.tile_height // 2
+
+            monster_sprite = make_monster_sprite(monster_type, x, y, realm)
+            for g in groups:
+                g.add(monster_sprite)
+
+    def place_sprites(self, tiles: Dict[Position, Tile], groups):
+        base_x, base_y = self.pixel_base
         for position, tile in tiles.items():
             position = Position(*position)
             # unlike tiles, sprites are positioned by centre so offset to allow for this

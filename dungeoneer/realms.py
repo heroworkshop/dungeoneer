@@ -21,13 +21,14 @@ Regions are also arranged in a grid of variable size and this is known as a real
 import copy
 from contextlib import suppress
 from random import randint
-from typing import Dict
+from typing import Dict, Tuple, Type
 
 import pygame
 
-from dungeoneer.interfaces import SpriteGroups, Item
+from dungeoneer.interfaces import SpriteGroups, Item, SpriteGrouper, Collider
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.map_maker import generate_map, DesignType
+from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.regions import Position, Region
 
 
@@ -35,7 +36,7 @@ class PointOutsideRealmBoundary(ValueError):
     """Raised when trying to access position outside the realms boundaries"""
 
 
-class Realm:
+class Realm(SpriteGrouper):
     """A realm is a variable sized grid of Regions
 
     Args:
@@ -78,9 +79,9 @@ class Realm:
     def region(self, position: Position):
         try:
             return self.regions[position]
-        except KeyError:
+        except KeyError as e:
             raise PointOutsideRealmBoundary(f"Position {position} was outside the realm with "
-                                            f"size ({self.width}, {self.height})")
+                                            f"size ({self.width}, {self.height})") from e
 
     def region_coord_from_pixel_position(self, pixel_position):
         x, y = pixel_position
@@ -90,9 +91,9 @@ class Realm:
     def region_from_pixel_position(self, pixel_position):
         try:
             return self.region(self.region_coord_from_pixel_position(pixel_position))
-        except PointOutsideRealmBoundary:
+        except PointOutsideRealmBoundary as e:
             raise PointOutsideRealmBoundary(f"Pixel Position {pixel_position} "
-                                            f"was outside the realm with size ({self.width}, {self.height})")
+                                            f"was outside the realm with size ({self.width}, {self.height})") from e
 
     def neighbouring_regions_from_pixel_position(self, pixel_position):
         pixel_position = pygame.Vector2(pixel_position)
@@ -114,7 +115,7 @@ class Realm:
         for coordinates, region in self.regions.items():
             generate_map(region, DesignType.random())
             x, y = coordinates
-            region.build_world((x * width, y * height))
+            region.build_world(self)
 
     def render_tiles(self):
         pixel_width = self.regions[(0, 0)].pixel_width
@@ -135,6 +136,49 @@ class Realm:
         for sprite in group:
             if self.out_of_bounds(sprite):
                 sprite.kill()
+
+    def any_solid_collisions(self, other: Collider, position: Tuple[int]) -> bool:
+        sub_groups = self.region_from_pixel_position(position).groups
+        return any(other.collided(groups.solid) or other.collided(groups.player)
+                   for groups in (sub_groups, self.groups))
+
+    def shoot(self, sprite, affects_player):
+        if affects_player:
+            self.groups.missile.add(sprite)
+        else:
+            self.groups.player_missile.add(sprite)
+
+    def drop(self, item, position, motion=None):
+        x, y = position
+        sprite = make_item_sprite(item, x, y, motion=motion)
+        self.drop_item_sprite(sprite, position)
+        return sprite
+
+    def drop_item_sprite(self, item_sprite, position):
+        item_sprite.center = position
+        region = self.region_from_pixel_position(position)
+        region.groups.items.add(item_sprite)
+        region.groups.effects.add(item_sprite)
+
+    def effect(self, effect_sprite: pygame.sprite.Sprite):
+        self.groups.effects.add(effect_sprite)
+
+    def spawn(self, monster_sprite):
+        region = self.region_from_pixel_position(monster_sprite.rect.center)
+        world = region.groups
+        if move_to_nearest_empty_space(monster_sprite, (world.solid, world.player), 500):
+            world.solid.add(monster_sprite)
+            world.monster.add(monster_sprite)
+            return monster_sprite
+        return None
+
+    def update_monster_group(self, monster, from_region):
+        """Ensure that the monster is in the correct group based on its current position"""
+        position = monster.rect.center
+        region = self.region_from_pixel_position(position)
+        if monster not in region.groups.monster:
+            from_region.groups.monster.remove(monster)
+            region.groups.monster.add(monster)
 
 
 def drop_item(item_spec: Item, realm: Realm, x: int, y: int, count=1):

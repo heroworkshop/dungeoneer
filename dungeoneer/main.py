@@ -19,6 +19,7 @@ from dungeoneer.interfaces import Item
 from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
+from dungeoneer.items import Ammo
 from dungeoneer.messages import Messages
 from dungeoneer.realms import Realm
 from dungeoneer.regions import Region, NoFreeSpaceFound
@@ -68,8 +69,8 @@ class DungeoneerGame:
         self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
         self.camera = Camera(self.screen, self.realm, position=(x, y))
 
-        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
-        make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
+        # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
+        # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
 
     def place_static_items(self):
         create_health_bar(self.player, self.static_sprites)
@@ -80,7 +81,7 @@ class DungeoneerGame:
     def game_loop(self):
         while True:
             handle_events(self.key_event_dispatcher, self.player, self.message_store)
-            move_vector = self.player.move(self.realm)
+            move_vector = self.player.move()
             self.camera.move(move_vector)
 
             self.move_monsters()
@@ -114,13 +115,8 @@ class DungeoneerGame:
             monster: Monster
             for monster in world.monster:
                 monster.target_enemy(self.player)
-                monster.move(self.realm)
-                # update region if monster has moved across regions
-                if monster not in monster.region.groups.monster:
-                    world.monster.remove(monster)
-                    actual_region = monster.region
-                    monster.add(actual_region.groups.monster)
-
+                monster.move()
+                self.realm.update_monster_group(monster, region)
                 monster.do_actions(self.realm)
 
 
@@ -132,6 +128,11 @@ def play():
 
     thread.join()
     game.place_player((5, 5))
+    arrows = items.ammo["arrow"]
+    arrows.count = 20
+    game.player.inventory.add_item(arrows, slot=2)
+    add_demo_items(game.region, (10, 10))
+
     game.place_static_items()
 
     start_music("Dragon_and_Toast.mp3")
@@ -175,32 +176,32 @@ def handle_events(key_event_dispatcher, player, message_store):
 def add_demo_items(region: Region, position):
     col, row = position
     arrows: Item = items.ammo["arrow"]
-    arrows.count = 5
+    arrows.count = 15
     with suppress(NoFreeSpaceFound):
         p = region.nearest_free_space(col, row, 20)
         x, y = region.pixel_position(p)
         arrow_sprite = make_item_sprite(arrows, x, y)
         region.groups.items.add(arrow_sprite)
 
-    for i, item in enumerate(items.all_items.values()):
-        col, row = 10 + i % 8, 10 + i // 8
-        try:
-            p = region.nearest_free_space(col, row, 20)
-        except NoFreeSpaceFound:
-            print("Couldn't place demo item sprite")
-            continue
-        x, y = region.pixel_position(p)
-        item_sprite = make_item_sprite(item, x, y)
-        dx, dy = randint(-15, 15), randint(-15, 15)  # subtile variance in position
-        item_sprite.rect.topleft = x + dx, y + dy
-        region.groups.items.add(item_sprite)
+    # for i, item in enumerate(items.all_items.values()):
+    #     col, row = 10 + i % 8, 10 + i // 8
+    #     try:
+    #         p = region.nearest_free_space(col, row, 20)
+    #     except NoFreeSpaceFound:
+    #         print("Couldn't place demo item sprite")
+    #         continue
+    #     x, y = region.pixel_position(p)
+    #     item_sprite = make_item_sprite(item, x, y)
+    #     dx, dy = randint(-15, 15), randint(-15, 15)  # subtile variance in position
+    #     item_sprite.rect.topleft = x + dx, y + dy
+    #     region.groups.items.add(item_sprite)
 
 
 def create_player(realm: Realm, pixel_position) -> Player:
     player_character = Character(PlayerCharacterType.TOBY)
     x, y = pixel_position
+    region = realm.region_from_pixel_position(pixel_position)
     player = Player(x, y, player_character, realm)
-    region = player.region
     pos = region.coordinate_from_absolute_position(x, y)
     empty_space = region.nearest_free_space(*pos, 10)
     player.rect.center = region.pixel_position(empty_space, align="center")

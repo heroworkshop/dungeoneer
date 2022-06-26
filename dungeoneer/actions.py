@@ -66,9 +66,7 @@ class AttackAction(Action):
         direction = x - ox, y - oy
         attack_item: Ammo = copy(items.generated_ammo[self.attack_item])
         attack_item.damage = self.damage
-        world = realm.region_from_pixel_position((x, y)).groups
-        parameters = dict(x=x, y=y, direction=direction, group=realm.groups.missile,
-                          attack_item=attack_item)
+        parameters = dict(x=x, y=y, direction=direction, attack_item=attack_item)
         return Runner("make_attack_sprite", parameters)
 
     def on_activated(self, result, owner, target):

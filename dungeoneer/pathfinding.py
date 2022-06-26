@@ -24,7 +24,6 @@ def move_to_nearest_empty_space(tile: Sprite, solid_groups, max_distance: int):
     while locations:
         distance_squared, (x, y) = locations.popitem(0)
         checked.add((x, y))
-        # distance_squared = (initial_x - x) ** 2 + (initial_y - y) ** 2
         if distance_squared > max_distance_squared:
             continue
         tile.rect.center = (x, y)
