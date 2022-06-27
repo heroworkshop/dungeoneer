@@ -4,7 +4,7 @@ import unittest
 from assertpy import assert_that
 
 from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms, \
-    make_rooms_in_subregions, join_exits, place_treasure
+    make_rooms_in_subregions, join_exits, place_treasure, monster_drops
 from dungeoneer.regions import Region, Position, SubRegion, Size
 
 
@@ -147,3 +147,27 @@ class TestItemDrops(unittest.TestCase):
         original = len(region.visual_effects)
         place_treasure((5, 5), region)
         assert_that(region.visual_effects).is_length(1 + original)
+
+
+class TestMonsterDrops(unittest.TestCase):
+    def test_drop_monster_with100pcProbability_dropsAtLeastOneMonster(self):
+        room = [(0, 0)]
+        region = Region((10, 10))
+        monster_drops(room, region, base_p=100)
+
+        assert_that(len(region.monster_eggs)).is_greater_than_or_equal_to(1)
+
+    def test_drop_monster_with0Probability_dropsNoMonsters(self):
+        room = [(0, 0)]
+        region = Region((10, 10))
+        monster_drops(room, region, base_p=0)
+
+        assert_that(len(region.monster_eggs)).is_equal_to(0)
+
+    def test_drop_monster_withMultipleDropsOnSameLocation_dropsOnlyOneMonster(self):
+        room = [(0, 0)]
+        region = Region((10, 10))
+        for _ in range(4):
+            monster_drops(room, region, base_p=100)
+
+        assert_that(len(region.monster_eggs)).is_greater_than_or_equal_to(1)

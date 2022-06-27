@@ -46,6 +46,7 @@ SPRITE_SHEET_TABLE = {
     "inventory slot box": ("slot_box.png", (1, 1)),
     "zombie": ("TombZombies.png", (12, 8), (3, 0, 3, 4)),
     "zombie generator": ("graveyard.png", (12, 8), (0, 1, 1, 1)),
+    "skeleton": ("TombZombies.png", (12, 8), (9, 0, 3, 4)),
     "mummy": ("TombZombies.png", (12, 8), (6, 0, 3, 4)),
     "player01": ("player01_sheet.png", (3, 4)),
     "player02": ("player02_sheet.png", (3, 4)),

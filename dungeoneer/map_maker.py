@@ -89,34 +89,40 @@ def generate_connected_rooms(region):
 
 
 def item_drops(room, region):
-    drop_table = (
-        (20, place_treasure),
-        (100, place_item)
-    )
+    drop_table = {
+        place_treasure: 20,
+        place_item: 80
+    }
     p = 40
     while random.randint(0, 100) <= p:
         p //= 2
         pos = random.choice(room)
-        roll = random.randint(0, 100)
-        for prob, dropper in drop_table:
-            if roll <= prob:
-                dropper(pos, region)
-                break
+        dropper = pick_from_weighted_table(drop_table)
+        dropper(pos, region)
 
 
-def monster_drops(room, region):
-    drop_table = (
-        (100, place_monster),
-    )
-    p = 40
-    while random.randint(0, 100) <= p:
+def monster_drops(room, region, base_p=30):
+    drop_table = {
+        place_monster: 100
+    }
+    type_table = {
+        MonsterType.ZOMBIE: 50,
+        MonsterType.SKELETON: 50,
+        MonsterType.MUMMY: 20
+    }
+    p = base_p
+    while random.randint(1, 100) <= p:
         p //= 2
         pos = random.choice(room)
-        roll = random.randint(0, 100)
-        for prob, dropper in drop_table:
-            if roll <= prob:
-                dropper(pos, region)
-                break
+        dropper = pick_from_weighted_table(drop_table)
+        monster_type = pick_from_weighted_table(type_table)
+        dropper(pos, region, monster_type)
+
+
+def pick_from_weighted_table(table):
+    """A weighted table is a dict where the values are the relative probability (weight)"""
+    choices = random.choices(list(table.keys()), weights=list(table.values()))
+    return choices[0]
 
 
 def place_treasure(pos, region):
@@ -130,8 +136,8 @@ def place_item(pos, region):
     region.visual_effects[pos] = Tile(ItemSprite, sprite_sheet.filmstrip(), layer=1, item_spec=item)
 
 
-def place_monster(pos, region):
-    region.monster_eggs[pos] = MonsterType.ZOMBIE
+def place_monster(pos, region, monster_type):
+    region.monster_eggs[pos] = monster_type
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):
