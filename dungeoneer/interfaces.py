@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Protocol, Tuple, Type
+from typing import Protocol, Tuple
 
 import pygame.sprite
 from pygame.sprite import Group
@@ -41,6 +41,9 @@ class SpriteGrouper(Protocol):
         ...
 
     def effect(self, effect_sprite: pygame.sprite.Sprite):
+        ...
+
+    def spawn(self, monster_sprite):
         ...
 
 

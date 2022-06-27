@@ -1,6 +1,5 @@
 import threading
 from contextlib import suppress
-from random import randint
 
 import pygame
 from pygame.rect import Rect
@@ -8,9 +7,9 @@ from pygame.rect import Rect
 from dungeoneer import intro
 from dungeoneer import items
 from dungeoneer import sprite_effects
-from dungeoneer.actors import Player, make_monster_sprite, Monster
+from dungeoneer.actors import Player, Monster
 from dungeoneer.camera import Camera
-from dungeoneer.characters import Character, PlayerCharacterType, MonsterType
+from dungeoneer.characters import Character, PlayerCharacterType
 from dungeoneer.event_dispatcher import KeyEventDispatcher
 from dungeoneer.events import WARNING_EVENT
 from dungeoneer.fonts import make_font
@@ -19,9 +18,8 @@ from dungeoneer.interfaces import Item
 from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
 from dungeoneer.item_sprites import make_item_sprite
-from dungeoneer.items import Ammo
 from dungeoneer.messages import Messages
-from dungeoneer.realms import Realm
+from dungeoneer.realms import Realm, handle_missile_collisions
 from dungeoneer.regions import Region, NoFreeSpaceFound
 from dungeoneer.score_bar import ScoreBar
 from dungeoneer.sound_effects import start_music
@@ -138,25 +136,6 @@ def play():
     start_music("Dragon_and_Toast.mp3")
 
     game.game_loop()
-
-
-def handle_missile_collisions(realm: Realm):
-    # The player is not in the solid group so enemy missiles
-    # will need to do collision detection with the player group instead.
-    # It is important that player missiles don't collide with the player.
-    for missile in realm.groups.player_missile:
-        region = realm.region_from_pixel_position(missile.rect.center)
-        hit = pygame.sprite.spritecollideany(missile, region.groups.solid)
-        if hit:
-            missile.on_impact(hit, realm)
-
-    for missile in realm.groups.missile:
-        region = realm.region_from_pixel_position(missile.rect.center)
-
-        hit = pygame.sprite.spritecollideany(missile, region.groups.solid)
-        hit = hit or pygame.sprite.spritecollideany(missile, realm.groups.player)
-        if hit:
-            missile.on_impact(hit, realm)
 
 
 def handle_events(key_event_dispatcher, player, message_store):

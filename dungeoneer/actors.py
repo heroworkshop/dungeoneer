@@ -88,13 +88,13 @@ class Actor(pygame.sprite.Sprite, Collider):
 
         self.update_filmstrip()
 
-        self.rect.centerx += int(velocity.x)
+        self.rect.x += int(velocity.x)
         collide_pixel = self.rect.midleft if velocity.x < 0 else self.rect.midright
 
         if self.world.any_solid_collisions(self, collide_pixel):
             self.rect.centerx -= int(velocity.x)
             velocity.x = 0
-        self.rect.centery += int(velocity.y)
+        self.rect.y += int(velocity.y)
         collide_pixel = self.rect.midtop if velocity.y < 0 else self.rect.midbottom
         if self.world.any_solid_collisions(self, collide_pixel):
             self.rect.centery -= int(velocity.y)

@@ -21,10 +21,11 @@ Regions are also arranged in a grid of variable size and this is known as a real
 import copy
 from contextlib import suppress
 from random import randint
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple
 
 import pygame
 
+from dungeoneer.actors import Monster, MissileSprite
 from dungeoneer.interfaces import SpriteGroups, Item, SpriteGrouper, Collider
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.map_maker import generate_map, DesignType
@@ -111,10 +112,8 @@ class Realm(SpriteGrouper):
         return results
 
     def generate_map(self):
-        width, height = self.region_pixel_size
-        for coordinates, region in self.regions.items():
+        for _coordinates, region in self.regions.items():
             generate_map(region, DesignType.random())
-            x, y = coordinates
             region.build_world(self)
 
     def render_tiles(self):
@@ -172,13 +171,15 @@ class Realm(SpriteGrouper):
             return monster_sprite
         return None
 
-    def update_monster_group(self, monster, from_region):
+    def update_monster_group(self, monster: Monster, from_region: Region):
         """Ensure that the monster is in the correct group based on its current position"""
         position = monster.rect.center
         region = self.region_from_pixel_position(position)
         if monster not in region.groups.monster:
             from_region.groups.monster.remove(monster)
+            from_region.groups.solid.remove(monster)
             region.groups.monster.add(monster)
+            region.groups.solid.add(monster)
 
 
 def drop_item(item_spec: Item, realm: Realm, x: int, y: int, count=1):
@@ -190,3 +191,23 @@ def drop_item(item_spec: Item, realm: Realm, x: int, y: int, count=1):
     groups.items.add(item)
     groups.effects.add(item)
     return item
+
+
+def handle_missile_collisions(realm: Realm):
+    # The player is not in the solid group so enemy missiles
+    # will need to do collision detection with the player group instead.
+    # It is important that player missiles don't collide with the player.
+    missile: MissileSprite
+    for missile in realm.groups.player_missile:
+        region = realm.region_from_pixel_position(missile.rect.center)
+        hit = pygame.sprite.spritecollideany(missile, region.groups.solid)
+        if hit:
+            missile.on_impact(hit, realm)
+
+    for missile in realm.groups.missile:
+        region = realm.region_from_pixel_position(missile.rect.center)
+
+        hit = pygame.sprite.spritecollideany(missile, region.groups.solid)
+        hit = hit or pygame.sprite.spritecollideany(missile, realm.groups.player)
+        if hit:
+            missile.on_impact(hit, realm)

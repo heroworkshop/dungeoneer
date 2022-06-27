@@ -3,6 +3,8 @@ import unittest
 import pygame
 from assertpy import assert_that
 
+from dungeoneer.actors import make_monster_sprite
+from dungeoneer.characters import MonsterType
 from dungeoneer.realms import Realm, PointOutsideRealmBoundary
 from dungeoneer.regions import Region
 
@@ -76,3 +78,22 @@ class TestRealm(unittest.TestCase):
         realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
         neighbours = realm.neighbouring_regions_from_pixel_position((0, 0))
         assert_that(neighbours).is_length(1)
+
+    def test_update_monster_group_withMonsterInWrongRegion_changesMonsterToCorrectGroup(self):
+        realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
+        from_region = realm.region((1, 0))
+        to_region = realm.region((0, 0))
+        monster = make_monster_sprite(MonsterType.ZOMBIE, 205, 5, realm)
+        assert_that(from_region.groups.monster).contains(monster)
+        assert_that(to_region.groups.monster).does_not_contain(monster)
+        assert_that(from_region.groups.solid).contains(monster)
+        assert_that(to_region.groups.solid).does_not_contain(monster)
+
+        monster.direction = pygame.math.Vector2(-1, 0)
+        monster.speed = 100
+        monster.move()
+        realm.update_monster_group(monster, from_region)
+        assert_that(to_region.groups.monster).contains(monster)
+        assert_that(from_region.groups.monster).does_not_contain(monster)
+        assert_that(to_region.groups.solid).contains(monster)
+        assert_that(from_region.groups.solid).does_not_contain(monster)
