@@ -6,6 +6,7 @@ from copy import copy
 import pygame
 
 from dungeoneer import items
+from dungeoneer.interfaces import SpriteGrouper
 from dungeoneer.items import Ammo
 
 Runner = namedtuple("runner", "name parameters")
@@ -59,8 +60,10 @@ class AttackAction(Action):
         self.damage = damage
         self.rate_of_fire = rate_of_fire
         self.reach_squared = reach ** 2
+        self.world = None
 
-    def create(self, realm, owner, target):
+    def create(self, realm: SpriteGrouper, owner, target):
+        self.world = realm
         x, y = target.rect.center
         ox, oy = owner.rect.center
         direction = x - ox, y - oy
@@ -70,6 +73,7 @@ class AttackAction(Action):
         return Runner("make_attack_sprite", parameters)
 
     def on_activated(self, result, owner, target):
+        self.world.shoot(result, affects_player=True)
         owner.connect(result)
 
     def valid_target(self, owner, target):

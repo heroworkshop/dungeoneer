@@ -4,7 +4,7 @@ import pygame
 from assertpy import assert_that
 
 from dungeoneer import actors
-from dungeoneer.actors import Player
+from dungeoneer.actors import Player, make_monster_sprite
 from dungeoneer.characters import MonsterType, Character, PlayerCharacterType
 from dungeoneer.interfaces import SpriteGroups, Item
 from dungeoneer.inventory import Inventory

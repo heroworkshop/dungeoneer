@@ -291,16 +291,16 @@ class Monster(Actor):
     def on_collided(self):
         self.direction.update(0, 0)
 
-    def target_enemy(self, player):
+    def target_enemy(self, enemy):
         if not next(self.retarget):
             return
         if self.character.sleeping:
             return
-        if not player.alive():
+        if not enemy.alive():
             self.targeted_enemy = None
             return
-        self.targeted_enemy = player
-        px, py = player.rect.center
+        self.targeted_enemy = enemy
+        px, py = enemy.rect.center
         x, y = self.rect.center
 
         def home_in(me, them):
