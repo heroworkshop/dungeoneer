@@ -10,7 +10,7 @@ import pygame
 from dungeoneer import game_assets, treasure, items
 from dungeoneer.characters import Character, MonsterType
 from dungeoneer.game_assets import load_sound_file, sfx_file, make_sprite_sheet
-from dungeoneer.interfaces import Item, Collider, SpriteGrouper
+from dungeoneer.interfaces import Item, Collider, SpriteGrouper, Observer
 from dungeoneer.inventory import Inventory
 from dungeoneer.items import Ammo, Melee, Launcher, GoldItem
 from dungeoneer.scenery import VisualEffect
@@ -58,7 +58,7 @@ class Actor(pygame.sprite.Sprite, Collider):
         self.observers = defaultdict(list)
         self.collide_ratio = 0.8
 
-    def add_observer(self, observer, attribute):
+    def add_observer(self, observer: Observer, attribute: str):
         self.observers[attribute].append(observer)
         observer.on_update(attribute, Item(attribute, count=getattr(self, attribute)))
 
@@ -202,6 +202,16 @@ class Player(Actor):
         if item:
             return item.count
         return 0
+
+    @property
+    def gold(self):
+        return self.character.gold
+
+    @gold.setter
+    def gold(self, value):
+        self.character.gold = value
+        for observer in self.observers["gold"]:
+            observer.on_update("gold", Item("gold", count=value))
 
     def attack(self):
         t = pygame.time.get_ticks()

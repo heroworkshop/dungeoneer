@@ -130,5 +130,5 @@ class GoldItem(VisualEffect):
         self.sound_effect = load_sound_file(sfx_file("handleCoins.ogg"))
 
     def on_pick_up(self, player):
-        player.character.gold += self.value
+        player.gold += self.value
         self.sound_effect.play()

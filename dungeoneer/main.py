@@ -13,7 +13,7 @@ from dungeoneer.characters import Character, PlayerCharacterType
 from dungeoneer.event_dispatcher import KeyEventDispatcher
 from dungeoneer.events import WARNING_EVENT
 from dungeoneer.fonts import make_font
-from dungeoneer.game_assets import image_file
+from dungeoneer.game_assets import image_file, make_sprite_sheet
 from dungeoneer.interfaces import Item
 from dungeoneer.inventory_controller import InventoryController
 from dungeoneer.inventory_view import InventoryView
@@ -21,7 +21,7 @@ from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.messages import Messages
 from dungeoneer.realms import Realm, handle_missile_collisions
 from dungeoneer.regions import Region, NoFreeSpaceFound
-from dungeoneer.score_bar import ScoreBar
+from dungeoneer.score_bar import ScoreBar, NumericScoreBar
 from dungeoneer import screen
 from dungeoneer.sound_effects import start_music
 from dungeoneer.spritesheet import SpriteSheet
@@ -68,7 +68,7 @@ class DungeoneerGame:
 
     def place_static_items(self):
         create_health_bar(self.player, self.static_sprites)
-
+        create_gold_score(self.player, self.static_sprites)
         InventoryView(self.player.inventory, screen.WIDTH - 80, 200, sprite_groups=[self.static_sprites])
         self.key_event_dispatcher.register(InventoryController(self.player.inventory, self.player))
 
@@ -125,12 +125,12 @@ class DungeoneerGame:
         caption = font.render(str(self.realm.region_coord_from_pixel_position(self.player.rect.center)), True, (255, 255, 255))
         surface.blit(caption, (x, y))
 
-        neighbours = self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center)
-
-        for n in neighbours:
-            y += line_spacing
-            caption = font.render(str(n), True, (100, 100, 255))
-            surface.blit(caption, (x, y))
+        # neighbours = self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center)
+        #
+        # for n in neighbours:
+        #     y += line_spacing
+        #     caption = font.render(str(n), True, (100, 100, 255))
+        #     surface.blit(caption, (x, y))
 
         y += line_spacing
         caption = font.render(str(self.camera.visible_sprite_count), True, (100, 100, 255))
@@ -215,5 +215,11 @@ def create_health_bar(player, group):
     group.add(health_bar)
     player.add_observer(health_bar, "vitality")
 
+
+def create_gold_score(player, group):
+    gold_icon = make_sprite_sheet("gold pieces").filmstrip(scale=0.5)
+    score_bar = NumericScoreBar(screen.WIDTH - 100, 20, gold_icon, 0, font_size=30)
+    group.add(score_bar)
+    player.add_observer(score_bar, "gold")
 
 

@@ -1,5 +1,8 @@
+from functools import lru_cache
+
 import pygame
 
+from dungeoneer.fonts import make_font
 from dungeoneer.interfaces import Observer, Item, Direction
 
 
@@ -74,3 +77,51 @@ class ScoreBar(pygame.sprite.Sprite, Observer):
 
         self.image = self.filmstrip[self.frame]
         self.update_rect()
+
+
+class NumericScoreBar(ScoreBar):
+    SPACING = 5
+
+    def __init__(self, x: int, y: int, unit_filmstrip, score: int,
+                 direction=Direction.LEFT_TO_RIGHT, font_size=20):
+        self.font_size = font_size
+        self.font = make_font("Times New Roman", self.font_size)
+        super().__init__(x, y, unit_filmstrip, score, direction=direction)
+
+    def render_bar(self, score, frame_image):
+        width, height = frame_image.get_rect().size
+        dx, dy = self.direction.value
+
+        score_text = str(int(score))
+        text_width, text_height = self.font.size(score_text)
+        if dx:
+            v_space = (height - text_height) // 2
+            h_space = 0
+            total_width = width + text_width + self.SPACING
+            total_height = height
+            min_width = 1
+            min_height = text_height
+        else:
+            v_space = 0
+            h_space = width - text_width
+            total_width = width
+            total_height = height + text_height + self.SPACING
+            min_width = text_width
+            min_height = 1
+
+        image = pygame.Surface((max(total_width, min_width), max(total_height, min_height)), flags=pygame.SRCALPHA)
+
+        x = image.get_width() - width if dx < 0 else 0
+        y = image.get_height() - height if dy < 0 else 0
+        padx = min(h_space, 0)
+        pady = min(v_space, 0)
+        image.blit(frame_image, (x + padx, y + pady))
+
+        x = x + width + padx + self.SPACING if dx > 0 else 0
+        y = y + height + pady + self.SPACING if dy > 0 else 0
+        padx = max(h_space, 0)
+        pady = max(v_space, 0)
+        caption = self.font.render(score_text, True, (255, 255, 255))
+        image.blit(caption, (x + padx, y + pady))
+
+        return image
