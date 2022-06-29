@@ -65,12 +65,19 @@ class TestRealm(unittest.TestCase):
         neighbours = realm.neighbouring_regions_from_pixel_position((200, 200))
         assert_that(neighbours).is_length(4)
 
-    def test_neighbouring_regions_withPixelNotInCornerOfRegion_has9Neighbours(self):
+    def test_neighbouring_regions_withPixelNotInCornerOfRegion_has4Neighbours(self):
         realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
         # region pixel width and height are 10 * 20 = (200 x 200)
-        # pick pixel in region(1, 1) which should have 9 neighbours
+        # pick pixel in region(1, 1) which should have 4 neighbours
         neighbours = realm.neighbouring_regions_from_pixel_position((201, 201))
-        assert_that(neighbours).is_length(9)
+        assert_that(neighbours).is_length(4)
+
+    def test_neighbouring_regions_withPixelInCenterOfRegion_has1Neighbour(self):
+        realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
+        # region pixel width and height are 10 * 20 = (200 x 200)
+        # pick pixel in region(1, 1) which should have 4 neighbours
+        neighbours = realm.neighbouring_regions_from_pixel_position((300, 300))
+        assert_that(neighbours).is_length(1)
 
     def test_neighbouring_regions_withPixelInCornerOfBorderRegion_has1Neighbour(self):
         # Because it is a corner region, there are no neighbours so the only match is

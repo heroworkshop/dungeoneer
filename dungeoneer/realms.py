@@ -96,7 +96,7 @@ class Realm(SpriteGrouper):
             raise PointOutsideRealmBoundary(f"Pixel Position {pixel_position} "
                                             f"was outside the realm with size ({self.width}, {self.height})") from e
 
-    def neighbouring_regions_from_pixel_position(self, pixel_position):
+    def neighbouring_regions_from_pixel_position_old(self, pixel_position):
         pixel_position = pygame.Vector2(pixel_position)
         dx, dy = self.region_pixel_size
         dx -= 1
@@ -104,7 +104,23 @@ class Realm(SpriteGrouper):
         neighbours = [(-dx, -dy), (0, -dy), (dx, -dy),
                       (-dx, 0), (0, 0), (dx, 0),
                       (-dx, dy), (0, dy), (dx, dy)]
-        region_coords = {self.region_coord_from_pixel_position(pygame.Vector2(n) + pixel_position) for n in neighbours}
+        region_coords = {self.region_coord_from_pixel_position(pygame.Vector2(n) + pixel_position)
+                         for n in neighbours}
+        results = []
+        for p in region_coords:
+            with suppress(PointOutsideRealmBoundary):
+                results.append(self.region(p))
+        return results
+
+    def neighbouring_regions_from_pixel_position(self, pixel_position):
+        pixel_position = pygame.Vector2(pixel_position)
+        dx, dy = self.region_pixel_size
+        dx = dx // 2 - 1
+        dy = dx // 2 - 1
+        neighbours = [(-dx, -dy), (dx, -dy),
+                      (-dx, dy), (dx, dy)]
+        region_coords = {self.region_coord_from_pixel_position(pygame.Vector2(n) + pixel_position)
+                         for n in neighbours}
         results = []
         for p in region_coords:
             with suppress(PointOutsideRealmBoundary):

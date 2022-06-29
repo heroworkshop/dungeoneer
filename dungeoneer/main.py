@@ -22,15 +22,11 @@ from dungeoneer.messages import Messages
 from dungeoneer.realms import Realm, handle_missile_collisions
 from dungeoneer.regions import Region, NoFreeSpaceFound
 from dungeoneer.score_bar import ScoreBar
+from dungeoneer import screen
 from dungeoneer.sound_effects import start_music
 from dungeoneer.spritesheet import SpriteSheet
 
 GENERATOR_EVENT = pygame.USEREVENT + 1
-
-SCREEN_WIDTH = 1600
-SCREEN_HEIGHT = 900
-
-SCREEN_BOUNDS = pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
 class GameInterrupt(RuntimeError):
@@ -73,7 +69,7 @@ class DungeoneerGame:
     def place_static_items(self):
         create_health_bar(self.player, self.static_sprites)
 
-        InventoryView(self.player.inventory, SCREEN_WIDTH - 80, 200, sprite_groups=[self.static_sprites])
+        InventoryView(self.player.inventory, screen.WIDTH - 80, 200, sprite_groups=[self.static_sprites])
         self.key_event_dispatcher.register(InventoryController(self.player.inventory, self.player))
 
     def game_loop(self):
@@ -81,33 +77,29 @@ class DungeoneerGame:
             handle_events(self.key_event_dispatcher, self.player, self.message_store)
             move_vector = self.player.move()
             self.camera.move(move_vector)
-
-            self.move_monsters()
+            active_regions = self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center)
+            self.move_monsters(active_regions)
 
             world = self.realm.region_from_pixel_position(self.player.rect.center).groups
             self.realm.check_bounds(world.missile)
-
-            # update missiles
             self.realm.groups.player_missile.update()
             handle_missile_collisions(self.realm)
-
             self.realm.groups.effects.update()
-
             self.player.handle_item_pickup(world)
 
             self.screen.blit(self.background, dest=self.camera.offset)
-            self.camera.draw_all()
+            self.camera.draw_all(active_regions)
 
-            pygame.draw.rect(self.screen, (0, 0, 0), Rect(0, 0, SCREEN_WIDTH, 50))
+            pygame.draw.rect(self.screen, (0, 0, 0), Rect(0, 0, screen.WIDTH, 50))
             self.static_sprites.update()
             self.static_sprites.draw(self.screen)
-            display_debug(self.screen, (0, 0), self.clock, self.player, self.realm)
+            self.display_debug(self.screen, (0, 0))
             pygame.display.flip()
             self.clock.tick(self.fps)
 
-    def move_monsters(self):
+    def move_monsters(self, active_regions):
         # Move monsters in current region and neighbouring regions
-        for region in self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center):
+        for region in active_regions:
             world = region.groups
 
             monster: Monster
@@ -117,9 +109,36 @@ class DungeoneerGame:
                 self.realm.update_monster_group(monster, region)
                 monster.do_actions(self.realm)
 
+    def display_debug(self, surface, position):
+        line_spacing = 20
+        font = make_font("Times New Roman", 20)
+        pygame.draw.rect(surface, (0, 0, 0), Rect(0, 50, 160, 100))
+        x, y = position
+
+        caption = font.render(str(int(self.clock.get_fps())), True, (255, 255, 255))
+        surface.blit(caption, (x, y))
+
+        caption = font.render(str(self.player.rect.center), True, (255, 255, 255))
+        surface.blit(caption, (x + 32, y))
+
+        y += line_spacing
+        caption = font.render(str(self.realm.region_coord_from_pixel_position(self.player.rect.center)), True, (255, 255, 255))
+        surface.blit(caption, (x, y))
+
+        neighbours = self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center)
+
+        for n in neighbours:
+            y += line_spacing
+            caption = font.render(str(n), True, (100, 100, 255))
+            surface.blit(caption, (x, y))
+
+        y += line_spacing
+        caption = font.render(str(self.camera.visible_sprite_count), True, (100, 100, 255))
+        surface.blit(caption, (x, y))
+
 
 def play():
-    game = DungeoneerGame((SCREEN_WIDTH, SCREEN_HEIGHT))
+    game = DungeoneerGame((screen.WIDTH, screen.HEIGHT))
     thread = threading.Thread(target=game.initialise_realm)
     thread.start()
     intro.play(game.screen)
@@ -192,22 +211,9 @@ def create_health_bar(player, group):
     heart = pygame.image.load(image_file("heart.png"))
     heart_filmstrip = SpriteSheet(heart, 1, 1).filmstrip(scale=0.1)
     throbbing_heart = sprite_effects.throbbing(heart_filmstrip[0])
-    health_bar = ScoreBar(SCREEN_WIDTH - 500, 20, throbbing_heart, 100, 10, frame_length=50)
+    health_bar = ScoreBar(screen.WIDTH - 500, 20, throbbing_heart, 100, 10, frame_length=50)
     group.add(health_bar)
     player.add_observer(health_bar, "vitality")
 
 
-def display_debug(surface, position, clock, player, realm):
-    font = make_font("Times New Roman", 20)
-    pygame.draw.rect(surface, (0, 0, 0), Rect(0, 50, 160, 100))
-    x, y = position
 
-    caption = font.render(str(int(clock.get_fps())), True, (255, 255, 255))
-    surface.blit(caption, (x, y))
-
-    caption = font.render(str(player.rect.center), True, (255, 255, 255))
-    surface.blit(caption, (x + 32, y))
-
-    y += 32
-    caption = font.render(str(realm.region_coord_from_pixel_position(player.rect.center)), True, (255, 255, 255))
-    surface.blit(caption, (x, y))
