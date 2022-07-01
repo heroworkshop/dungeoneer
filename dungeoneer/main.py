@@ -6,6 +6,7 @@ from pygame.rect import Rect
 
 from dungeoneer import intro
 from dungeoneer import items
+from dungeoneer import screen
 from dungeoneer import sprite_effects
 from dungeoneer.actors import Player, Monster
 from dungeoneer.camera import Camera
@@ -22,7 +23,6 @@ from dungeoneer.messages import Messages
 from dungeoneer.realms import Realm, handle_missile_collisions
 from dungeoneer.regions import Region, NoFreeSpaceFound
 from dungeoneer.score_bar import ScoreBar, NumericScoreBar
-from dungeoneer import screen
 from dungeoneer.sound_effects import start_music
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -110,19 +110,25 @@ class DungeoneerGame:
                 monster.do_actions(self.realm)
 
     def display_debug(self, surface, position):
-        line_spacing = 20
-        font = make_font("Times New Roman", 20)
+        line_spacing = 15
+        font = make_font("Times New Roman", 15)
         pygame.draw.rect(surface, (0, 0, 0), Rect(0, 50, 160, 100))
         x, y = position
 
-        caption = font.render(str(int(self.clock.get_fps())), True, (255, 255, 255))
+        region = self.realm.region_from_pixel_position(self.player.rect.center)
+        caption = font.render(str(region.name), True, (255, 255, 255))
+        surface.blit(caption, (x, y))
+
+        y += line_spacing
+        caption = font.render(str(int(self.clock.get_fps())), True, (255, 50, 50))
         surface.blit(caption, (x, y))
 
         caption = font.render(str(self.player.rect.center), True, (255, 255, 255))
         surface.blit(caption, (x + 32, y))
 
         y += line_spacing
-        caption = font.render(str(self.realm.region_coord_from_pixel_position(self.player.rect.center)), True, (255, 255, 255))
+        caption = font.render(str(self.realm.region_coord_from_pixel_position(self.player.rect.center)), True,
+                              (255, 255, 255))
         surface.blit(caption, (x, y))
 
         # neighbours = self.realm.neighbouring_regions_from_pixel_position(self.player.rect.center)
@@ -221,5 +227,3 @@ def create_gold_score(player, group):
     score_bar = NumericScoreBar(screen.WIDTH - 100, 20, gold_icon, 0, font_size=30)
     group.add(score_bar)
     player.add_observer(score_bar, "gold")
-
-

@@ -3,22 +3,22 @@ import unittest
 
 from assertpy import assert_that
 
-from dungeoneer.map_maker import generate_map, DesignType, make_nodes, join_nodes, generate_connected_rooms, \
-    make_rooms_in_subregions, join_exits, place_treasure, monster_drops
+from dungeoneer.map_maker import generate_map, make_nodes, join_nodes, make_rooms_in_subregions, join_exits
+from dungeoneer.room_generation import LargeRoomGenerator, ConnectedRoomGenerator
+from dungeoneer.spawn import monster_drops, place_treasure
 from dungeoneer.regions import Region, Position, SubRegion, Size
 
 
 class TestGenerateMap(unittest.TestCase):
     def test_generate_withLargeRoom_hasOpenCentralCore(self):
         region = Region((50, 50))
-        generate_map(region, DesignType.LARGE_ROOM)
-        for column in range(1, 49):
-            for row in range(1, 49):
-                self.assertIsNone(region.solid_object_at_position((column, row)))
+        generate_map(region, LargeRoomGenerator)
+        for column, row in itertools.product(range(1, 49), range(1, 49)):
+            self.assertIsNone(region.solid_object_at_position((column, row)))
 
     def test_generate_map_withLargeRoom_hasWallsAroundPerimeterWithExit(self):
         region = Region((50, 50))
-        generate_map(region, DesignType.LARGE_ROOM)
+        generate_map(region, LargeRoomGenerator)
         # count solid objects around perimeter
         top = [region.solid_object_at_position((column, 0)) is not None for column in range(50)].count(True)
         bottom = [region.solid_object_at_position((column, 49)) is not None for column in range(50)].count(True)
@@ -37,10 +37,10 @@ class TestGenerateMap(unittest.TestCase):
 
     def test_generate_connected_rooms(self):
         width, height = 50, 40
-        region = generate_connected_rooms(Region((width, height)))
+        region = ConnectedRoomGenerator(Region((width, height))).generate()
         walls = sum([region.solid_object_at_position((column, row)) is not None
                      for column in range(width)].count(True)
-                     for row in range(height))
+                    for row in range(height))
 
         self.assertEqual(walls, len(region.solid_objects), "Solid objects should not be outside bounds of region")
         self.assertLess(walls, int(width * height * 0.9), "Solid objects should be less than 90% of region")
@@ -65,24 +65,26 @@ class TestGenerateMap(unittest.TestCase):
 
 
 class TestJoinNodes(unittest.TestCase):
+    WIDTH_TABLE = {1: 100}
+
     def test_join_nodes_withYAlignedNodes(self):
         nodes = (Position(2, 2), Position(8, 2))
-        path = join_nodes(nodes)
+        path = join_nodes(nodes, self.WIDTH_TABLE)
         self.assertEqual(6 + 1, len(path))
 
     def test_join_nodes_withXAlignedNodes(self):
         nodes = (Position(2, 2), Position(2, 8))
-        path = join_nodes(nodes)
+        path = join_nodes(nodes, self.WIDTH_TABLE)
         self.assertEqual(6 + 1, len(path))
 
     def test_join_nodes_withDiagonalNodes(self):
         nodes = (Position(2, 2), Position(8, 8))
-        path = join_nodes(nodes)
+        path = join_nodes(nodes, self.WIDTH_TABLE)
         self.assertEqual(6 + 6 + 1, len(path))
 
     def test_join_nodes_withNegativeDirectionDiagonalNodes(self):
         nodes = (Position(8, 8), Position(2, 2))
-        path = join_nodes(nodes)
+        path = join_nodes(nodes, self.WIDTH_TABLE)
         self.assertEqual(6 + 6 + 1, len(path))
 
     def test_join_exits_withOneInLineNorthExit_takesDirectPath(self):
@@ -143,7 +145,7 @@ class TestJoinNodes(unittest.TestCase):
 class TestItemDrops(unittest.TestCase):
     def test_drop_treasure_withOneDrop_putsAddsOneItemInVisualEffectsTable(self):
         region = Region((10, 10))
-        generate_map(region, DesignType.LARGE_ROOM)
+        generate_map(region, LargeRoomGenerator)
         original = len(region.visual_effects)
         place_treasure((5, 5), region)
         assert_that(region.visual_effects).is_length(1 + original)

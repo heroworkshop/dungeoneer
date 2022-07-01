@@ -2,34 +2,19 @@ import heapq
 import random
 from collections import defaultdict
 from contextlib import suppress
-from enum import Enum
-from typing import Iterable, List
+from typing import Iterable, List, Protocol, Type
 
-from dungeoneer import treasure, items
-from dungeoneer.characters import MonsterType
-from dungeoneer.game_assets import make_sprite_sheet
-from dungeoneer.item_sprites import ItemSprite
-from dungeoneer.items import GoldItem
-from dungeoneer.regions import TileType, Position, SubRegion, Region, Tile
+from dungeoneer.dice_roll import pick_from_weighted_table
+from dungeoneer.regions import TileType, Position, SubRegion, Region
 
 
-class DesignType(Enum):
-    LARGE_ROOM = 0
-    CONNECTED_ROOMS = 1
-
-    @classmethod
-    def random(cls):
-        if random.randint(0, 100) < 2:
-            return cls.LARGE_ROOM
-        return cls.CONNECTED_ROOMS
+class RegionGenerator(Protocol):
+    def generate(self):
+        ...
 
 
-def generate_map(region, design: DesignType):
-    if design == DesignType.LARGE_ROOM:
-        generate_large_room(region)
-    if design == DesignType.CONNECTED_ROOMS:
-        generate_connected_rooms(region)
-    return region
+def generate_map(region, design_generator: Type[RegionGenerator]):
+    return design_generator(region).generate()
 
 
 def join_exits(nodes, exits, size):
@@ -55,89 +40,6 @@ def join_exits(nodes, exits, size):
             node = find_best_node(exit_pos)
             paths.extend(join_two_nodes(node, exit_pos))
     return paths
-
-
-def generate_large_room(region):
-    region.clear_area((1, 1), (region.grid_width - 1, region.grid_height - 1))
-    rooms = [[Position(x, y)
-              for x in range(1, region.grid_width - 1)
-              for y in range(1, region.grid_height - 1)]]
-    nodes = [Position(10, 10)]
-    paths = join_exits(nodes, region.exits, (region.grid_width, region.grid_height))
-
-    carve_out_dungeon(region, paths, rooms)
-    for room in rooms:
-        for _ in range(4):
-            item_drops(room, region)
-            monster_drops(room, region)
-    return region
-
-
-def generate_connected_rooms(region):
-    sub_regions = make_sub_regions(region, node_count=16)
-    nodes = sub_regions_to_nodes(sub_regions)
-    paths = join_nodes(nodes)
-    paths.extend(join_exits(nodes, region.exits, (region.grid_width, region.grid_height)))
-    rooms = make_rooms_in_subregions(sub_regions)
-    # dump_ascii_map(region, sub_regions, nodes, paths, rooms, f"debug/subregions-{len(sub_regions)}.txt")
-
-    carve_out_dungeon(region, paths, rooms)
-    for room in rooms:
-        item_drops(room, region)
-        monster_drops(room, region)
-    return region
-
-
-def item_drops(room, region):
-    drop_table = {
-        place_treasure: 20,
-        place_item: 80
-    }
-    p = 40
-    while random.randint(0, 100) <= p:
-        p //= 2
-        pos = random.choice(room)
-        dropper = pick_from_weighted_table(drop_table)
-        dropper(pos, region)
-
-
-def monster_drops(room, region, base_p=30):
-    drop_table = {
-        place_monster: 100
-    }
-    type_table = {
-        MonsterType.ZOMBIE: 50,
-        MonsterType.SKELETON: 50,
-        MonsterType.MUMMY: 20
-    }
-    p = base_p
-    while random.randint(1, 100) <= p:
-        p //= 2
-        pos = random.choice(room)
-        dropper = pick_from_weighted_table(drop_table)
-        monster_type = pick_from_weighted_table(type_table)
-        dropper(pos, region, monster_type)
-
-
-def pick_from_weighted_table(table):
-    """A weighted table is a dict where the values are the relative probability (weight)"""
-    choices = random.choices(list(table.keys()), weights=list(table.values()))
-    return choices[0]
-
-
-def place_treasure(pos, region):
-    sprite_sheet, value, scale = treasure.random_treasure(1)
-    region.visual_effects[pos] = Tile(GoldItem, sprite_sheet.filmstrip(scale=scale), layer=1, value=value)
-
-
-def place_item(pos, region):
-    item = random.choice(list(items.all_items.values()))
-    sprite_sheet = make_sprite_sheet(item.name)
-    region.visual_effects[pos] = Tile(ItemSprite, sprite_sheet.filmstrip(), layer=1, item_spec=item)
-
-
-def place_monster(pos, region, monster_type):
-    region.monster_eggs[pos] = monster_type
 
 
 def carve_out_dungeon(region, paths, rooms, wall_type=TileType.STONE_WALL):
@@ -186,21 +88,29 @@ def make_sub_regions(root_region: Region, *, node_count) -> List[SubRegion]:
     return sub_regions
 
 
-def join_nodes(nodes: Iterable[Position]) -> List[Position]:
+DEFAULT_WIDTH_TABLE = {
+    2: 20,
+    1: 80
+}
+
+
+def join_nodes(nodes: Iterable[Position], width_table=DEFAULT_WIDTH_TABLE) -> List[Position]:
     path = []
     i = iter(nodes)
     with suppress(StopIteration):
+        width = pick_from_weighted_table(width_table)
         src = next(i)
         while True:
             dest = next(i)
-            path.extend(join_two_nodes(src, dest))
+            path.extend(join_two_nodes(src, dest, width))
             src = dest
     return path
 
 
-def join_two_nodes(src: Position, dest: Position):
+def join_two_nodes(src: Position, dest: Position, width=1) -> List[Position]:
+    width = max(width, 1)
     x, y = src
-    path = [(x, y)]
+    path = [Position(x, y)]
     while True:
         x_count = dest.x - x
         y_count = dest.y - y
@@ -216,11 +126,11 @@ def join_two_nodes(src: Position, dest: Position):
         while steps[0]:
             x += dx
             steps[0] -= 1
-            path.append((x, y))
+            path.extend(Position(x, y + w) for w in range(width))
         while steps[1]:
             y += dy
             steps[1] -= 1
-            path.append((x, y))
+            path.extend(Position(x + w, y) for w in range(width))
     return path
 
 
@@ -233,11 +143,14 @@ def _random_path_segment(x_count, y_count):
     """
     options = [(x_count, 0), (0, y_count)]
     option = random.choice([opt for opt in options if opt[0] or opt[1]])
-    steps = [random.randint(0, abs(option[0])), random.randint(0, abs(option[1]))]
-    return steps
+    return [random.randint(0, abs(option[0])), random.randint(0, abs(option[1]))]
 
 
-def make_rooms_in_subregions(sub_regions: List[SubRegion]):
+def make_rooms_in_subregions(sub_regions: List[SubRegion], undersize_pc_probability=75):
+    def weighted_scale_down(size):
+        if random.randint(1, 100) > undersize_pc_probability:
+            return size - 1
+        return random.randint(1, size - 1)
     rooms = []
     for r in sub_regions:
 
@@ -266,12 +179,6 @@ def make_rooms_in_subregions(sub_regions: List[SubRegion]):
 
         rooms.append(room)
     return rooms
-
-
-def weighted_scale_down(size):
-    if random.randint(1, 4) > 1:
-        return size - 1
-    return random.randint(1, size - 1)
 
 
 def dump_ascii_map(root_region: Region, sub_regions: List[SubRegion],

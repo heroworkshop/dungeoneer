@@ -28,7 +28,8 @@ import pygame
 from dungeoneer.actors import Monster, MissileSprite
 from dungeoneer.interfaces import SpriteGroups, Item, SpriteGrouper, Collider
 from dungeoneer.item_sprites import make_item_sprite
-from dungeoneer.map_maker import generate_map, DesignType
+from dungeoneer.map_maker import generate_map
+from dungeoneer.room_generation import random_room_generator
 from dungeoneer.pathfinding import move_to_nearest_empty_space
 from dungeoneer.regions import Position, Region
 
@@ -129,7 +130,7 @@ class Realm(SpriteGrouper):
 
     def generate_map(self):
         for _coordinates, region in self.regions.items():
-            generate_map(region, DesignType.random())
+            generate_map(region, random_room_generator())
             region.build_world(self)
 
     def render_tiles(self):

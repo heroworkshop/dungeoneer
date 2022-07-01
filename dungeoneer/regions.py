@@ -245,7 +245,7 @@ class Region:
 
 
 class SubRegion:
-    def __init__(self, region, top_left=Position(0, 0), size: Size = None):
+    def __init__(self, region: Region, top_left=Position(0, 0), size: Size = None):
         self.top_left = Position(*top_left)
         self.size = Size(*(size or (region.grid_width, region.grid_height)))
         self.region = region
