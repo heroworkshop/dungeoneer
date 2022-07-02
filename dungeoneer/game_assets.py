@@ -44,6 +44,7 @@ def play_sound(name):
 
 SPRITE_SHEET_TABLE = {
     "inventory slot box": ("slot_box.png", (1, 1)),
+    "tigerman": ("tigre.png", (4, 4), (0, 0, 4, 4)),
     "zombie": ("TombZombies.png", (12, 8), (3, 0, 3, 4)),
     "zombie generator": ("graveyard.png", (12, 8), (0, 1, 1, 1)),
     "skeleton": ("TombZombies.png", (12, 8), (9, 0, 3, 4)),

@@ -16,7 +16,8 @@ def monster_drops(room, region, base_p=30):
     type_table = {
         MonsterType.ZOMBIE: 50,
         MonsterType.SKELETON: 50,
-        MonsterType.MUMMY: 20
+        MonsterType.MUMMY: 20,
+        MonsterType.TIGERMAN: 20
     }
     p = base_p
     while random.randint(1, 100) <= p:

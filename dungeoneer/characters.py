@@ -58,6 +58,9 @@ class MonsterType(enum.Enum):
                    sprite_sheet=make_sprite_sheet("skeleton"),
                    actions=[AttackAction("swipe", 10)]
                    )
+    TIGERMAN = _CT(vitality=60, speed=3, sprite_sheet=make_sprite_sheet("tigerman"),
+                   actions=[AttackAction("swipe", 25)]
+                   )
 
 
 class PlayerCharacterType(enum.Enum):
