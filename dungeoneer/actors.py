@@ -57,6 +57,7 @@ class Actor(pygame.sprite.Sprite, Collider):
         self._connected_sprites = []
         self.observers = defaultdict(list)
         self.collide_ratio = 0.8
+        self.subframe_count = 0
 
     def add_observer(self, observer: Observer, attribute: str):
         self.observers[attribute].append(observer)
@@ -86,8 +87,6 @@ class Actor(pygame.sprite.Sprite, Collider):
         velocity = pygame.math.Vector2(self.direction)
         velocity.scale_to_length(self.speed)
 
-        self.update_filmstrip()
-
         self.rect.x += int(velocity.x)
         collide_pixel = self.rect.midleft if velocity.x < 0 else self.rect.midright
 
@@ -99,29 +98,37 @@ class Actor(pygame.sprite.Sprite, Collider):
         if self.world.any_solid_collisions(self, collide_pixel):
             self.rect.centery -= int(velocity.y)
             velocity.y = 0
+        if not velocity:
+            return velocity
+
         for sprite in self._connected_sprites:
             sprite.rect.x += int(velocity.x)
             sprite.rect.y += int(velocity.y)
+        self.update_filmstrip()
         return pygame.math.Vector2(-int(velocity.x), -int(velocity.y))
 
     def update_filmstrip(self):
         """Animate filmstrip using current direction"""
-        self.filmstrip = self.filmstrip_from_direction()
-        self.frame = (self.frame + 1) % len(self.filmstrip)
+        self.filmstrip = self.filmstrip_from_facing()
+        self.subframe_count += 1
+        if self.subframe_count % 2:
+            self.frame = (self.frame + 1) % len(self.filmstrip)
         self.image = self.filmstrip[self.frame]
 
-    def filmstrip_from_direction(self):
-        if self.direction.length_squared():
-            self.facing = pygame.math.Vector2(self.direction)
-        if self.direction.y > 0:
+    def filmstrip_from_facing(self):
+        if self.facing.y > 0 and self.facing.y > abs(self.facing.x):
             self.filmstrip = self.filmstrips.walk_south
-        elif self.direction.y < 0:
+        elif self.facing.y < 0 and abs(self.facing.y) > abs(self.facing.x):
             self.filmstrip = self.filmstrips.walk_north
-        elif self.direction.x > 0:
+        elif self.facing.x > 0:
             self.filmstrip = self.filmstrips.walk_east
-        elif self.direction.x < 0:
+        elif self.facing.x < 0:
             self.filmstrip = self.filmstrips.walk_west
         return self.filmstrip
+
+    def face_direction(self, direction):
+        if direction:
+            self.facing = pygame.math.Vector2(direction)
 
     def collided(self, group: pygame.sprite.Group):
         collisions = pygame.sprite.spritecollide(self, group, dokill=False,
@@ -183,18 +190,24 @@ class Player(Actor):
     def handle_keyboard(self, kb):
         self.direction.update(0, 0)
 
+        new_direction = pygame.Vector2(0, 0)
         if kb[pygame.K_a]:
-            self.direction.x = -1
+            new_direction.x = -1
         if kb[pygame.K_d]:
-            self.direction.x = 1
+            new_direction.x = 1
         if kb[pygame.K_w]:
-            self.direction.y = -1
+            new_direction.y = -1
         if kb[pygame.K_s]:
-            self.direction.y = 1
+            new_direction.y = 1
         if kb[pygame.K_RETURN]:
             self.shoot()
         if kb[pygame.K_SPACE]:
             self.attack()
+        if new_direction:
+            self.direction = new_direction
+            self.face_direction(self.direction)
+            self.update_filmstrip()
+
 
     @property
     def ammo(self):
@@ -314,13 +327,15 @@ class Monster(Actor):
         x, y = self.rect.center
 
         def home_in(me, them):
-            if me + self.speed < them:
+            margin = self.rect.width // 8
+            if me + self.speed + margin < them:
                 return 1
-            if me - self.speed > them:
+            if me - self.speed - margin > them:
                 return -1
             return 0
 
         self.direction.update(home_in(x, px), home_in(y, py))
+        self.face_direction(self.direction)
 
     def die(self):
         sprite_sheet, value, scale = treasure.random_treasure(self.character.template.treasure)
