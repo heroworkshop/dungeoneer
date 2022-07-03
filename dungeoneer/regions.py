@@ -58,14 +58,15 @@ Size = namedtuple("size", "width height")
 
 
 class NoFreeSpaceFound(Exception):
-    """Raised when trying to find a free space near a specfic spot but a space could not be found"""
+    """Raised when trying to find a free space near a specific spot but a space could not be found"""
 
 
 class Region:
     """A region is a variable sized sparse grid of tiles"""
     region_id = itertools.count()
 
-    def __init__(self, size, default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None,
+    def __init__(self, size, tile_size=pygame.Vector2(0,0),
+                 default_tile: Tile = TileType.STONE_FLOOR.value, id_code=None,
                  pixel_base=(0, 0)):
         id_code = id_code or next(self.region_id)
         self.pixel_base = pixel_base
@@ -78,8 +79,8 @@ class Region:
         self.monster_eggs = {}
 
         self.groups = SpriteGroups()
-        self.tile_width = default_tile.width
-        self.tile_height = default_tile.height
+        self.tile_width = tile_size.x or default_tile.width
+        self.tile_height = tile_size.y or default_tile.height
         self.pixel_width = self.grid_width * self.tile_width
         self.pixel_height = self.grid_height * self.tile_height
         self.default_tile = default_tile

@@ -49,6 +49,7 @@ class Realm(SpriteGrouper):
 
     def __init__(self, size, tile_size, region_size=(50, 30)):
         region_width, region_height = region_size
+        self.tile_size = pygame.Vector2(tile_size)
         tile_width, tile_height = tile_size
         self.region_pixel_size = int(region_width * tile_width), int(region_height * tile_height)
         self.regions: Dict[Position, Region] = {}
@@ -64,7 +65,8 @@ class Realm(SpriteGrouper):
         for x in range(self.width):
             for y in range(self.height):
                 pixel_base = x * self.region_pixel_size[0], y * self.region_pixel_size[1]
-                region = Region(region_size, id_code=(x, y), pixel_base=pixel_base)
+                region = Region(region_size, id_code=(x, y), pixel_base=pixel_base,
+                                tile_size=self.tile_size)
                 if y > 0:
                     region.exits["N"] = self.regions[Position(x, y - 1)].exits["S"]
                 if y < self.height - 1:
@@ -96,22 +98,6 @@ class Realm(SpriteGrouper):
         except PointOutsideRealmBoundary as e:
             raise PointOutsideRealmBoundary(f"Pixel Position {pixel_position} "
                                             f"was outside the realm with size ({self.width}, {self.height})") from e
-
-    def neighbouring_regions_from_pixel_position_old(self, pixel_position):
-        pixel_position = pygame.Vector2(pixel_position)
-        dx, dy = self.region_pixel_size
-        dx -= 1
-        dy -= 1
-        neighbours = [(-dx, -dy), (0, -dy), (dx, -dy),
-                      (-dx, 0), (0, 0), (dx, 0),
-                      (-dx, dy), (0, dy), (dx, dy)]
-        region_coords = {self.region_coord_from_pixel_position(pygame.Vector2(n) + pixel_position)
-                         for n in neighbours}
-        results = []
-        for p in region_coords:
-            with suppress(PointOutsideRealmBoundary):
-                results.append(self.region(p))
-        return results
 
     def neighbouring_regions_from_pixel_position(self, pixel_position):
         pixel_position = pygame.Vector2(pixel_position)
@@ -187,6 +173,15 @@ class Realm(SpriteGrouper):
             world.monster.add(monster_sprite)
             return monster_sprite
         return None
+
+    def centre_on_tile(self, pixel_pos, offset=(0, 0)):
+        x, y = pixel_pos
+        region = self.region_from_pixel_position(pixel_pos)
+        width, height = region.tile_width, region.tile_height
+        ox, oy = offset
+        x = x - x % width + width // 2 + ox * width
+        y = y - y % height + height // 2 + oy * height
+        return pygame.Vector2(x, y)
 
     def update_monster_group(self, monster: Monster, from_region: Region):
         """Ensure that the monster is in the correct group based on its current position"""

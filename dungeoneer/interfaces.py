@@ -46,6 +46,9 @@ class SpriteGrouper(Protocol):
     def spawn(self, monster_sprite):
         ...
 
+    def centre_on_tile(self, pixel_pos, offset):
+        ...
+
 
 class Observer(ABC):
     @abstractmethod

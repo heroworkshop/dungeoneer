@@ -104,3 +104,18 @@ class TestRealm(unittest.TestCase):
         assert_that(from_region.groups.monster).does_not_contain(monster)
         assert_that(to_region.groups.solid).contains(monster)
         assert_that(from_region.groups.solid).does_not_contain(monster)
+
+    def test_centre_on_tile_withNoOffset_returnsCentrePixelForGridCell(self):
+        realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
+        pos = realm.centre_on_tile((201, 201))
+        assert_that(pos).is_equal_to((210, 210))
+
+    def test_centre_on_tile_withOffsetNextRight_returnsCentrePixelForNextRightGridCell(self):
+        realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
+        pos = realm.centre_on_tile((201, 201), offset=(1, 0))
+        assert_that(pos).is_equal_to((230, 210))
+
+    def test_centre_on_tile_withOffsetDiagonal_returnsCentrePixelForDiagonalGridCell(self):
+        realm = Realm((5, 5), tile_size=(20, 20), region_size=(10, 10))
+        pos = realm.centre_on_tile((201, 201), offset=(1, 1))
+        assert_that(pos).is_equal_to((230, 230))

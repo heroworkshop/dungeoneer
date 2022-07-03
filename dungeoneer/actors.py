@@ -427,6 +427,7 @@ class MissileSprite(pygame.sprite.Sprite):
         x, y = target.rect.center
         realm.effect(self.make_impact_effect(x, y))
         if randint(0, 100) < self.shot_from_item.survivability:
+            x, y = realm.centre_on_tile((x, y), (-self.dx, -self.dy))
             realm.drop(self.shot_from_item, (x, y))
 
         target.on_hit()
