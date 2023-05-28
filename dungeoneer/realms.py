@@ -21,12 +21,12 @@ Regions are also arranged in a grid of variable size and this is known as a real
 import copy
 from contextlib import suppress
 from random import randint
-from typing import Dict, Tuple
+from typing import Dict, Tuple, cast
 
 import pygame
 
-from dungeoneer.actors import Monster, MissileSprite
-from dungeoneer.interfaces import SpriteGroups, Item, SpriteGrouper, Collider
+from dungeoneer.actors import Monster, MissileSprite, Player
+from dungeoneer.interfaces import SpriteGroups, Item, SpriteGrouper, Collider, Observer
 from dungeoneer.item_sprites import make_item_sprite
 from dungeoneer.map_maker import generate_map
 from dungeoneer.room_generation import random_room_generator
@@ -38,7 +38,7 @@ class PointOutsideRealmBoundary(ValueError):
     """Raised when trying to access position outside the realms boundaries"""
 
 
-class Realm(SpriteGrouper):
+class Realm(SpriteGrouper, Observer):
     """A realm is a variable sized grid of Regions
 
     Args:
@@ -59,6 +59,15 @@ class Realm(SpriteGrouper):
         self.groups = SpriteGroups()  # global across all regions
 
         self.create_empty_regions(region_size)
+
+    def on_update(self, attribute, value):
+        """Implementation of method from Observer class"""
+        if attribute == "move":
+            # notify relevant region of movement
+            mover = cast(pygame.sprite, value)
+            region = self.region_from_pixel_position(mover.rect.center)
+            x, y = mover.rect.center
+            region.on_player_move(x, y)
 
     def create_empty_regions(self, region_size):
         region_width, region_height = region_size
@@ -170,7 +179,7 @@ class Realm(SpriteGrouper):
         world = region.groups
         if move_to_nearest_empty_space(monster_sprite, (world.solid, world.player), 500):
             world.solid.add(monster_sprite)
-            world.monster.add(monster_sprite)
+            world.sleeping_monster.add(monster_sprite)
             return monster_sprite
         return None
 

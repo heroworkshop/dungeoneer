@@ -9,7 +9,7 @@ from dungeoneer.items import GoldItem
 from dungeoneer.regions import Tile
 
 
-def monster_drops(room, region, base_p=30):
+def monster_drops(room, region, base_p=90):
     drop_table = {
         place_monster: 100
     }

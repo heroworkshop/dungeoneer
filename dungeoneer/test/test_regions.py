@@ -3,7 +3,7 @@ import unittest
 import pygame
 from assertpy import assert_that
 
-from dungeoneer.characters import MonsterType
+from dungeoneer.characters import MonsterType, Character
 from dungeoneer.realms import Realm
 from dungeoneer.regions import Region, Tile, TileType, SubRegion, NoFreeSpaceFound
 from dungeoneer.scenery import ScenerySprite
@@ -137,6 +137,27 @@ class TestRegion(unittest.TestCase):
         region.fill_all(TileType.STONE_WALL)
         region.clear_area((1, 1), (2, 2))
         self.assertEqual(16 - 4, len(region.solid_objects))
+
+
+ROOM_2x2 = [(x, y) for x in range(1, 3) for y in range(1, 3)]
+ROOM_1x3 = [(5, y) for y in range(1, 4)]
+
+
+class TestPlaceMonsters(unittest.TestCase):
+    def test_on_player_move_withMatchingRoom_wakesMonsters(self):
+        region = Region((10, 10))
+        region.fill_all(TileType.STONE_WALL)
+        region.clear_nodes(ROOM_2x2)
+        region.clear_nodes(ROOM_1x3)
+        region.rooms.add_room(ROOM_2x2)
+        region.rooms.add_room(ROOM_1x3)
+        zombie = Character(MonsterType.ZOMBIE)
+        region.rooms.add_monster(zombie, 0)
+        x = region.tile_width * 2
+        y = region.tile_height * 2
+        assert_that(zombie.sleeping).is_true()
+        region.on_player_move(x, y)
+        assert_that(zombie.sleeping).is_false()
 
 
 class TestFindNearestFreeSpace(unittest.TestCase):

@@ -23,13 +23,14 @@ class RoomGenerator(ABC):
     def __init__(self, region: Region):
         self.region = region
         self.sub_regions: List[SubRegion] = []
-        self.paths = []
-        self.rooms = []
+        self.paths: List[List[Position]] = []
+        self.rooms: List[List[Position]] = []
 
     def generate(self) -> Region:
         nodes = self.make_nodes()
         self.make_corridors(nodes)
         self.make_rooms()
+        self.region.rooms.add_rooms_list(self.rooms)
         carve_out_dungeon(self.region, self.paths, self.rooms)
         self.populate()
         room_type = str(self.__class__).split(".")[-1].split("Generator")[0]
@@ -118,9 +119,9 @@ class EnclosedBossChamberGenerator(ConnectedRoomGenerator):
 
 
 class LargeRoomGenerator(ConnectedRoomGenerator):
-    def __init__(self, region):
-        super().__init__(region)
-        self.region.clear_area((1, 1), (self.region.grid_width - 1, self.region.grid_height - 1))
+    # def __init__(self, region):
+    #     super().__init__(region)
+    #     self.region.clear_area((1, 1), (self.region.grid_width - 1, self.region.grid_height - 1))
 
     def make_nodes(self):
         return [Position(10, 10)]

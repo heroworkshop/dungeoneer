@@ -28,6 +28,13 @@ class TestGenerateMap(unittest.TestCase):
         self.assertLess(total, 198)
         self.assertGreater(total, 170)
 
+    def test_generate_map_withLargeRoom_addsRoomToRegion(self):
+        region = Region((50, 50))
+        generate_map(region, LargeRoomGenerator)
+        assert_that(region.rooms.count).is_equal_to(1)
+        assert_that(region.rooms.index_by_position[(1, 1)]).is_equal_to(0)
+        assert_that(region.rooms.index_by_position[(48, 48)]).is_equal_to(0)
+
     def test_make_nodes_withNodeCountN_CreatesNNodes(self):
         for n in [16]:
             with self.subTest(n=n):

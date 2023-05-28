@@ -1,5 +1,6 @@
 import itertools
 from collections import namedtuple, deque
+from contextlib import suppress
 from enum import Enum
 from typing import Iterable, Dict, Type, List
 
@@ -9,6 +10,7 @@ from dungeoneer import game_assets
 from dungeoneer.actors import make_monster_sprite
 from dungeoneer.characters import MonsterType
 from dungeoneer.interfaces import SpriteGroups
+from dungeoneer.rooms import Rooms
 from dungeoneer.scenery import ScenerySprite, VisualEffect
 from dungeoneer.spritesheet import SpriteSheet
 
@@ -27,6 +29,9 @@ class Tile:
         self.height = filmstrip[0].get_height()
         self.layer = layer
         self.is_solid = is_solid
+
+    def __repr__(self):
+        return "solid" if self.is_solid else "non-solid"
 
     def make_sprite(self, x, y):
         return self.sprite_class(x, y, self.filmstrip, **self.parameters)
@@ -85,6 +90,7 @@ class Region:
         self.pixel_height = self.grid_height * self.tile_height
         self.default_tile = default_tile
         self.exits = {}
+        self.rooms = Rooms()
 
     def __repr__(self):
         return str(self.name)
@@ -103,11 +109,22 @@ class Region:
         dx, dy = align_offsets[align]
         return x + dx, y + dy
 
+    def on_player_move(self, x, y):
+        pos = self.coordinate_from_absolute_position(x, y)
+        if pos not in self.rooms.index_by_position:
+            return
+        room_index = self.rooms.index_by_position[pos]
+        if room_index not in self.rooms.monsters_by_index:
+            return
+        for monster in self.rooms.monsters_by_index[room_index]:
+            if monster.character.sleeping:
+                monster.character.sleeping = False
+
     def coordinate_from_absolute_position(self, x, y):
         bx, by = self.pixel_base
         col = (x - bx) // self.tile_width
         row = (y - by) // self.tile_height
-        return col, row
+        return int(col), int(row)
 
     def out_of_bounds(self, position):
         x, y = position
@@ -117,6 +134,13 @@ class Region:
         return self.tiles.get(position, self.default_tile)
 
     def solid_object_at_position(self, position: Position):
+        """
+        Args:
+            position: grid coordinate within region
+
+        Returns:
+            Solid object at position (Tile) or None
+        """
         return self.solid_objects.get(position)
 
     def animated_tile(self, position: Position):
@@ -171,8 +195,11 @@ class Region:
             y = base_y + position.y * self.tile_height + self.tile_height // 2
 
             monster_sprite = make_monster_sprite(monster_type, x, y, realm)
-            for g in groups:
-                g.add(monster_sprite)
+            room_index = self.rooms.index_by_position[(position.x, position.y)]
+            self.rooms.add_monster(monster_sprite, room_index)
+            if monster_sprite:
+                for g in groups:
+                    g.add(monster_sprite)
 
     def place_sprites(self, tiles: Dict[Position, Tile], groups):
         base_x, base_y = self.pixel_base

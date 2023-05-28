@@ -25,10 +25,11 @@ class CharacterTemplate:
 
 class Character:
     def __init__(self, template_enum):
-        self.type_name = template_enum.name
+        self.type_name: str = template_enum.name
         self.template = template_enum.value
-        self.vitality = self.template.vitality
-        self.gold = 0
+        self.vitality: int = self.template.vitality
+        self.gold: int = 0
+        self.sleeping: bool = False
 
     @property
     def rate_of_fire(self):

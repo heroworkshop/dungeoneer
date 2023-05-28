@@ -16,6 +16,7 @@ class SpriteGroups:
     solid: Group = field(default_factory=Group)
     player: Group = field(default_factory=Group)
     monster: Group = field(default_factory=Group)
+    sleeping_monster: Group = field(default_factory=Group)
     missile: Group = field(default_factory=Group)
     player_missile: Group = field(default_factory=Group)
     items: Group = field(default_factory=Group)

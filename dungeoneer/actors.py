@@ -61,7 +61,6 @@ class Actor(pygame.sprite.Sprite, Collider):
 
     def add_observer(self, observer: Observer, attribute: str):
         self.observers[attribute].append(observer)
-        observer.on_update(attribute, Item(attribute, count=getattr(self, attribute)))
 
     @property
     def vitality(self):
@@ -105,6 +104,10 @@ class Actor(pygame.sprite.Sprite, Collider):
             sprite.rect.x += int(velocity.x)
             sprite.rect.y += int(velocity.y)
         self.update_filmstrip()
+
+        for observer in self.observers["move"]:
+            observer.on_update("move", self)
+
         return pygame.math.Vector2(-int(velocity.x), -int(velocity.y))
 
     def update_filmstrip(self):
@@ -444,7 +447,7 @@ def make_attack_sprite(x: int, y: int, direction, attack_item: Ammo, repeats=Fal
     return MissileSprite(x, y, sprite_sheet, direction, attack_item, repeats=repeats)
 
 
-def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, realm: SpriteGrouper, sleeping=False):
+def make_monster_sprite(monster_type: Union[MonsterType, str], x, y, realm: SpriteGrouper, sleeping=True):
     if type(monster_type) is str:
         monster_type = MonsterType[monster_type]
     monster = Character(monster_type)

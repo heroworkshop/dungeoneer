@@ -91,8 +91,8 @@ class TestRealm(unittest.TestCase):
         from_region = realm.region((1, 0))
         to_region = realm.region((0, 0))
         monster = make_monster_sprite(MonsterType.ZOMBIE, 205, 5, realm)
-        assert_that(from_region.groups.monster).contains(monster)
-        assert_that(to_region.groups.monster).does_not_contain(monster)
+        assert_that(from_region.groups.sleeping_monster).contains(monster)
+        assert_that(to_region.groups.sleeping_monster).does_not_contain(monster)
         assert_that(from_region.groups.solid).contains(monster)
         assert_that(to_region.groups.solid).does_not_contain(monster)
 

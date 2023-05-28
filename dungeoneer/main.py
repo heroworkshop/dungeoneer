@@ -62,7 +62,7 @@ class DungeoneerGame:
         region_offset = (self.region.pixel_width // 2, self.region.pixel_height // 2)
         self.player = create_player(self.realm, (x + region_offset[0], y + region_offset[1]))
         self.camera = Camera(self.screen, self.realm, position=(x, y))
-
+        self.player.add_observer(self.realm, "move")
         # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 200, y + randint(0, self.screen.get_height()), self.realm)
         # make_monster_sprite(MonsterType.ZOMBIE_GENERATOR, x + 800, y + randint(0, self.screen.get_height()), self.realm)
 
@@ -104,6 +104,8 @@ class DungeoneerGame:
 
             monster: Monster
             for monster in world.monster:
+                if monster.character.sleeping:
+                    continue
                 monster.target_enemy(self.player)
                 monster.move()
                 self.realm.update_monster_group(monster, region)
@@ -120,7 +122,9 @@ class DungeoneerGame:
         surface.blit(caption, (x, y))
 
         y += line_spacing
-        caption = font.render(str(int(self.clock.get_fps())), True, (255, 50, 50))
+        fps = int(self.clock.get_fps())
+        fps_colour = (50, 255, 50) if fps > self.fps * 0.9 else (255, 50, 50)
+        caption = font.render(str(fps), True, fps_colour)
         surface.blit(caption, (x, y))
 
         caption = font.render(str(self.player.rect.center), True, (255, 255, 255))
@@ -227,3 +231,4 @@ def create_gold_score(player, group):
     score_bar = NumericScoreBar(screen.WIDTH - 100, 20, gold_icon, 0, font_size=30)
     group.add(score_bar)
     player.add_observer(score_bar, "gold")
+    score_bar.on_update("gold", Item("gold", count=player.gold))
